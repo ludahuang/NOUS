@@ -6,6 +6,7 @@
 - Added the first graph-grounded agent prototype for connectome summary, structure suggestions, and Obsidian draft-note generation
 - Replaced the agent tab with a bottom-right floating assistant bubble
 - Added graph-derived link opportunities and bridge-note drafting inside the assistant
+- Added dedicated agent documentation and a browser smoke test for the floating assistant flow
 
 ## Archive Reset
 

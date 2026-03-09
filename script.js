@@ -433,6 +433,9 @@ const state = {
   agentOpen: false,
   agentMessages: [],
   agentDraftSuggestions: [],
+  agentRequestedTitle: "",
+  agentBannerTitle: "",
+  agentBannerSummary: "",
   graphMode: "default",
   motionEnabled: true,
   loading: true,
@@ -2867,19 +2870,34 @@ function createAgentResponse(intent, query = "") {
   };
 }
 
-function refreshAgentPrototype(query = "", requestedTitle = "") {
+function setAgentBanner(title = "", summary = "", requestedTitle = state.agentRequestedTitle) {
+  state.agentBannerTitle = title;
+  state.agentBannerSummary = summary;
+  state.agentRequestedTitle = requestedTitle || "";
+}
+
+function clearAgentBanner() {
+  state.agentBannerTitle = "";
+  state.agentBannerSummary = "";
+  state.agentRequestedTitle = "";
+}
+
+function refreshAgentPrototype(query = "", requestedTitle = state.agentRequestedTitle) {
   const snapshot = buildAgentSnapshot(query);
-  agentTitle.textContent = snapshot.focus?.title
+  const defaultTitle = snapshot.focus?.title
     ? `Graph-aware assistant for ${snapshot.focus.title}`
     : "Graph-aware note assistant";
-  agentSummary.textContent =
+  const defaultSummary =
     snapshot.obsidianCount > 0
       ? `Prototype mode: graph-grounded summary and draft suggestions over ${snapshot.wikipediaCount} Wikipedia pages plus ${snapshot.obsidianCount} local note${snapshot.obsidianCount === 1 ? "" : "s"}.`
       : `Prototype mode: graph-grounded summary and draft suggestions over ${snapshot.wikipediaCount} live Wikipedia pages.`;
+  state.agentRequestedTitle = requestedTitle || "";
+  agentTitle.textContent = state.agentBannerTitle || defaultTitle;
+  agentSummary.textContent = state.agentBannerSummary || defaultSummary;
   renderAgentCards(agentDigest, buildAgentDigestCards(snapshot));
   renderAgentCards(agentStructureList, buildAgentStructureCards(snapshot));
   renderAgentCards(agentLinkList, buildAgentLinkCards(snapshot));
-  state.agentDraftSuggestions = buildAgentDraftSuggestions(snapshot, requestedTitle);
+  state.agentDraftSuggestions = buildAgentDraftSuggestions(snapshot, state.agentRequestedTitle);
   renderAgentDraftCards(state.agentDraftSuggestions);
   ensureAgentWelcome(snapshot);
 }
@@ -4982,8 +5000,9 @@ function bindEvents() {
     const response = createAgentResponse("summary");
     setAgentOpen(true);
     refreshAgentPrototype("", response.requestedTitle);
-    agentTitle.textContent = response.title;
-    agentSummary.textContent = response.summary;
+    setAgentBanner(response.title, response.summary, response.requestedTitle);
+    agentTitle.textContent = state.agentBannerTitle;
+    agentSummary.textContent = state.agentBannerSummary;
     pushAgentMessage("assistant", response.html);
   });
 
@@ -4991,8 +5010,9 @@ function bindEvents() {
     const response = createAgentResponse("structure");
     setAgentOpen(true);
     refreshAgentPrototype("", response.requestedTitle);
-    agentTitle.textContent = response.title;
-    agentSummary.textContent = response.summary;
+    setAgentBanner(response.title, response.summary, response.requestedTitle);
+    agentTitle.textContent = state.agentBannerTitle;
+    agentSummary.textContent = state.agentBannerSummary;
     pushAgentMessage("assistant", response.html);
   });
 
@@ -5000,8 +5020,9 @@ function bindEvents() {
     const response = createAgentResponse("draft");
     setAgentOpen(true);
     refreshAgentPrototype("", response.requestedTitle);
-    agentTitle.textContent = response.title;
-    agentSummary.textContent = response.summary;
+    setAgentBanner(response.title, response.summary, response.requestedTitle);
+    agentTitle.textContent = state.agentBannerTitle;
+    agentSummary.textContent = state.agentBannerSummary;
     renderAgentDraftCards(state.agentDraftSuggestions);
     pushAgentMessage("assistant", response.html);
   });
@@ -5017,8 +5038,9 @@ function bindEvents() {
     pushAgentMessage("user", `<p>${escapeHtml(query)}</p>`);
     const response = createAgentResponse(inferAgentIntent(query), query);
     refreshAgentPrototype(query, response.requestedTitle);
-    agentTitle.textContent = response.title;
-    agentSummary.textContent = response.summary;
+    setAgentBanner(response.title, response.summary, response.requestedTitle);
+    agentTitle.textContent = state.agentBannerTitle;
+    agentSummary.textContent = state.agentBannerSummary;
     renderAgentDraftCards(state.agentDraftSuggestions);
     pushAgentMessage("assistant", response.html);
     agentChatInput.value = "";

@@ -6,6 +6,8 @@ Its active app is still the static root connectome, now carrying the next-versio
 
 `2.0-alpha` is frozen and archived in [archive/the-vault-2.0-alpha](/Users/mini/Documents/New%20project/archive/the-vault-2.0-alpha). It is preserved for salvage, not active product work.
 
+Agent usage is documented in [docs/agent-use.md](/Users/mini/Documents/New%20project/docs/agent-use.md).
+
 ## Active Build
 
 - Live Wikipedia discovery from `Find note`
@@ -32,6 +34,12 @@ From the repo root:
 
 ```bash
 npm run serve
+```
+
+For the root agent smoke test:
+
+```bash
+npm run smoke:agent
 ```
 
 Then open:

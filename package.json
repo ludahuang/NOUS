@@ -6,6 +6,8 @@
   ],
   "scripts": {
     "serve": "python3 -m http.server 8765",
+    "smoke:agent": "node scripts/smoke-agent-ui.mjs",
+    "capture:agent-docs": "node scripts/capture-agent-docs.mjs",
     "dev:alpha": "npm run dev --workspace @the-vault/web",
     "build:alpha": "npm run build --workspace @the-vault/web",
     "start:alpha": "npm run start --workspace @the-vault/web",

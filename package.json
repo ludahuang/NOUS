@@ -1,0 +1,19 @@
+{
+  "name": "the-vault",
+  "private": true,
+  "workspaces": [
+    "archive/the-vault-2.0-alpha/apps/web"
+  ],
+  "scripts": {
+    "serve": "python3 -m http.server 8765",
+    "dev:alpha": "npm run dev --workspace @the-vault/web",
+    "build:alpha": "npm run build --workspace @the-vault/web",
+    "start:alpha": "npm run start --workspace @the-vault/web",
+    "db:init:alpha": "npm run db:init --workspace @the-vault/web",
+    "worker:alpha": "npm run worker --workspace @the-vault/web",
+    "smoke:alpha": "node archive/the-vault-2.0-alpha/apps/web/scripts/smoke-ui.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="The Vault blends live Wikipedia graphs with imported Obsidian markdown vaults in a shared 3D connectome."
+    />
+    <meta name="application-name" content="The Vault" />
+    <meta name="theme-color" content="#090b10" />
+    <meta name="color-scheme" content="dark" />
+    <title>The Vault 1.1-dev</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="workspace-shell">
+      <aside class="vault-sidebar">
+        <div class="sidebar-head">
+          <div class="headline-row">
+            <p class="eyebrow">NOUS</p>
+            <span class="version-chip">v1.1-dev</span>
+          </div>
+          <h1>The Vault</h1>
+          <p class="lede">
+            Explore the connectome of knowledge.
+          </p>
+        </div>
+
+        <div class="sidebar-panel control-panel">
+          <label class="control-group">
+            <span>Find note</span>
+            <input
+              id="search-input"
+              type="search"
+              placeholder="Search page title or topic"
+              autocomplete="off"
+            />
+            <div id="search-suggestions" class="search-suggestions" hidden></div>
+            <p id="search-mode-meta" class="search-meta">
+              Press Enter to clear the current canvas and build a new neural network from the most relevant Wikipedia entry. If none fits, use Obsidian &gt; New from a blank canvas.
+            </p>
+          </label>
+
+          <div class="source-accordion" aria-label="Data sources">
+            <section id="source-card-wikipedia" class="source-accordion-item active">
+              <button
+                id="menu-wikipedia"
+                class="source-accordion-trigger active"
+                type="button"
+                data-menu-tab="wikipedia"
+                aria-expanded="true"
+                aria-controls="menu-panel-wikipedia"
+              >
+                Wikipedia
+              </button>
+
+              <div
+                id="menu-panel-wikipedia"
+                class="source-accordion-panel"
+                aria-labelledby="menu-wikipedia"
+                aria-hidden="false"
+              >
+                <div class="source-accordion-panel-inner">
+                <p class="search-meta">
+                  Explore the live Wikipedia graph, jump to a random note, or reset back to the current search seed.
+                </p>
+                <div class="button-row button-row-stack">
+                  <button id="random-focus" type="button">Random</button>
+                  <button id="reset-view" type="button" class="ghost-button">
+                    Reset
+                  </button>
+                </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="source-card-obsidian" class="source-accordion-item">
+              <button
+                id="menu-obsidian"
+                class="source-accordion-trigger"
+                type="button"
+                data-menu-tab="obsidian"
+                aria-expanded="false"
+                aria-controls="menu-panel-obsidian"
+              >
+                Obsidian
+              </button>
+
+              <div
+                id="menu-panel-obsidian"
+                class="source-accordion-panel"
+                aria-labelledby="menu-obsidian"
+                aria-hidden="true"
+              >
+                <div class="source-accordion-panel-inner">
+                <p id="source-meta" class="search-meta">
+                  Import adds markdown notes into the current neural network. New opens a clean canvas for local note drafting.
+                </p>
+                <div class="button-row button-row-stack">
+                  <button id="import-vault" type="button">Import</button>
+                  <button id="new-note" type="button" class="ghost-button">
+                    New
+                  </button>
+                </div>
+                </div>
+              </div>
+            </section>
+
+            <input
+              id="vault-input"
+              type="file"
+              accept=".md,.markdown,text/markdown"
+              multiple
+              webkitdirectory
+              directory
+              hidden
+            />
+          </div>
+
+          <label class="control-group">
+            <span>Filter folder</span>
+            <select id="region-filter">
+              <option value="all">All folders</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="sidebar-panel tree-panel">
+          <div class="panel-head">
+            <p class="eyebrow">Vault</p>
+            <span id="vault-count">0 notes</span>
+          </div>
+          <div id="note-tree" class="note-tree"></div>
+        </div>
+      </aside>
+
+      <main class="stage-pane">
+        <section class="stage-shell">
+          <header class="stage-header">
+            <div class="stage-headline">
+              <p class="eyebrow">3D Connectome</p>
+              <h2>Live neural graph of structured knowledge.</h2>
+              <p class="stage-copy">
+                Orbit, pan, zoom, and inspect pages through in-scene spark markers.
+              </p>
+            </div>
+
+            <div class="stage-meta">
+              <div class="stat-strip">
+                <div>
+                  <span class="stat-label">Pages</span>
+                  <strong id="stat-neurons">0</strong>
+                </div>
+                <div>
+                  <span class="stat-label">Links</span>
+                  <strong id="stat-synapses">0</strong>
+                </div>
+                <div>
+                  <span class="stat-label">Folders</span>
+                  <strong id="stat-regions">0</strong>
+                </div>
+              </div>
+              <button id="download-vault" type="button" class="stage-action-button">
+                Download Vault
+              </button>
+            </div>
+
+            <div id="legend" class="legend"></div>
+          </header>
+
+          <div id="graph-viewport" class="graph-viewport" aria-label="3D neural network"></div>
+          <div id="label-layer" class="label-layer"></div>
+
+          <div class="stage-overlay top-right">
+            <div id="graph-status" class="graph-note">
+              Connecting to English Wikipedia and building the note graph…
+            </div>
+          </div>
+
+          <div class="stage-overlay bottom-right controls-stack">
+            <button id="zoom-in" type="button" class="icon-button" aria-label="Zoom in">
+              +
+            </button>
+            <button id="zoom-out" type="button" class="icon-button" aria-label="Zoom out">
+              -
+            </button>
+            <button id="reset-camera" type="button" class="icon-button" aria-label="Reset camera">
+              ⟲
+            </button>
+            <button id="focus-selected" type="button" class="icon-button" aria-label="Focus selected">
+              ◎
+            </button>
+            <button id="toggle-motion" type="button" class="icon-button" aria-label="Pause motion">
+              ❚❚
+            </button>
+          </div>
+
+          <div class="stage-overlay bottom-left help-chip">
+            Pan: drag empty space. Orbit: right-drag. Zoom: wheel. Click sparks or notes to inspect.
+          </div>
+        </section>
+      </main>
+
+      <aside class="note-pane">
+        <div class="tab-bar">
+          <button
+            id="tab-wiki"
+            class="tab active"
+            type="button"
+            data-note-tab="wiki"
+            aria-selected="true"
+          >
+            Note.md
+          </button>
+          <button
+            id="tab-inspector"
+            class="tab"
+            type="button"
+            data-note-tab="inspector"
+            aria-selected="false"
+          >
+            Inspector
+          </button>
+        </div>
+
+        <article id="note-panel-wiki" class="note-card note-panel">
+          <div class="note-header">
+            <p class="article-kicker" id="article-kicker">The Vault Note</p>
+            <h3 id="article-title">Loading Wikipedia notes…</h3>
+            <a
+              id="source-link"
+              class="source-link"
+              href="https://en.wikipedia.org/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open source
+            </a>
+            <button id="edit-note" type="button" class="ghost-button source-link" hidden>
+              Edit note
+            </button>
+          </div>
+
+          <p id="article-summary" class="article-summary">
+            Fetching article summaries and page links from English Wikipedia.
+          </p>
+
+          <div id="article-body" class="article-body"></div>
+
+          <section id="editor-panel" class="editor-panel" hidden>
+            <div class="panel-head">
+              <p class="eyebrow">Clean Canvas</p>
+              <button id="cancel-editor" type="button" class="ghost-button">
+                Close
+              </button>
+            </div>
+
+            <label class="editor-field">
+              <span>Title</span>
+              <input id="editor-title" type="text" placeholder="Untitled note" />
+            </label>
+
+            <label class="editor-field">
+              <span>Folder</span>
+              <input id="editor-folder" type="text" placeholder="Scratchpad" />
+            </label>
+
+            <label class="editor-field">
+              <span>Markdown</span>
+              <textarea
+                id="editor-body-input"
+                rows="14"
+                placeholder="# Untitled note&#10;&#10;Write a thought here. Use [[Page Title]] to link into the current graph."
+              ></textarea>
+            </label>
+
+            <p class="search-meta">
+              Use <code>[[Page Title]]</code> to connect the note to imported notes or Wikipedia pages already in the graph.
+            </p>
+
+            <div class="button-row">
+              <button id="save-note" type="button">Save note</button>
+              <button id="discard-note" type="button" class="ghost-button">
+                Discard
+              </button>
+            </div>
+          </section>
+
+          <dl class="infobox" id="infobox">
+            <div>
+              <dt>Cluster</dt>
+              <dd id="info-region">-</dd>
+            </div>
+            <div>
+              <dt>Topic</dt>
+              <dd id="info-type">-</dd>
+            </div>
+            <div>
+              <dt>Source</dt>
+              <dd id="info-transmitter">-</dd>
+            </div>
+            <div>
+              <dt>Wiki links</dt>
+              <dd id="info-rate">-</dd>
+            </div>
+            <div>
+              <dt>Connected pages</dt>
+              <dd id="info-degree">-</dd>
+            </div>
+            <div>
+              <dt>Theme</dt>
+              <dd id="info-motif">-</dd>
+            </div>
+          </dl>
+
+          <div class="tag-block">
+            <div class="panel-head">
+              <p class="eyebrow">Tags</p>
+            </div>
+            <div id="tag-list" class="tag-list"></div>
+          </div>
+
+          <div class="neighbor-block">
+            <div class="panel-head">
+              <p class="eyebrow">Linked Pages</p>
+              <span id="neighbor-count">0 pages</span>
+            </div>
+            <div id="neighbor-list" class="neighbor-list"></div>
+          </div>
+        </article>
+
+        <article id="note-panel-inspector" class="note-card note-panel" hidden>
+          <div class="note-header">
+            <p class="article-kicker">Graph Inspector</p>
+            <h3 id="diagnostics-title">Waiting for selection…</h3>
+            <p id="diagnostics-summary" class="article-summary">
+              Select a note to inspect graph structure, folder placement, and camera framing.
+            </p>
+          </div>
+
+          <dl class="infobox">
+            <div>
+              <dt>Graph Mode</dt>
+              <dd id="diag-mode">-</dd>
+            </div>
+            <div>
+              <dt>Seed Note</dt>
+              <dd id="diag-seed">-</dd>
+            </div>
+            <div>
+              <dt>Folder</dt>
+              <dd id="diag-folder">-</dd>
+            </div>
+            <div>
+              <dt>Selected Links</dt>
+              <dd id="diag-links">-</dd>
+            </div>
+            <div>
+              <dt>Pages In Graph</dt>
+              <dd id="diag-pages">-</dd>
+            </div>
+            <div>
+              <dt>Total Fibers</dt>
+              <dd id="diag-fibers">-</dd>
+            </div>
+            <div>
+              <dt>Visible Notes</dt>
+              <dd id="diag-visible">-</dd>
+            </div>
+            <div>
+              <dt>Camera Distance</dt>
+              <dd id="diag-camera">-</dd>
+            </div>
+          </dl>
+
+          <div class="tag-block">
+            <div class="panel-head">
+              <p class="eyebrow">Folder Density</p>
+            </div>
+            <div id="diagnostics-folder-list" class="tag-list"></div>
+          </div>
+
+          <div class="neighbor-block">
+            <div class="panel-head">
+              <p class="eyebrow">Strongest Links</p>
+              <span id="diagnostics-link-count">0 links</span>
+            </div>
+            <div id="diagnostics-link-list" class="neighbor-list"></div>
+          </div>
+        </article>
+      </aside>
+    </div>
+
+    <script>
+      window.addEventListener("error", function (event) {
+        const status = document.getElementById("graph-status");
+        const title = document.getElementById("article-title");
+        const summary = document.getElementById("article-summary");
+        if (status) status.textContent = "Script error: " + event.message;
+        if (title) title.textContent = "Script error";
+        if (summary) summary.textContent = event.message;
+      });
+    </script>
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

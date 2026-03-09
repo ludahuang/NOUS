@@ -19,6 +19,8 @@ async function main() {
   await page.waitForFunction(() => document.querySelectorAll("#note-tree .tree-item").length >= 12);
   await page.locator("#note-tree .tree-item").filter({ hasText: "Connectome" }).first().click();
   await page.waitForTimeout(300);
+  await page.hover("#agent-launcher");
+  await page.waitForTimeout(180);
 
   await page.screenshot({
     path: fileURLToPath(new URL("agent-bubble-home.png", outputDir)),
@@ -27,20 +29,14 @@ async function main() {
 
   await page.click("#agent-launcher");
   await page.locator("#agent-panel").waitFor({ state: "visible" });
-  await page.locator("#agent-action-structure").click({ force: true });
+  await page.locator("#agent-action-reveal").click({ force: true });
   await page.waitForTimeout(350);
   await page.screenshot({
     path: fileURLToPath(new URL("agent-panel-open.png", outputDir)),
     fullPage: false,
   });
 
-  await page.evaluate(() => {
-    document.getElementById("agent-chat-input")?.scrollIntoView({ block: "center" });
-  });
-  await page.fill("#agent-chat-input", "draft a note about hippocampus");
-  await page.press("#agent-chat-input", "Enter");
-  await page.waitForTimeout(350);
-  await page.locator("#agent-draft-list [data-agent-draft-index]").first().click();
+  await page.locator("#agent-link-list [data-agent-draft-index]").first().click({ force: true });
   await page.waitForTimeout(350);
   await page.screenshot({
     path: fileURLToPath(new URL("agent-draft-editor.png", outputDir)),

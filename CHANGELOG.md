@@ -1,12 +1,13 @@
 # The Vault Changelog
 
-## v1.2-agent
+## v2-agentic
 
-- Marked the `agent` branch as `v1.2-agent`
-- Added the first graph-grounded agent prototype for connectome summary, structure suggestions, and Obsidian draft-note generation
-- Replaced the agent tab with a bottom-right floating assistant bubble
-- Added graph-derived link opportunities and bridge-note drafting inside the assistant
-- Added dedicated agent documentation and a browser smoke test for the floating assistant flow
+- Replaced the old utility-style assistant with a personified graph-native agent
+- Removed summary-first, optimization-first, and generic draft-note panel behavior
+- Made `Reveal Connections` the primary action
+- Kept chat as a secondary shell around missing-bridge discovery
+- Added `Inspect` and `Draft bridge` actions for each revealed connection
+- Updated the agent guide, screenshots, and smoke test to the new relation-first concept
 
 ## Archive Reset
 

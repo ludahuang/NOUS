@@ -1,6 +1,6 @@
 # The Vault
 
-The current `agent` branch is marked as `v1.2-agent`.
+The current `agent` branch is marked as `v2-agentic`.
 
 Its active app is still the static root connectome, now carrying the next-version agent prototype. The stable baseline remains `1.1-dev` in the release snapshot.
 
@@ -15,7 +15,7 @@ Agent usage is documented in [docs/agent-use.md](/Users/mini/Documents/New%20pro
 - Obsidian markdown import merged into the current graph
 - Local note drafting with Wikipedia fallback for duplicate titles
 - `Download Vault` export as an Obsidian-compatible archive
-- Floating agent bubble for graph-aware summary, structure guidance, link opportunities, and Obsidian draft notes
+- `v2-agentic`: a floating graph-native agent focused on revealing missing connections and drafting bridge notes
 
 The root app files are:
 

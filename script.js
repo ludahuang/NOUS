@@ -284,13 +284,8 @@ const agentLauncher = document.getElementById("agent-launcher");
 const agentCloseButton = document.getElementById("agent-close");
 const agentTitle = document.getElementById("agent-title");
 const agentSummary = document.getElementById("agent-summary");
-const agentDigest = document.getElementById("agent-digest");
-const agentStructureList = document.getElementById("agent-structure-list");
 const agentLinkList = document.getElementById("agent-link-list");
-const agentDraftList = document.getElementById("agent-draft-list");
-const agentActionSummary = document.getElementById("agent-action-summary");
-const agentActionStructure = document.getElementById("agent-action-structure");
-const agentActionDrafts = document.getElementById("agent-action-drafts");
+const agentActionReveal = document.getElementById("agent-action-reveal");
 const agentChatLog = document.getElementById("agent-chat-log");
 const agentChatForm = document.getElementById("agent-chat-form");
 const agentChatInput = document.getElementById("agent-chat-input");
@@ -432,10 +427,9 @@ const state = {
   activeNoteTab: "wiki",
   agentOpen: false,
   agentMessages: [],
-  agentDraftSuggestions: [],
-  agentRequestedTitle: "",
-  agentBannerTitle: "",
-  agentBannerSummary: "",
+  agentSuggestions: [],
+  agentFocusQuery: "",
+  agentHasRevealed: false,
   graphMode: "default",
   motionEnabled: true,
   loading: true,
@@ -1832,6 +1826,10 @@ function clearGraphCanvas(title = "Blank canvas", summary = "Discovering a new n
   state.selectedPageId = null;
   state.hoveredPageId = null;
   state.loading = true;
+  state.agentHasRevealed = false;
+  state.agentFocusQuery = "";
+  state.agentSuggestions = [];
+  state.agentMessages = [];
   state.cameraGoal = null;
   state.targetGoal = null;
   state.trackedPageId = null;
@@ -2464,25 +2462,6 @@ function arePagesConnected(sourceId, targetId) {
   return Boolean(state.neighborMap.get(sourceId)?.has(targetId));
 }
 
-function extractRequestedTitle(query) {
-  const trimmed = normalizeWhitespace(query);
-  if (!trimmed) {
-    return "";
-  }
-
-  const quoted = trimmed.match(/["“”']([^"“”']+)["“”']?/);
-  if (quoted?.[1]) {
-    return normalizeWhitespace(quoted[1]).replace(/[.?!,:;]+$/, "");
-  }
-
-  const contextual = trimmed.match(/\b(?:about|for|on)\s+(.+)$/i);
-  if (contextual?.[1]) {
-    return normalizeWhitespace(contextual[1]).replace(/[.?!,:;]+$/, "");
-  }
-
-  return "";
-}
-
 function buildAgentSnapshot(query = "") {
   const focus = getAgentFocusPage(query);
   const neighbors = focus
@@ -2491,134 +2470,47 @@ function buildAgentSnapshot(query = "") {
         .filter((entry) => entry.page)
         .sort((left, right) => right.weight - left.weight)
     : [];
-  const clusterCounts = getClusterCounts();
-  const topPages = getTopConnectedPages(4);
-  const wikipediaCount = state.pages.filter((page) => page.sourceType === "wikipedia").length;
-  const obsidianCount = state.pages.filter((page) => page.sourceType === "obsidian").length;
-  const averageDegree = state.pages.length ? (state.edges.length * 2) / state.pages.length : 0;
 
   return {
     focus,
     neighbors,
-    clusterCounts,
-    topPages,
-    wikipediaCount,
-    obsidianCount,
-    averageDegree,
     seedTitle: state.activeSeedTitle || focus?.title || "this connectome",
   };
 }
 
-function renderAgentCards(container, cards) {
-  container.innerHTML = cards
-    .map((card) => {
-      const body = card.body ? `<p>${escapeHtml(card.body)}</p>` : "";
-      const items = card.items?.length
-        ? `<ul>${card.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
-        : "";
-      const actions = card.actions || "";
-
-      return `
-        <div class="agent-card">
-          <strong>${escapeHtml(card.title)}</strong>
-          ${body}
-          ${items}
-          ${actions}
-        </div>
-      `;
-    })
-    .join("");
+function getAgentDefaultTitle(snapshot) {
+  return snapshot.focus?.title
+    ? `Missing bridges near ${snapshot.focus.title}`
+    : "I watch for quiet gaps.";
 }
 
-function buildAgentDigestCards(snapshot) {
-  const dominantCluster = snapshot.clusterCounts[0];
-  const secondCluster = snapshot.clusterCounts[1];
-  const hubTitles = snapshot.topPages.map((page) => page.title);
-  const sourceMix =
-    snapshot.obsidianCount > 0
-      ? `${snapshot.wikipediaCount} Wikipedia pages and ${snapshot.obsidianCount} local note${snapshot.obsidianCount === 1 ? "" : "s"}`
-      : `${snapshot.wikipediaCount} live Wikipedia pages with no local Obsidian layer yet`;
-
-  return [
-    {
-      title: `Current focus: ${snapshot.focus?.title || snapshot.seedTitle}`,
-      body:
-        snapshot.focus
-          ? `The active connectome spans ${state.pages.length} pages and ${formatNumber(state.edges.length)} links. "${snapshot.focus.title}" currently sits in ${snapshot.focus.clusterName} with ${snapshot.neighbors.length} directly connected pages.`
-          : `The graph is loading. Once a focus note exists, the agent will summarize its connected context.`,
-    },
-    {
-      title: "Source mix",
-      body: `${sourceMix}. Graph mode: ${getGraphModeLabel()}. Average degree is ${snapshot.averageDegree.toFixed(1)} connections per page.`,
-    },
-    {
-      title: "Dominant folders",
-      body:
-        dominantCluster
-          ? secondCluster
-            ? `${dominantCluster.cluster.name} leads with ${dominantCluster.count} pages, followed by ${secondCluster.cluster.name} with ${secondCluster.count}.`
-            : `${dominantCluster.cluster.name} currently carries most of the graph with ${dominantCluster.count} pages.`
-          : "No folders are populated yet.",
-      items: hubTitles.length ? [`Strong hubs: ${hubTitles.join(", ")}`] : [],
-    },
-  ];
+function getAgentDefaultSummary(snapshot) {
+  return snapshot.focus
+    ? `"${snapshot.focus.title}" is pulling nearby ideas together. I can reveal which of them still need an authored bridge.`
+    : "When the graph leans toward a missing bridge, I can surface the nearest unresolved connection.";
 }
 
-function buildAgentStructureCards(snapshot) {
-  const dominantCluster = snapshot.clusterCounts[0];
-  const weakestCluster =
-    snapshot.clusterCounts.find((entry) => entry.count <= Math.max(2, Math.floor((dominantCluster?.count || 0) / 3))) ||
-    snapshot.clusterCounts[snapshot.clusterCounts.length - 1];
-  const neighborClusters = [...new Set(snapshot.neighbors.map((entry) => entry.page.clusterName))];
-  const cards = [];
+function inferBridgeConceptTitle(snapshot, firstPage, secondPage) {
+  const anchor = snapshot.focus?.title || snapshot.seedTitle;
 
-  cards.push({
-    title: "Capture an interpretation layer",
-    body:
-      snapshot.obsidianCount === 0
-        ? `There is no local Obsidian layer yet. Add a synthesis note around "${snapshot.focus?.title || snapshot.seedTitle}" so the graph has at least one authored interpretation node.`
-        : `Local notes already exist. Tighten them by linking each local note back to the seed and the two strongest neighboring pages.`,
-    items:
-      snapshot.neighbors.length
-        ? [`Recommended anchors: ${snapshot.neighbors.slice(0, 3).map((entry) => entry.page.title).join(", ")}`]
-        : [],
-  });
+  if (firstPage.clusterName !== secondPage.clusterName) {
+    return `${anchor}: ${firstPage.clusterName} ↔ ${secondPage.clusterName}`;
+  }
 
-  cards.push({
-    title: "Balance folder pressure",
-    body:
-      dominantCluster && weakestCluster && dominantCluster.cluster.id !== weakestCluster.cluster.id
-        ? `${dominantCluster.cluster.name} is visually dominating the graph. A new note in ${weakestCluster.cluster.name} would keep the connectome from collapsing into a single topical lobe.`
-        : "Folder balance looks even enough for this graph size. Prioritize note quality over forced redistribution.",
-  });
-
-  cards.push({
-    title: "Bridge context between clusters",
-    body:
-      neighborClusters.length > 1
-        ? `"${snapshot.focus?.title || snapshot.seedTitle}" already touches ${neighborClusters.length} clusters. A bridge note that names those crossings will reduce visual sprawl without deleting links.`
-        : "The current focus stays mostly inside one cluster. A contrast note that links it to a neighboring concept would improve structural range.",
-    items:
-      neighborClusters.length > 1
-        ? [`Active crossing: ${neighborClusters.slice(0, 4).join(" -> ")}`]
-        : [],
-  });
-
-  return cards;
+  return `${anchor}: ${firstPage.title} ↔ ${secondPage.title}`;
 }
 
-function buildBridgeDraft(snapshot, firstPage, secondPage) {
+function buildBridgeDraft(snapshot, firstPage, secondPage, conceptTitle = inferBridgeConceptTitle(snapshot, firstPage, secondPage)) {
   const focusTitle = snapshot.focus?.title || snapshot.seedTitle;
-  const title = `${firstPage.title} x ${secondPage.title} bridge`;
   const folderName = `Maps/${snapshot.focus?.clusterName || state.activeVaultName || "Scratchpad"}`;
   const relatedTitles = [focusTitle, firstPage.title, secondPage.title];
 
   return {
-    title,
+    title: conceptTitle,
     folderName,
     rationale: `Explain how [[${firstPage.title}]] and [[${secondPage.title}]] connect through [[${focusTitle}]].`,
     markdown: buildDraftMarkdown(
-      title,
+      conceptTitle,
       snapshot,
       "Bridge note",
       `Explain how [[${firstPage.title}]] and [[${secondPage.title}]] connect through [[${focusTitle}]].`,
@@ -2627,10 +2519,12 @@ function buildBridgeDraft(snapshot, firstPage, secondPage) {
   };
 }
 
-function buildAgentLinkCards(snapshot) {
-  const cards = [];
+function buildAgentSuggestions(query = state.agentFocusQuery || "") {
+  const snapshot = buildAgentSnapshot(query);
+  const suggestions = [];
   const focus = snapshot.focus;
-  const neighbors = snapshot.neighbors.slice(0, 5);
+  const neighbors = snapshot.neighbors.slice(0, 6);
+  const candidatePairs = [];
 
   for (let leftIndex = 0; leftIndex < neighbors.length; leftIndex += 1) {
     for (let rightIndex = leftIndex + 1; rightIndex < neighbors.length; rightIndex += 1) {
@@ -2640,46 +2534,51 @@ function buildAgentLinkCards(snapshot) {
         continue;
       }
 
-      const bridgeDraft = buildBridgeDraft(snapshot, leftPage, rightPage);
-      cards.push({
-        title: `${leftPage.title} -> ${rightPage.title}`,
-        body: focus
-          ? `Both pages connect strongly to "${focus.title}" but not to each other. Add a synthesis note or explicit wikilinks so the graph does not collapse into a single hub.`
-          : `These pages should be connected more explicitly in the authored layer.`,
-        items: [
-          focus ? `Shared anchor: ${focus.title}` : "Shared anchor: current graph focus",
-          `Clusters: ${leftPage.clusterName} / ${rightPage.clusterName}`,
-        ],
-        actions: `
-          <div class="agent-draft-actions">
-            <button class="ghost-button" type="button" data-agent-focus-id="${leftPage.id}">Inspect ${escapeHtml(leftPage.title)}</button>
-            <button class="ghost-button" type="button" data-agent-focus-id="${rightPage.id}">Inspect ${escapeHtml(rightPage.title)}</button>
-            <button class="ghost-button" type="button" data-agent-bridge-title="${escapeHtml(
-              bridgeDraft.title,
-            )}" data-agent-bridge-left="${leftPage.id}" data-agent-bridge-right="${rightPage.id}">
-              Draft bridge
-            </button>
-          </div>
-        `,
-      });
+      const score =
+        neighbors[leftIndex].weight +
+        neighbors[rightIndex].weight +
+        (leftPage.clusterId !== rightPage.clusterId ? 3.4 : 0.8) +
+        (leftPage.sourceType !== rightPage.sourceType ? 1.2 : 0);
 
-      if (cards.length >= 3) {
-        return cards;
-      }
+      candidatePairs.push({
+        leftPage,
+        rightPage,
+        score,
+      });
     }
   }
 
-  if (!cards.length) {
-    cards.push({
-      title: "Link pressure is already dense",
-      body:
-        snapshot.neighbors.length > 1
-          ? `The strongest neighbors around "${focus?.title || snapshot.seedTitle}" already cross-link well. The next useful move is an authored note that explains why those links matter.`
-          : "This focus does not have enough neighbors yet for a meaningful bridge suggestion. Grow the graph or add a local note first.",
+  candidatePairs
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.leftPage.title.localeCompare(right.leftPage.title) ||
+        left.rightPage.title.localeCompare(right.rightPage.title),
+    )
+    .slice(0, 3)
+    .forEach(({ leftPage, rightPage }) => {
+      const conceptTitle = inferBridgeConceptTitle(snapshot, leftPage, rightPage);
+      const bridgeDraft = buildBridgeDraft(snapshot, leftPage, rightPage, conceptTitle);
+      suggestions.push({
+        leftPageId: leftPage.id,
+        rightPageId: rightPage.id,
+        anchorPageId: focus?.id || leftPage.id,
+        leftTitle: leftPage.title,
+        rightTitle: rightPage.title,
+        anchorTitle: focus?.title || snapshot.seedTitle,
+        conceptTitle,
+        body:
+          leftPage.clusterName !== rightPage.clusterName
+            ? `${leftPage.clusterName} and ${rightPage.clusterName} keep leaning toward "${focus?.title || snapshot.seedTitle}" without an authored bridge to carry that crossing.`
+            : `"${leftPage.title}" and "${rightPage.title}" are nearby in the graph, but nothing explicit is holding the connection together yet.`,
+        bridgeDraft,
+      });
     });
-  }
 
-  return cards;
+  return {
+    snapshot,
+    suggestions,
+  };
 }
 
 function buildDraftMarkdown(title, snapshot, variantLabel, rationale, relatedTitles) {
@@ -2706,69 +2605,41 @@ ${relatedTitles.length ? relatedTitles.map((entry) => `- [[${entry}]]`).join("\n
 
 ## Next steps
 - Expand the note with citations or imported markdown.
-- Link the note back into the main cluster.
+  - Link the note back into the main cluster.
 `;
 }
 
-function buildAgentDraftSuggestions(snapshot, requestedTitle = "") {
-  const focusTitle = snapshot.focus?.title || snapshot.seedTitle || "Untitled connectome";
-  const folderName = snapshot.focus?.clusterName || state.activeVaultName || "Scratchpad";
-  const relatedTitles = snapshot.neighbors.slice(0, 4).map((entry) => entry.page.title);
-  const requested = normalizeWhitespace(requestedTitle);
+function renderAgentSuggestions(suggestions = state.agentSuggestions) {
+  if (!suggestions.length) {
+    agentLinkList.innerHTML = `
+      <div class="agent-bridge-placeholder">
+        ${
+          state.agentHasRevealed
+            ? "I do not see a clean hidden bridge from the current focus yet. Try another note, or widen the graph first."
+            : "Press <strong>Reveal Connections</strong> and I will surface the nearest hidden bridges in this graph."
+        }
+      </div>
+    `;
+    return;
+  }
 
-  return [
-    {
-      title: requested || `${focusTitle} research brief`,
-      folderName,
-      rationale: `Capture a compact interpretation layer around "${focusTitle}" with the most important links preserved.`,
-      markdown: buildDraftMarkdown(
-        requested || `${focusTitle} research brief`,
-        snapshot,
-        "Research brief",
-        `Capture a compact interpretation layer around "${focusTitle}" with the most important links preserved.`,
-        relatedTitles,
-      ),
-    },
-    {
-      title: `${focusTitle} bridge map`,
-      folderName: `Maps/${folderName}`,
-      rationale: `Use a bridge map note to explain why the strongest neighboring pages belong in one connective context.`,
-      markdown: buildDraftMarkdown(
-        `${focusTitle} bridge map`,
-        snapshot,
-        "Bridge map",
-        `Explain why the strongest neighboring pages belong in one connective context.`,
-        relatedTitles,
-      ),
-    },
-    {
-      title: `${focusTitle} open questions`,
-      folderName: `Questions/${folderName}`,
-      rationale: `Create an Obsidian question ledger so future imports and edits have a stable destination inside the graph.`,
-      markdown: buildDraftMarkdown(
-        `${focusTitle} open questions`,
-        snapshot,
-        "Question ledger",
-        `Create a question ledger so future imports and edits have a stable destination inside the graph.`,
-        relatedTitles,
-      ),
-    },
-  ];
-}
-
-function renderAgentDraftCards(suggestions) {
-  agentDraftList.innerHTML = suggestions
+  agentLinkList.innerHTML = suggestions
     .map(
       (suggestion, index) => `
-        <div class="agent-card">
-          <strong>${escapeHtml(suggestion.title)}</strong>
-          <p>${escapeHtml(suggestion.rationale)}</p>
-          <div class="agent-draft-actions">
+        <article class="agent-bridge-card">
+          <p class="agent-bridge-kicker">These regions seem related</p>
+          <strong>${escapeHtml(suggestion.leftTitle)} ↔ ${escapeHtml(suggestion.rightTitle)}</strong>
+          <p>${escapeHtml(suggestion.body)}</p>
+          <span class="agent-bridge-concept">${escapeHtml(suggestion.conceptTitle)}</span>
+          <div class="agent-bridge-actions">
+            <button class="ghost-button" type="button" data-agent-inspect-index="${index}">
+              Inspect
+            </button>
             <button class="ghost-button" type="button" data-agent-draft-index="${index}">
-              Draft in Obsidian
+              Draft bridge
             </button>
           </div>
-        </div>
+        </article>
       `,
     )
     .join("");
@@ -2789,8 +2660,8 @@ function renderAgentMessages() {
 
 function pushAgentMessage(role, html) {
   state.agentMessages.push({ role, html });
-  if (state.agentMessages.length > 8) {
-    state.agentMessages = state.agentMessages.slice(-8);
+  if (state.agentMessages.length > 6) {
+    state.agentMessages = state.agentMessages.slice(-6);
   }
   renderAgentMessages();
 }
@@ -2802,129 +2673,162 @@ function ensureAgentWelcome(snapshot) {
 
   pushAgentMessage(
     "assistant",
-    `<p>This is a graph-grounded prototype. I can summarize the current connectome, suggest Obsidian notes, and point out structural pressure before a real LLM layer is added.</p><p>Current seed: <strong>${escapeHtml(snapshot.seedTitle)}</strong>.</p>`,
+    `<p>I do not summarize the whole graph. I listen for the places where it still wants a bridge.</p><p>Current seed: <strong>${escapeHtml(snapshot.seedTitle)}</strong>.</p>`,
   );
 }
 
 function inferAgentIntent(query) {
   const text = query.toLowerCase();
 
-  if (/(summar|digest|overview|recap)/.test(text)) {
-    return "summary";
-  }
-
-  if (/(draft|new note|create note|add note|obsidian|capture)/.test(text)) {
+  if (/(draft|write|create|note)/.test(text)) {
     return "draft";
   }
 
-  if (/(optimi|structure|organize|cluster|folder|context|link)/.test(text)) {
-    return "structure";
+  if (/(inspect|look|focus|show)/.test(text)) {
+    return "inspect";
   }
 
-  return "general";
+  return "reveal";
+}
+
+function setAgentPresence(title, summary) {
+  agentTitle.textContent = title;
+  agentSummary.textContent = summary;
+}
+
+function syncAgentPresence(snapshot, suggestions, fromReveal = false) {
+  if (!fromReveal) {
+    setAgentPresence(getAgentDefaultTitle(snapshot), getAgentDefaultSummary(snapshot));
+    return;
+  }
+
+  if (!suggestions.length) {
+    setAgentPresence(
+      `No clear bridge near ${snapshot.focus?.title || snapshot.seedTitle}`,
+      "This part of the graph is already tightly connected. Try another note or a wider region.",
+    );
+    return;
+  }
+
+  setAgentPresence(
+    `Missing bridges near ${snapshot.focus?.title || snapshot.seedTitle}`,
+    `I found ${suggestions.length} quiet ${suggestions.length === 1 ? "bridge" : "bridges"} worth testing from the current graph.`,
+  );
+}
+
+function describeAgentSuggestion(suggestion) {
+  return `<p><strong>${escapeHtml(suggestion.leftTitle)}</strong> and <strong>${escapeHtml(
+    suggestion.rightTitle,
+  )}</strong> both lean toward <strong>${escapeHtml(
+    suggestion.anchorTitle,
+  )}</strong>.</p><p>Possible bridge: <strong>${escapeHtml(
+    suggestion.conceptTitle,
+  )}</strong>.</p>`;
+}
+
+function revealAgentConnections(query = state.agentFocusQuery || "") {
+  const normalizedQuery = normalizeWhitespace(query);
+  if (normalizedQuery) {
+    state.agentFocusQuery = normalizedQuery;
+  }
+
+  const { snapshot, suggestions } = buildAgentSuggestions(state.agentFocusQuery);
+  state.agentHasRevealed = true;
+  state.agentSuggestions = suggestions;
+  syncAgentPresence(snapshot, suggestions, true);
+  renderAgentSuggestions(suggestions);
+  ensureAgentWelcome(snapshot);
+
+  return {
+    snapshot,
+    suggestions,
+  };
 }
 
 function createAgentResponse(intent, query = "") {
-  const requestedTitle = extractRequestedTitle(query);
-  const snapshot = buildAgentSnapshot(query);
-  const structureCards = buildAgentStructureCards(snapshot);
-  const draftSuggestions = buildAgentDraftSuggestions(snapshot, requestedTitle);
-  state.agentDraftSuggestions = draftSuggestions;
+  const { snapshot, suggestions } = revealAgentConnections(query);
 
-  if (intent === "summary") {
+  if (!suggestions.length) {
     return {
-      title: snapshot.focus?.title || snapshot.seedTitle,
-      summary: `This connectome currently spans ${state.pages.length} pages and ${formatNumber(state.edges.length)} links, anchored by ${snapshot.focus?.title || snapshot.seedTitle}.`,
-      html: `<p><strong>${escapeHtml(snapshot.focus?.title || snapshot.seedTitle)}</strong> is the current focus. The graph mixes ${snapshot.wikipediaCount} Wikipedia pages with ${snapshot.obsidianCount} local note${snapshot.obsidianCount === 1 ? "" : "s"}.</p><p>The strongest hubs right now are ${escapeHtml(snapshot.topPages.map((page) => page.title).join(", ") || "still loading")}.</p>`,
+      html: `<p>I do not see a clean missing bridge around <strong>${escapeHtml(
+        snapshot.focus?.title || snapshot.seedTitle,
+      )}</strong> yet. Try another note or widen the graph first.</p>`,
     };
   }
 
-  if (intent === "structure") {
-    const linkCards = buildAgentLinkCards(snapshot);
-    return {
-      title: "Structure recommendations",
-      summary: `I found ${structureCards.length} structural moves and ${linkCards.length} link ${
-        linkCards.length === 1 ? "opportunity" : "opportunities"
-      } worth testing on the current graph.`,
-      html: `<ul>${structureCards.map((card) => `<li><strong>${escapeHtml(card.title)}</strong>: ${escapeHtml(card.body)}</li>`).join("")}</ul><p>${escapeHtml(
-        linkCards[0]?.body || "Open the link section below for the strongest graph gaps.",
-      )}</p>`,
-      requestedTitle,
-    };
-  }
-
+  const lead = suggestions[0];
   if (intent === "draft") {
     return {
-      title: "Draft notes prepared",
-      summary: `I prepared ${draftSuggestions.length} Obsidian-ready draft directions based on the current graph.`,
-      html: `<p>The first draft is <strong>${escapeHtml(draftSuggestions[0].title)}</strong>. Use the draft buttons below to open any suggestion in the existing note editor before saving.</p>`,
-      requestedTitle,
+      html: `<p>I refreshed the nearest bridge candidates around <strong>${escapeHtml(
+        snapshot.focus?.title || snapshot.seedTitle,
+      )}</strong>.</p><p>If one feels right, draft <strong>${escapeHtml(
+        lead.conceptTitle,
+      )}</strong> from the list below.</p>`,
+    };
+  }
+
+  if (intent === "inspect") {
+    return {
+      html: `<p>I am looking at the gap between <strong>${escapeHtml(
+        lead.leftTitle,
+      )}</strong> and <strong>${escapeHtml(
+        lead.rightTitle,
+      )}</strong>.</p><p>The bridge note I would test first is <strong>${escapeHtml(
+        lead.conceptTitle,
+      )}</strong>.</p>`,
     };
   }
 
   return {
-    title: "Prototype guidance",
-    summary: "I can summarize the active graph, suggest structure changes, or prepare note drafts from the current connectome.",
-    html: `<p>Try prompts like <strong>summarize this connectome</strong>, <strong>optimize the structure</strong>, or <strong>draft a note about ${escapeHtml(snapshot.focus?.title || snapshot.seedTitle)}</strong>.</p>`,
-    requestedTitle,
+    html: `<p>The nearest missing bridge is between <strong>${escapeHtml(
+      lead.leftTitle,
+    )}</strong> and <strong>${escapeHtml(
+      lead.rightTitle,
+    )}</strong>.</p><p>Try <strong>${escapeHtml(
+      lead.conceptTitle,
+    )}</strong> if you want to stabilize that crossing.</p>`,
   };
 }
 
-function setAgentBanner(title = "", summary = "", requestedTitle = state.agentRequestedTitle) {
-  state.agentBannerTitle = title;
-  state.agentBannerSummary = summary;
-  state.agentRequestedTitle = requestedTitle || "";
-}
+function refreshAgentPrototype(query = state.agentFocusQuery || "") {
+  if (query) {
+    state.agentFocusQuery = query;
+  }
+  const snapshot = buildAgentSnapshot(state.agentFocusQuery);
+  if (!state.agentHasRevealed) {
+    state.agentSuggestions = [];
+    syncAgentPresence(snapshot, [], false);
+    renderAgentSuggestions([]);
+    ensureAgentWelcome(snapshot);
+    return;
+  }
 
-function clearAgentBanner() {
-  state.agentBannerTitle = "";
-  state.agentBannerSummary = "";
-  state.agentRequestedTitle = "";
-}
-
-function refreshAgentPrototype(query = "", requestedTitle = state.agentRequestedTitle) {
-  const snapshot = buildAgentSnapshot(query);
-  const defaultTitle = snapshot.focus?.title
-    ? `Graph-aware assistant for ${snapshot.focus.title}`
-    : "Graph-aware note assistant";
-  const defaultSummary =
-    snapshot.obsidianCount > 0
-      ? `Prototype mode: graph-grounded summary and draft suggestions over ${snapshot.wikipediaCount} Wikipedia pages plus ${snapshot.obsidianCount} local note${snapshot.obsidianCount === 1 ? "" : "s"}.`
-      : `Prototype mode: graph-grounded summary and draft suggestions over ${snapshot.wikipediaCount} live Wikipedia pages.`;
-  state.agentRequestedTitle = requestedTitle || "";
-  agentTitle.textContent = state.agentBannerTitle || defaultTitle;
-  agentSummary.textContent = state.agentBannerSummary || defaultSummary;
-  renderAgentCards(agentDigest, buildAgentDigestCards(snapshot));
-  renderAgentCards(agentStructureList, buildAgentStructureCards(snapshot));
-  renderAgentCards(agentLinkList, buildAgentLinkCards(snapshot));
-  state.agentDraftSuggestions = buildAgentDraftSuggestions(snapshot, state.agentRequestedTitle);
-  renderAgentDraftCards(state.agentDraftSuggestions);
+  const { suggestions } = buildAgentSuggestions(state.agentFocusQuery);
+  state.agentSuggestions = suggestions;
+  syncAgentPresence(snapshot, suggestions, true);
+  renderAgentSuggestions(suggestions);
   ensureAgentWelcome(snapshot);
 }
 
-function openAgentDraft(index) {
-  const suggestion = state.agentDraftSuggestions[index];
+function inspectAgentSuggestion(index) {
+  const suggestion = state.agentSuggestions[index];
   if (!suggestion) {
     return;
   }
 
-  openNoteEditor({
-    title: suggestion.title,
-    folderName: suggestion.folderName,
-    markdown: suggestion.markdown,
-  });
-  setNoteTab("wiki");
-  setGraphStatus(`Opened agent draft "${suggestion.title}" in the Obsidian editor.`);
+  state.agentFocusQuery = suggestion.leftTitle;
+  focusPage(suggestion.leftPageId);
+  pushAgentMessage("assistant", describeAgentSuggestion(suggestion));
+  setGraphStatus(`Inspecting the missing bridge between "${suggestion.leftTitle}" and "${suggestion.rightTitle}".`);
 }
 
-function openAgentBridgeDraft(leftPageId, rightPageId) {
-  const leftPage = getPageById(leftPageId);
-  const rightPage = getPageById(rightPageId);
-  if (!leftPage || !rightPage) {
+function openAgentBridgeDraft(index) {
+  const suggestion = state.agentSuggestions[index];
+  if (!suggestion) {
     return;
   }
 
-  const bridgeDraft = buildBridgeDraft(buildAgentSnapshot(), leftPage, rightPage);
+  const bridgeDraft = suggestion.bridgeDraft;
   openNoteEditor({
     title: bridgeDraft.title,
     folderName: bridgeDraft.folderName,
@@ -4969,61 +4873,24 @@ function bindEvents() {
     setAgentOpen(false);
   });
 
-  agentDraftList.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-agent-draft-index]");
-    if (!button) {
-      return;
-    }
-
-    openAgentDraft(Number(button.dataset.agentDraftIndex));
-  });
-
   agentLinkList.addEventListener("click", (event) => {
-    const focusButton = event.target.closest("[data-agent-focus-id]");
-    if (focusButton) {
-      focusPage(focusButton.dataset.agentFocusId);
+    const inspectButton = event.target.closest("[data-agent-inspect-index]");
+    if (inspectButton) {
+      inspectAgentSuggestion(Number(inspectButton.dataset.agentInspectIndex));
       return;
     }
 
-    const bridgeButton = event.target.closest("[data-agent-bridge-left]");
-    if (!bridgeButton) {
+    const draftButton = event.target.closest("[data-agent-draft-index]");
+    if (!draftButton) {
       return;
     }
 
-    openAgentBridgeDraft(
-      bridgeButton.dataset.agentBridgeLeft,
-      bridgeButton.dataset.agentBridgeRight,
-    );
+    openAgentBridgeDraft(Number(draftButton.dataset.agentDraftIndex));
   });
 
-  agentActionSummary.addEventListener("click", () => {
-    const response = createAgentResponse("summary");
+  agentActionReveal.addEventListener("click", () => {
     setAgentOpen(true);
-    refreshAgentPrototype("", response.requestedTitle);
-    setAgentBanner(response.title, response.summary, response.requestedTitle);
-    agentTitle.textContent = state.agentBannerTitle;
-    agentSummary.textContent = state.agentBannerSummary;
-    pushAgentMessage("assistant", response.html);
-  });
-
-  agentActionStructure.addEventListener("click", () => {
-    const response = createAgentResponse("structure");
-    setAgentOpen(true);
-    refreshAgentPrototype("", response.requestedTitle);
-    setAgentBanner(response.title, response.summary, response.requestedTitle);
-    agentTitle.textContent = state.agentBannerTitle;
-    agentSummary.textContent = state.agentBannerSummary;
-    pushAgentMessage("assistant", response.html);
-  });
-
-  agentActionDrafts.addEventListener("click", () => {
-    const response = createAgentResponse("draft");
-    setAgentOpen(true);
-    refreshAgentPrototype("", response.requestedTitle);
-    setAgentBanner(response.title, response.summary, response.requestedTitle);
-    agentTitle.textContent = state.agentBannerTitle;
-    agentSummary.textContent = state.agentBannerSummary;
-    renderAgentDraftCards(state.agentDraftSuggestions);
+    const response = createAgentResponse("reveal", state.agentFocusQuery);
     pushAgentMessage("assistant", response.html);
   });
 
@@ -5037,11 +4904,6 @@ function bindEvents() {
     setAgentOpen(true);
     pushAgentMessage("user", `<p>${escapeHtml(query)}</p>`);
     const response = createAgentResponse(inferAgentIntent(query), query);
-    refreshAgentPrototype(query, response.requestedTitle);
-    setAgentBanner(response.title, response.summary, response.requestedTitle);
-    agentTitle.textContent = state.agentBannerTitle;
-    agentSummary.textContent = state.agentBannerSummary;
-    renderAgentDraftCards(state.agentDraftSuggestions);
     pushAgentMessage("assistant", response.html);
     agentChatInput.value = "";
   });

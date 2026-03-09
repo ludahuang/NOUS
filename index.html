@@ -14,8 +14,8 @@
       rel="icon"
       href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Ccircle cx="32" cy="32" r="28" fill="%23090b10"/%3E%3Ccircle cx="32" cy="32" r="16" fill="%237f8fff"/%3E%3C/svg%3E'
     />
-    <title>The Vault v1.2-agent</title>
-    <link rel="stylesheet" href="styles.css?v=1.2-agent-bubble" />
+    <title>The Vault v2-agentic</title>
+    <link rel="stylesheet" href="styles.css?v=v2-agentic" />
   </head>
   <body>
     <div class="workspace-shell">
@@ -23,7 +23,7 @@
         <div class="sidebar-head">
           <div class="headline-row">
             <p class="eyebrow">NOUS</p>
-            <span class="version-chip">v1.2-agent</span>
+            <span class="version-chip">v2-agentic</span>
           </div>
           <h1>The Vault</h1>
           <p class="lede">
@@ -204,67 +204,39 @@
             <section id="agent-panel" class="assistant-panel" hidden>
               <div class="assistant-panel-head">
                 <div>
-                  <p class="eyebrow">Vault Agent</p>
-                  <h3 id="agent-title">Graph-aware note assistant</h3>
+                  <p class="eyebrow">v2-agentic</p>
+                  <h3 id="agent-title">I watch for quiet gaps.</h3>
                 </div>
-                <button id="agent-close" type="button" class="ghost-button assistant-close">
-                  Close
+                <button id="agent-close" type="button" class="assistant-close" aria-label="Close agent">
+                  ×
                 </button>
               </div>
 
-              <p id="agent-summary" class="article-summary">
-                A graph-grounded prototype for summarizing the current connectome, proposing Obsidian notes, and testing structural moves before adding a real LLM layer.
+              <p id="agent-summary" class="agent-presence">
+                When the graph leans toward a missing bridge, I can surface the nearest unresolved connection.
               </p>
 
-              <section class="agent-section">
-                <div class="panel-head">
-                  <p class="eyebrow">Quick Actions</p>
+              <section class="agent-primary">
+                <button id="agent-action-reveal" type="button" class="agent-reveal-button">
+                  Reveal Connections
+                </button>
+                <div id="agent-link-list" class="agent-bridge-list">
+                  <div class="agent-bridge-placeholder">
+                    Press <strong>Reveal Connections</strong> and I will surface the nearest hidden bridges in this graph.
+                  </div>
                 </div>
-                <div class="agent-chip-row">
-                  <button id="agent-action-summary" type="button" class="ghost-button">Summarize</button>
-                  <button id="agent-action-structure" type="button" class="ghost-button">Optimize</button>
-                  <button id="agent-action-drafts" type="button" class="ghost-button">Draft notes</button>
-                </div>
-              </section>
-
-              <section class="agent-section">
-                <div class="panel-head">
-                  <p class="eyebrow">Connectome Digest</p>
-                </div>
-                <div id="agent-digest" class="agent-stack"></div>
-              </section>
-
-              <section class="agent-section">
-                <div class="panel-head">
-                  <p class="eyebrow">Structure Moves</p>
-                </div>
-                <div id="agent-structure-list" class="agent-stack"></div>
-              </section>
-
-              <section class="agent-section">
-                <div class="panel-head">
-                  <p class="eyebrow">Link Opportunities</p>
-                </div>
-                <div id="agent-link-list" class="agent-stack"></div>
-              </section>
-
-              <section class="agent-section">
-                <div class="panel-head">
-                  <p class="eyebrow">Suggested Drafts</p>
-                </div>
-                <div id="agent-draft-list" class="agent-stack"></div>
               </section>
 
               <section class="agent-section agent-chat-section">
                 <div class="panel-head">
-                  <p class="eyebrow">Agent Chat</p>
+                  <p class="eyebrow">Chat</p>
                 </div>
                 <div id="agent-chat-log" class="agent-chat-log"></div>
                 <form id="agent-chat-form" class="agent-chat-form">
                   <input
                     id="agent-chat-input"
                     type="text"
-                    placeholder="Ask for a summary, a note draft, or a structure suggestion"
+                    placeholder="Ask where the graph is missing a bridge"
                     autocomplete="off"
                   />
                   <button type="submit">Send</button>
@@ -490,6 +462,6 @@
     </script>
     <script src="vendor/three.min.js"></script>
     <script src="vendor/OrbitControls.js"></script>
-    <script src="script.js?v=1.2-agent-bubble"></script>
+    <script src="script.js?v=v2-agentic"></script>
   </body>
 </html>

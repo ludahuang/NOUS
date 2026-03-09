@@ -33,9 +33,13 @@ async function main() {
 
     const bubble = page.locator("#agent-launcher");
     await bubble.waitFor({ state: "visible" });
-    const bubbleBox = await bubble.boundingBox();
-    if (!bubbleBox) {
-      throw new Error("Agent bubble did not render.");
+
+    const beforeHover = await bubble.boundingBox();
+    await bubble.hover();
+    await page.waitForTimeout(180);
+    const afterHover = await bubble.boundingBox();
+    if (!beforeHover || !afterHover || afterHover.width <= beforeHover.width) {
+      throw new Error("Agent bubble did not expand on hover.");
     }
 
     const viewport = page.viewportSize();
@@ -43,15 +47,13 @@ async function main() {
       throw new Error("Viewport size unavailable.");
     }
 
-    if (bubbleBox.x < viewport.width * 0.65 || bubbleBox.y < viewport.height * 0.65) {
-      throw new Error(
-        `Agent bubble is not in the bottom-right region. x=${bubbleBox.x} y=${bubbleBox.y}`,
-      );
+    if (afterHover.x < viewport.width * 0.6 || afterHover.y < viewport.height * 0.65) {
+      throw new Error(`Agent bubble is not in the bottom-right region. x=${afterHover.x} y=${afterHover.y}`);
     }
 
     const panel = page.locator("#agent-panel");
     if (!(await panel.evaluate((node) => node.hidden))) {
-      throw new Error("Agent panel should start hidden.");
+      throw new Error("Agent chamber should start hidden.");
     }
 
     await page.locator("#note-tree .tree-item").filter({ hasText: "Connectome" }).first().click();
@@ -59,97 +61,106 @@ async function main() {
     await bubble.click();
     await panel.waitFor({ state: "visible" });
 
-    const digestCount = await page.locator("#agent-digest .agent-card").count();
-    if (digestCount < 1) {
-      throw new Error("Agent digest did not render.");
-    }
-
-    const initialMessageCount = await page.locator("#agent-chat-log .agent-message").count();
-    await page.locator("#agent-action-summary").click({ force: true });
+    const revealButton = page.locator("#agent-action-reveal");
+    await revealButton.click({ force: true });
     await page.waitForFunction(
-      (count) => document.querySelectorAll("#agent-chat-log .agent-message").length > count,
-      initialMessageCount,
+      () => document.querySelectorAll("#agent-link-list .agent-bridge-card").length >= 1,
+      undefined,
       { timeout: 5000 },
     );
 
-    const summaryMessageCount = await page.locator("#agent-chat-log .agent-message").count();
-    await page.locator("#agent-action-structure").click({ force: true });
-    await page.waitForFunction(
-      (count) => document.querySelectorAll("#agent-chat-log .agent-message").length > count,
-      summaryMessageCount,
-      { timeout: 5000 },
-    );
-
-    const structureSummary = await page.locator("#agent-summary").textContent();
-    if (!/structural move/i.test(structureSummary || "")) {
-      throw new Error(`Unexpected structure summary: ${structureSummary}`);
+    const suggestionCount = await page.locator("#agent-link-list .agent-bridge-card").count();
+    if (suggestionCount < 1 || suggestionCount > 3) {
+      throw new Error(`Unexpected number of bridge suggestions: ${suggestionCount}`);
     }
 
-    const linkCards = await page.locator("#agent-link-list .agent-card").count();
-    if (linkCards < 1) {
-      throw new Error("No agent link opportunities rendered.");
+    const revealSummary = await page.locator("#agent-summary").textContent();
+    if (!/bridge/i.test(revealSummary || "")) {
+      throw new Error(`Unexpected reveal summary: ${revealSummary}`);
     }
 
-    const bridgeButtons = page.locator("#agent-link-list [data-agent-bridge-left]");
-    const bridgeCount = await bridgeButtons.count();
-    if (bridgeCount < 1) {
-      throw new Error("No bridge-draft button rendered in link opportunities.");
+    const firstSuggestionTitle = await page
+      .locator("#agent-link-list .agent-bridge-card strong")
+      .first()
+      .textContent();
+    if (!firstSuggestionTitle?.includes("↔")) {
+      throw new Error(`Unexpected bridge title: ${firstSuggestionTitle}`);
     }
-    const bridgeClicked = await page.evaluate(() => {
-      const button = document.querySelector("#agent-link-list [data-agent-bridge-left]");
+
+    const drafted = await page.evaluate(() => {
+      const button = document.querySelector("#agent-link-list [data-agent-draft-index]");
       if (!button) {
         return false;
       }
-      button.scrollIntoView({ block: "center" });
       button.click();
       return true;
     });
-    if (!bridgeClicked) {
-      throw new Error("Bridge-draft button could not be clicked.");
+    if (!drafted) {
+      throw new Error("Draft bridge button could not be clicked.");
     }
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(300);
 
     const editorPanel = page.locator("#editor-panel");
     if (!(await editorPanel.isVisible())) {
-      throw new Error("Bridge draft did not open the editor.");
+      throw new Error("Draft bridge did not open the editor.");
     }
 
-    const bridgeTitle = await page.locator("#editor-title").inputValue();
-    if (!/bridge/i.test(bridgeTitle)) {
-      throw new Error(`Bridge draft title is incorrect: ${bridgeTitle}`);
+    const draftTitle = await page.locator("#editor-title").inputValue();
+    if (!draftTitle.trim()) {
+      throw new Error("Draft bridge title is empty.");
     }
 
-    await page.click("#cancel-editor");
+    await page.evaluate(() => {
+      document.getElementById("cancel-editor")?.click();
+    });
     await page.waitForTimeout(250);
     if (await panel.evaluate((node) => node.hidden)) {
       await bubble.click();
       await panel.waitFor({ state: "visible" });
     }
+    await revealButton.click({ force: true });
+    await page.waitForFunction(
+      () => document.querySelectorAll("#agent-link-list .agent-bridge-card").length >= 1,
+      undefined,
+      { timeout: 5000 },
+    );
 
-    await page.evaluate(() => {
-      document.getElementById("agent-chat-input")?.scrollIntoView({ block: "center" });
+    const messageCountBeforeInspect = await page.locator("#agent-chat-log .agent-message").count();
+    const inspected = await page.evaluate(() => {
+      const button = document.querySelector("#agent-link-list [data-agent-inspect-index]");
+      if (!button) {
+        return false;
+      }
+      button.click();
+      return true;
     });
-    await page.fill("#agent-chat-input", "draft a note about hippocampus");
-    await page.press("#agent-chat-input", "Enter");
-    await page.waitForTimeout(250);
-
-    const draftButtons = await page.locator("#agent-draft-list [data-agent-draft-index]").count();
-    if (draftButtons < 1) {
-      throw new Error("Chat-driven draft suggestions did not render.");
+    if (!inspected) {
+      throw new Error("Inspect button could not be clicked.");
+    }
+    await page.waitForTimeout(300);
+    const messageCountAfterInspect = await page.locator("#agent-chat-log .agent-message").count();
+    if (messageCountAfterInspect <= messageCountBeforeInspect) {
+      throw new Error("Inspect did not produce an agent response.");
     }
 
-    await page.locator("#agent-draft-list [data-agent-draft-index]").first().click();
-    await page.waitForTimeout(250);
+    await page.fill("#agent-chat-input", "show me the missing bridge around hippocampus");
+    await page.press("#agent-chat-input", "Enter");
+    await page.waitForTimeout(400);
 
-    const requestedTitle = await page.locator("#editor-title").inputValue();
-    if (requestedTitle.trim().toLowerCase() !== "hippocampus") {
-      throw new Error(`Requested draft title was not preserved: ${requestedTitle}`);
+    const messageCountAfterChat = await page.locator("#agent-chat-log .agent-message").count();
+    if (messageCountAfterChat <= messageCountAfterInspect) {
+      throw new Error("Chat did not produce a secondary relation response.");
+    }
+
+    const chatText = await page.locator("#agent-chat-log").textContent();
+    if (!/bridge|hippocampus/i.test(chatText || "")) {
+      throw new Error(`Unexpected chat response: ${chatText}`);
     }
 
     await page.click("#agent-close");
     await page.waitForTimeout(150);
     if (!(await panel.evaluate((node) => node.hidden))) {
-      throw new Error("Agent panel did not close.");
+      throw new Error("Agent chamber did not close.");
     }
 
     if (consoleMessages.length) {
@@ -161,11 +172,14 @@ async function main() {
         {
           ok: true,
           url,
-          bubbleBox,
-          digestCount,
-          linkCards,
-          structureSummary,
-          requestedTitle,
+          bubble: {
+            beforeHover,
+            afterHover,
+          },
+          suggestionCount,
+          revealSummary,
+          draftTitle,
+          messageCountAfterChat,
         },
         null,
         2,

@@ -13,6 +13,7 @@ Its active app is still the static root connectome, now carrying the next-versio
 - Obsidian markdown import merged into the current graph
 - Local note drafting with Wikipedia fallback for duplicate titles
 - `Download Vault` export as an Obsidian-compatible archive
+- Floating agent bubble for graph-aware summary, structure guidance, link opportunities, and Obsidian draft notes
 
 The root app files are:
 

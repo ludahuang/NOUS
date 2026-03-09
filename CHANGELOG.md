@@ -4,6 +4,8 @@
 
 - Marked the `agent` branch as `v1.2-agent`
 - Added the first graph-grounded agent prototype for connectome summary, structure suggestions, and Obsidian draft-note generation
+- Replaced the agent tab with a bottom-right floating assistant bubble
+- Added graph-derived link opportunities and bridge-note drafting inside the assistant
 
 ## Archive Reset
 

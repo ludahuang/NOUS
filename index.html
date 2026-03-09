@@ -200,8 +200,89 @@
             </button>
           </div>
 
-          <div class="stage-overlay bottom-left help-chip">
-            Pan: drag empty space. Orbit: right-drag. Zoom: wheel. Click sparks or notes to inspect.
+          <div class="assistant-shell">
+            <section id="agent-panel" class="assistant-panel" hidden>
+              <div class="assistant-panel-head">
+                <div>
+                  <p class="eyebrow">Vault Agent</p>
+                  <h3 id="agent-title">Graph-aware note assistant</h3>
+                </div>
+                <button id="agent-close" type="button" class="ghost-button assistant-close">
+                  Close
+                </button>
+              </div>
+
+              <p id="agent-summary" class="article-summary">
+                A graph-grounded prototype for summarizing the current connectome, proposing Obsidian notes, and testing structural moves before adding a real LLM layer.
+              </p>
+
+              <section class="agent-section">
+                <div class="panel-head">
+                  <p class="eyebrow">Quick Actions</p>
+                </div>
+                <div class="agent-chip-row">
+                  <button id="agent-action-summary" type="button" class="ghost-button">Summarize</button>
+                  <button id="agent-action-structure" type="button" class="ghost-button">Optimize</button>
+                  <button id="agent-action-drafts" type="button" class="ghost-button">Draft notes</button>
+                </div>
+              </section>
+
+              <section class="agent-section">
+                <div class="panel-head">
+                  <p class="eyebrow">Connectome Digest</p>
+                </div>
+                <div id="agent-digest" class="agent-stack"></div>
+              </section>
+
+              <section class="agent-section">
+                <div class="panel-head">
+                  <p class="eyebrow">Structure Moves</p>
+                </div>
+                <div id="agent-structure-list" class="agent-stack"></div>
+              </section>
+
+              <section class="agent-section">
+                <div class="panel-head">
+                  <p class="eyebrow">Link Opportunities</p>
+                </div>
+                <div id="agent-link-list" class="agent-stack"></div>
+              </section>
+
+              <section class="agent-section">
+                <div class="panel-head">
+                  <p class="eyebrow">Suggested Drafts</p>
+                </div>
+                <div id="agent-draft-list" class="agent-stack"></div>
+              </section>
+
+              <section class="agent-section agent-chat-section">
+                <div class="panel-head">
+                  <p class="eyebrow">Agent Chat</p>
+                </div>
+                <div id="agent-chat-log" class="agent-chat-log"></div>
+                <form id="agent-chat-form" class="agent-chat-form">
+                  <input
+                    id="agent-chat-input"
+                    type="text"
+                    placeholder="Ask for a summary, a note draft, or a structure suggestion"
+                    autocomplete="off"
+                  />
+                  <button type="submit">Send</button>
+                </form>
+              </section>
+            </section>
+
+            <button
+              id="agent-launcher"
+              type="button"
+              class="assistant-bubble"
+              aria-expanded="false"
+              aria-controls="agent-panel"
+              aria-label="Open Vault Agent"
+            >
+              <span class="assistant-bubble-orb" aria-hidden="true"></span>
+              <span class="assistant-bubble-label">Agent</span>
+            </button>
           </div>
         </section>
       </main>
@@ -225,15 +306,6 @@
             aria-selected="false"
           >
             Inspector
-          </button>
-          <button
-            id="tab-agent"
-            class="tab"
-            type="button"
-            data-note-tab="agent"
-            aria-selected="false"
-          >
-            Agent
           </button>
         </div>
 
@@ -403,63 +475,6 @@
           </div>
         </article>
 
-        <article id="note-panel-agent" class="note-card note-panel" hidden>
-          <div class="note-header">
-            <p class="article-kicker">Vault Agent Prototype</p>
-            <h3 id="agent-title">Graph-aware note assistant</h3>
-            <p id="agent-summary" class="article-summary">
-              A graph-grounded prototype for summarizing the current connectome, proposing Obsidian notes, and stress-testing structure changes before adding a real LLM layer.
-            </p>
-          </div>
-
-          <section class="agent-section">
-            <div class="panel-head">
-              <p class="eyebrow">Quick Actions</p>
-            </div>
-            <div class="agent-chip-row">
-              <button id="agent-action-summary" type="button" class="ghost-button">Summarize</button>
-              <button id="agent-action-structure" type="button" class="ghost-button">Structure</button>
-              <button id="agent-action-drafts" type="button" class="ghost-button">Draft notes</button>
-            </div>
-          </section>
-
-          <section class="agent-section">
-            <div class="panel-head">
-              <p class="eyebrow">Connectome Digest</p>
-            </div>
-            <div id="agent-digest" class="agent-stack"></div>
-          </section>
-
-          <section class="agent-section">
-            <div class="panel-head">
-              <p class="eyebrow">Structure Moves</p>
-            </div>
-            <div id="agent-structure-list" class="agent-stack"></div>
-          </section>
-
-          <section class="agent-section">
-            <div class="panel-head">
-              <p class="eyebrow">Suggested Drafts</p>
-            </div>
-            <div id="agent-draft-list" class="agent-stack"></div>
-          </section>
-
-          <section class="agent-section agent-chat-section">
-            <div class="panel-head">
-              <p class="eyebrow">Agent Chat</p>
-            </div>
-            <div id="agent-chat-log" class="agent-chat-log"></div>
-            <form id="agent-chat-form" class="agent-chat-form">
-              <input
-                id="agent-chat-input"
-                type="text"
-                placeholder="Ask for a summary, a note draft, or a structure suggestion"
-                autocomplete="off"
-              />
-              <button type="submit">Send</button>
-            </form>
-          </section>
-        </article>
       </aside>
     </div>
 

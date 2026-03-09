@@ -255,10 +255,8 @@ const discardNoteButton = document.getElementById("discard-note");
 const cancelEditorButton = document.getElementById("cancel-editor");
 const tabWiki = document.getElementById("tab-wiki");
 const tabInspector = document.getElementById("tab-inspector");
-const tabAgent = document.getElementById("tab-agent");
 const notePanelWiki = document.getElementById("note-panel-wiki");
 const notePanelInspector = document.getElementById("note-panel-inspector");
-const notePanelAgent = document.getElementById("note-panel-agent");
 const infoRegion = document.getElementById("info-region");
 const infoType = document.getElementById("info-type");
 const infoTransmitter = document.getElementById("info-transmitter");
@@ -281,10 +279,14 @@ const diagCamera = document.getElementById("diag-camera");
 const diagnosticsFolderList = document.getElementById("diagnostics-folder-list");
 const diagnosticsLinkCount = document.getElementById("diagnostics-link-count");
 const diagnosticsLinkList = document.getElementById("diagnostics-link-list");
+const agentPanel = document.getElementById("agent-panel");
+const agentLauncher = document.getElementById("agent-launcher");
+const agentCloseButton = document.getElementById("agent-close");
 const agentTitle = document.getElementById("agent-title");
 const agentSummary = document.getElementById("agent-summary");
 const agentDigest = document.getElementById("agent-digest");
 const agentStructureList = document.getElementById("agent-structure-list");
+const agentLinkList = document.getElementById("agent-link-list");
 const agentDraftList = document.getElementById("agent-draft-list");
 const agentActionSummary = document.getElementById("agent-action-summary");
 const agentActionStructure = document.getElementById("agent-action-structure");
@@ -428,6 +430,7 @@ const state = {
   activeVaultName: "",
   pendingNewTitle: "",
   activeNoteTab: "wiki",
+  agentOpen: false,
   agentMessages: [],
   agentDraftSuggestions: [],
   graphMode: "default",
@@ -2387,20 +2390,22 @@ function renderNoteTree() {
 }
 
 function setNoteTab(tab) {
-  state.activeNoteTab = tab === "inspector" || tab === "agent" ? tab : "wiki";
+  state.activeNoteTab = tab === "inspector" ? "inspector" : "wiki";
   const isWiki = state.activeNoteTab === "wiki";
   const isInspector = state.activeNoteTab === "inspector";
-  const isAgent = state.activeNoteTab === "agent";
 
   tabWiki.classList.toggle("active", isWiki);
   tabWiki.setAttribute("aria-selected", isWiki ? "true" : "false");
   tabInspector.classList.toggle("active", isInspector);
   tabInspector.setAttribute("aria-selected", isInspector ? "true" : "false");
-  tabAgent.classList.toggle("active", isAgent);
-  tabAgent.setAttribute("aria-selected", isAgent ? "true" : "false");
   notePanelWiki.hidden = !isWiki;
   notePanelInspector.hidden = !isInspector;
-  notePanelAgent.hidden = !isAgent;
+}
+
+function setAgentOpen(open) {
+  state.agentOpen = Boolean(open);
+  agentPanel.hidden = !state.agentOpen;
+  agentLauncher.setAttribute("aria-expanded", state.agentOpen ? "true" : "false");
 }
 
 function getGraphModeLabel() {
@@ -2450,6 +2455,10 @@ function getTopConnectedPages(limit = 4) {
         left.title.localeCompare(right.title),
     )
     .slice(0, limit);
+}
+
+function arePagesConnected(sourceId, targetId) {
+  return Boolean(state.neighborMap.get(sourceId)?.has(targetId));
 }
 
 function extractRequestedTitle(query) {
@@ -2591,6 +2600,81 @@ function buildAgentStructureCards(snapshot) {
         ? [`Active crossing: ${neighborClusters.slice(0, 4).join(" -> ")}`]
         : [],
   });
+
+  return cards;
+}
+
+function buildBridgeDraft(snapshot, firstPage, secondPage) {
+  const focusTitle = snapshot.focus?.title || snapshot.seedTitle;
+  const title = `${firstPage.title} x ${secondPage.title} bridge`;
+  const folderName = `Maps/${snapshot.focus?.clusterName || state.activeVaultName || "Scratchpad"}`;
+  const relatedTitles = [focusTitle, firstPage.title, secondPage.title];
+
+  return {
+    title,
+    folderName,
+    rationale: `Explain how [[${firstPage.title}]] and [[${secondPage.title}]] connect through [[${focusTitle}]].`,
+    markdown: buildDraftMarkdown(
+      title,
+      snapshot,
+      "Bridge note",
+      `Explain how [[${firstPage.title}]] and [[${secondPage.title}]] connect through [[${focusTitle}]].`,
+      relatedTitles,
+    ),
+  };
+}
+
+function buildAgentLinkCards(snapshot) {
+  const cards = [];
+  const focus = snapshot.focus;
+  const neighbors = snapshot.neighbors.slice(0, 5);
+
+  for (let leftIndex = 0; leftIndex < neighbors.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < neighbors.length; rightIndex += 1) {
+      const leftPage = neighbors[leftIndex].page;
+      const rightPage = neighbors[rightIndex].page;
+      if (!leftPage || !rightPage || arePagesConnected(leftPage.id, rightPage.id)) {
+        continue;
+      }
+
+      const bridgeDraft = buildBridgeDraft(snapshot, leftPage, rightPage);
+      cards.push({
+        title: `${leftPage.title} -> ${rightPage.title}`,
+        body: focus
+          ? `Both pages connect strongly to "${focus.title}" but not to each other. Add a synthesis note or explicit wikilinks so the graph does not collapse into a single hub.`
+          : `These pages should be connected more explicitly in the authored layer.`,
+        items: [
+          focus ? `Shared anchor: ${focus.title}` : "Shared anchor: current graph focus",
+          `Clusters: ${leftPage.clusterName} / ${rightPage.clusterName}`,
+        ],
+        actions: `
+          <div class="agent-draft-actions">
+            <button class="ghost-button" type="button" data-agent-focus-id="${leftPage.id}">Inspect ${escapeHtml(leftPage.title)}</button>
+            <button class="ghost-button" type="button" data-agent-focus-id="${rightPage.id}">Inspect ${escapeHtml(rightPage.title)}</button>
+            <button class="ghost-button" type="button" data-agent-bridge-title="${escapeHtml(
+              bridgeDraft.title,
+            )}" data-agent-bridge-left="${leftPage.id}" data-agent-bridge-right="${rightPage.id}">
+              Draft bridge
+            </button>
+          </div>
+        `,
+      });
+
+      if (cards.length >= 3) {
+        return cards;
+      }
+    }
+  }
+
+  if (!cards.length) {
+    cards.push({
+      title: "Link pressure is already dense",
+      body:
+        snapshot.neighbors.length > 1
+          ? `The strongest neighbors around "${focus?.title || snapshot.seedTitle}" already cross-link well. The next useful move is an authored note that explains why those links matter.`
+          : "This focus does not have enough neighbors yet for a meaningful bridge suggestion. Grow the graph or add a local note first.",
+    });
+  }
 
   return cards;
 }
@@ -2753,10 +2837,16 @@ function createAgentResponse(intent, query = "") {
   }
 
   if (intent === "structure") {
+    const linkCards = buildAgentLinkCards(snapshot);
     return {
       title: "Structure recommendations",
-      summary: `I found ${structureCards.length} structural moves worth testing on the current graph.`,
-      html: `<ul>${structureCards.map((card) => `<li><strong>${escapeHtml(card.title)}</strong>: ${escapeHtml(card.body)}</li>`).join("")}</ul>`,
+      summary: `I found ${structureCards.length} structural moves and ${linkCards.length} link ${
+        linkCards.length === 1 ? "opportunity" : "opportunities"
+      } worth testing on the current graph.`,
+      html: `<ul>${structureCards.map((card) => `<li><strong>${escapeHtml(card.title)}</strong>: ${escapeHtml(card.body)}</li>`).join("")}</ul><p>${escapeHtml(
+        linkCards[0]?.body || "Open the link section below for the strongest graph gaps.",
+      )}</p>`,
+      requestedTitle,
     };
   }
 
@@ -2765,6 +2855,7 @@ function createAgentResponse(intent, query = "") {
       title: "Draft notes prepared",
       summary: `I prepared ${draftSuggestions.length} Obsidian-ready draft directions based on the current graph.`,
       html: `<p>The first draft is <strong>${escapeHtml(draftSuggestions[0].title)}</strong>. Use the draft buttons below to open any suggestion in the existing note editor before saving.</p>`,
+      requestedTitle,
     };
   }
 
@@ -2772,10 +2863,11 @@ function createAgentResponse(intent, query = "") {
     title: "Prototype guidance",
     summary: "I can summarize the active graph, suggest structure changes, or prepare note drafts from the current connectome.",
     html: `<p>Try prompts like <strong>summarize this connectome</strong>, <strong>optimize the structure</strong>, or <strong>draft a note about ${escapeHtml(snapshot.focus?.title || snapshot.seedTitle)}</strong>.</p>`,
+    requestedTitle,
   };
 }
 
-function refreshAgentPrototype(query = "") {
+function refreshAgentPrototype(query = "", requestedTitle = "") {
   const snapshot = buildAgentSnapshot(query);
   agentTitle.textContent = snapshot.focus?.title
     ? `Graph-aware assistant for ${snapshot.focus.title}`
@@ -2786,7 +2878,8 @@ function refreshAgentPrototype(query = "") {
       : `Prototype mode: graph-grounded summary and draft suggestions over ${snapshot.wikipediaCount} live Wikipedia pages.`;
   renderAgentCards(agentDigest, buildAgentDigestCards(snapshot));
   renderAgentCards(agentStructureList, buildAgentStructureCards(snapshot));
-  state.agentDraftSuggestions = buildAgentDraftSuggestions(snapshot);
+  renderAgentCards(agentLinkList, buildAgentLinkCards(snapshot));
+  state.agentDraftSuggestions = buildAgentDraftSuggestions(snapshot, requestedTitle);
   renderAgentDraftCards(state.agentDraftSuggestions);
   ensureAgentWelcome(snapshot);
 }
@@ -2804,6 +2897,23 @@ function openAgentDraft(index) {
   });
   setNoteTab("wiki");
   setGraphStatus(`Opened agent draft "${suggestion.title}" in the Obsidian editor.`);
+}
+
+function openAgentBridgeDraft(leftPageId, rightPageId) {
+  const leftPage = getPageById(leftPageId);
+  const rightPage = getPageById(rightPageId);
+  if (!leftPage || !rightPage) {
+    return;
+  }
+
+  const bridgeDraft = buildBridgeDraft(buildAgentSnapshot(), leftPage, rightPage);
+  openNoteEditor({
+    title: bridgeDraft.title,
+    folderName: bridgeDraft.folderName,
+    markdown: bridgeDraft.markdown,
+  });
+  setNoteTab("wiki");
+  setGraphStatus(`Opened bridge draft "${bridgeDraft.title}" in the Obsidian editor.`);
 }
 
 function updateDiagnostics(page) {
@@ -4679,10 +4789,6 @@ function bindEvents() {
     setNoteTab("inspector");
   });
 
-  tabAgent.addEventListener("click", () => {
-    setNoteTab("agent");
-  });
-
   wikipediaMenuButton.addEventListener("click", () => {
     setSidebarTab("wikipedia");
   });
@@ -4834,6 +4940,17 @@ function bindEvents() {
     focusPage(button.dataset.pageId);
   });
 
+  agentLauncher.addEventListener("click", () => {
+    setAgentOpen(!state.agentOpen);
+    if (state.agentOpen) {
+      refreshAgentPrototype();
+    }
+  });
+
+  agentCloseButton.addEventListener("click", () => {
+    setAgentOpen(false);
+  });
+
   agentDraftList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-agent-draft-index]");
     if (!button) {
@@ -4843,10 +4960,28 @@ function bindEvents() {
     openAgentDraft(Number(button.dataset.agentDraftIndex));
   });
 
+  agentLinkList.addEventListener("click", (event) => {
+    const focusButton = event.target.closest("[data-agent-focus-id]");
+    if (focusButton) {
+      focusPage(focusButton.dataset.agentFocusId);
+      return;
+    }
+
+    const bridgeButton = event.target.closest("[data-agent-bridge-left]");
+    if (!bridgeButton) {
+      return;
+    }
+
+    openAgentBridgeDraft(
+      bridgeButton.dataset.agentBridgeLeft,
+      bridgeButton.dataset.agentBridgeRight,
+    );
+  });
+
   agentActionSummary.addEventListener("click", () => {
     const response = createAgentResponse("summary");
-    setNoteTab("agent");
-    refreshAgentPrototype();
+    setAgentOpen(true);
+    refreshAgentPrototype("", response.requestedTitle);
     agentTitle.textContent = response.title;
     agentSummary.textContent = response.summary;
     pushAgentMessage("assistant", response.html);
@@ -4854,8 +4989,8 @@ function bindEvents() {
 
   agentActionStructure.addEventListener("click", () => {
     const response = createAgentResponse("structure");
-    setNoteTab("agent");
-    refreshAgentPrototype();
+    setAgentOpen(true);
+    refreshAgentPrototype("", response.requestedTitle);
     agentTitle.textContent = response.title;
     agentSummary.textContent = response.summary;
     pushAgentMessage("assistant", response.html);
@@ -4863,8 +4998,8 @@ function bindEvents() {
 
   agentActionDrafts.addEventListener("click", () => {
     const response = createAgentResponse("draft");
-    setNoteTab("agent");
-    refreshAgentPrototype();
+    setAgentOpen(true);
+    refreshAgentPrototype("", response.requestedTitle);
     agentTitle.textContent = response.title;
     agentSummary.textContent = response.summary;
     renderAgentDraftCards(state.agentDraftSuggestions);
@@ -4878,10 +5013,10 @@ function bindEvents() {
       return;
     }
 
-    setNoteTab("agent");
+    setAgentOpen(true);
     pushAgentMessage("user", `<p>${escapeHtml(query)}</p>`);
     const response = createAgentResponse(inferAgentIntent(query), query);
-    refreshAgentPrototype(query);
+    refreshAgentPrototype(query, response.requestedTitle);
     agentTitle.textContent = response.title;
     agentSummary.textContent = response.summary;
     renderAgentDraftCards(state.agentDraftSuggestions);
@@ -4913,6 +5048,24 @@ function bindEvents() {
   renderer.domElement.addEventListener("pointerleave", () => {
     state.hoveredPageId = null;
     stage.style.cursor = "default";
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!state.agentOpen) {
+      return;
+    }
+
+    if (agentPanel.contains(event.target) || agentLauncher.contains(event.target)) {
+      return;
+    }
+
+    setAgentOpen(false);
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.agentOpen) {
+      setAgentOpen(false);
+    }
   });
 
   window.addEventListener("pointermove", handleWindowPointerMove);

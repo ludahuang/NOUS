@@ -10,6 +10,10 @@
     <meta name="application-name" content="The Vault" />
     <meta name="theme-color" content="#090b10" />
     <meta name="color-scheme" content="dark" />
+    <link
+      rel="icon"
+      href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Ccircle cx="32" cy="32" r="28" fill="%23090b10"/%3E%3Ccircle cx="32" cy="32" r="16" fill="%237f8fff"/%3E%3C/svg%3E'
+    />
     <title>The Vault 1.1-dev</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -222,6 +226,15 @@
           >
             Inspector
           </button>
+          <button
+            id="tab-agent"
+            class="tab"
+            type="button"
+            data-note-tab="agent"
+            aria-selected="false"
+          >
+            Agent
+          </button>
         </div>
 
         <article id="note-panel-wiki" class="note-card note-panel">
@@ -388,6 +401,64 @@
             </div>
             <div id="diagnostics-link-list" class="neighbor-list"></div>
           </div>
+        </article>
+
+        <article id="note-panel-agent" class="note-card note-panel" hidden>
+          <div class="note-header">
+            <p class="article-kicker">Vault Agent Prototype</p>
+            <h3 id="agent-title">Graph-aware note assistant</h3>
+            <p id="agent-summary" class="article-summary">
+              A graph-grounded prototype for summarizing the current connectome, proposing Obsidian notes, and stress-testing structure changes before adding a real LLM layer.
+            </p>
+          </div>
+
+          <section class="agent-section">
+            <div class="panel-head">
+              <p class="eyebrow">Quick Actions</p>
+            </div>
+            <div class="agent-chip-row">
+              <button id="agent-action-summary" type="button" class="ghost-button">Summarize</button>
+              <button id="agent-action-structure" type="button" class="ghost-button">Structure</button>
+              <button id="agent-action-drafts" type="button" class="ghost-button">Draft notes</button>
+            </div>
+          </section>
+
+          <section class="agent-section">
+            <div class="panel-head">
+              <p class="eyebrow">Connectome Digest</p>
+            </div>
+            <div id="agent-digest" class="agent-stack"></div>
+          </section>
+
+          <section class="agent-section">
+            <div class="panel-head">
+              <p class="eyebrow">Structure Moves</p>
+            </div>
+            <div id="agent-structure-list" class="agent-stack"></div>
+          </section>
+
+          <section class="agent-section">
+            <div class="panel-head">
+              <p class="eyebrow">Suggested Drafts</p>
+            </div>
+            <div id="agent-draft-list" class="agent-stack"></div>
+          </section>
+
+          <section class="agent-section agent-chat-section">
+            <div class="panel-head">
+              <p class="eyebrow">Agent Chat</p>
+            </div>
+            <div id="agent-chat-log" class="agent-chat-log"></div>
+            <form id="agent-chat-form" class="agent-chat-form">
+              <input
+                id="agent-chat-input"
+                type="text"
+                placeholder="Ask for a summary, a note draft, or a structure suggestion"
+                autocomplete="off"
+              />
+              <button type="submit">Send</button>
+            </form>
+          </section>
         </article>
       </aside>
     </div>

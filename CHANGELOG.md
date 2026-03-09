@@ -1,5 +1,10 @@
 # The Vault Changelog
 
+## v1.2-agent
+
+- Marked the `agent` branch as `v1.2-agent`
+- Added the first graph-grounded agent prototype for connectome summary, structure suggestions, and Obsidian draft-note generation
+
 ## Archive Reset
 
 - Restored the repo root to the static `1.1-dev` app surface

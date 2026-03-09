@@ -1,6 +1,8 @@
 # The Vault
 
-The active app is the static `1.1-dev` connectome at the repo root.
+The current `agent` branch is marked as `v1.2-agent`.
+
+Its active app is still the static root connectome, now carrying the next-version agent prototype. The stable baseline remains `1.1-dev` in the release snapshot.
 
 `2.0-alpha` is frozen and archived in [archive/the-vault-2.0-alpha](/Users/mini/Documents/New%20project/archive/the-vault-2.0-alpha). It is preserved for salvage, not active product work.
 
@@ -21,7 +23,7 @@ script.js
 vendor/
 ```
 
-They currently match [release/the-vault-1.1-dev](/Users/mini/Documents/New%20project/release/the-vault-1.1-dev).
+The stable reference snapshot is still [release/the-vault-1.1-dev](/Users/mini/Documents/New%20project/release/the-vault-1.1-dev).
 
 ## Run Locally
 

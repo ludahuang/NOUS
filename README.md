@@ -56,7 +56,7 @@ http://127.0.0.1:8765/index.html
 
 ## Run On GitHub
 
-`v2-agentic` is now wired for GitHub Pages through [deploy-v1-1-dev.yml](/Users/mini/Documents/New%20project/.github/workflows/deploy-v1-1-dev.yml).
+`v2-agentic` is now wired for GitHub Pages through [deploy-v2-agentic.yml](/Users/mini/Documents/New%20project/.github/workflows/deploy-v2-agentic.yml).
 
 What it publishes:
 

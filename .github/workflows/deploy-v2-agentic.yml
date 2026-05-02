@@ -9,7 +9,7 @@ on:
       - master
     paths:
       - release/the-vault-2.0-agentic/**
-      - .github/workflows/deploy-v1-1-dev.yml
+      - .github/workflows/deploy-v2-agentic.yml
 
 permissions:
   contents: read

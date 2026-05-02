@@ -5,6 +5,7 @@
 - Packaged the current build as `release/the-vault-2.0-agentic/`
 - Repointed GitHub Pages deployment to publish the packaged `release/the-vault-2.0-agentic/` snapshot
 - Renamed the Pages workflow to `deploy-v2-agentic.yml`
+- Removed the explicit Pages environment binding so the deploy job can run from the `agent` branch
 - Replaced the old utility-style assistant with a personified graph-native agent
 - Removed summary-first, optimization-first, and generic draft-note panel behavior
 - Made `Reveal Connections` the primary action

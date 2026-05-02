@@ -19,8 +19,6 @@ async function main() {
   await page.waitForFunction(() => document.querySelectorAll("#note-tree .tree-item").length >= 12);
   await page.locator("#note-tree .tree-item").filter({ hasText: "Connectome" }).first().click();
   await page.waitForTimeout(300);
-  await page.hover("#agent-launcher");
-  await page.waitForTimeout(180);
 
   await page.screenshot({
     path: fileURLToPath(new URL("agent-bubble-home.png", outputDir)),

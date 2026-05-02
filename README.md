@@ -6,7 +6,7 @@ Its active app is still the static root connectome, now carrying the next-versio
 
 `2.0-alpha` is frozen and archived in [archive/the-vault-2.0-alpha](/Users/mini/Documents/New%20project/archive/the-vault-2.0-alpha). It is preserved for salvage, not active product work.
 
-Agent usage is documented in [docs/agent-use.md](/Users/mini/Documents/New%20project/docs/agent-use.md).
+NOUS usage is documented in [docs/agent-use.md](/Users/mini/Documents/New%20project/docs/agent-use.md).
 
 ## Active Build
 
@@ -26,7 +26,7 @@ script.js
 vendor/
 ```
 
-The stable reference snapshot is still [release/the-vault-1.1-dev](/Users/mini/Documents/New%20project/release/the-vault-1.1-dev).
+The packaged `v2-agentic` snapshot is [release/the-vault-2.0-agentic](/Users/mini/Documents/New%20project/release/the-vault-2.0-agentic). The earlier stable reference remains [release/the-vault-1.1-dev](/Users/mini/Documents/New%20project/release/the-vault-1.1-dev).
 
 ## Run Locally
 
@@ -42,6 +42,12 @@ For the root agent smoke test:
 npm run smoke:agent
 ```
 
+For the full `v2-agentic` stabilization smoke:
+
+```bash
+npm run smoke:stability
+```
+
 Then open:
 
 ```text
@@ -50,22 +56,19 @@ http://127.0.0.1:8765/index.html
 
 ## Run On GitHub
 
-`v1.1-dev` is now wired for GitHub Pages through [deploy-v1-1-dev.yml](/Users/mini/Documents/New%20project/.github/workflows/deploy-v1-1-dev.yml).
+`v2-agentic` is now wired for GitHub Pages through [deploy-v1-1-dev.yml](/Users/mini/Documents/New%20project/.github/workflows/deploy-v1-1-dev.yml).
 
 What it publishes:
 
 ```text
-index.html
-styles.css
-script.js
-vendor/
+release/the-vault-2.0-agentic/
 ```
 
 What still needs to happen outside this repo:
 
 1. Push this repo to GitHub.
 2. In the GitHub repo settings, set Pages to deploy from GitHub Actions.
-3. Push to `main` or run the workflow manually.
+3. Push to `agent` or run the workflow manually.
 
 The published URL will be the normal GitHub Pages address for your repo.
 
@@ -74,11 +77,12 @@ The published URL will be the normal GitHub Pages address for your repo.
 Release snapshots live in:
 
 ```text
+release/the-vault-2.0-agentic/
 release/the-vault-1.1-dev/
 release/the-vault-1.0/
 ```
 
-`the-vault-1.1-dev` is the current product surface. `the-vault-1.0` preserves the earlier Wikipedia-first release.
+`the-vault-2.0-agentic` is the packaged agent-branch release. `the-vault-1.1-dev` preserves the earlier stable product surface, and `the-vault-1.0` preserves the original Wikipedia-first release.
 
 ## Archived 2.0-alpha
 

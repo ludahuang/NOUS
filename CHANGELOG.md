@@ -2,12 +2,15 @@
 
 ## v2-agentic
 
+- Packaged the current build as `release/the-vault-2.0-agentic/`
+- Repointed GitHub Pages deployment to publish the packaged `release/the-vault-2.0-agentic/` snapshot
 - Replaced the old utility-style assistant with a personified graph-native agent
 - Removed summary-first, optimization-first, and generic draft-note panel behavior
 - Made `Reveal Connections` the primary action
 - Kept chat as a secondary shell around missing-bridge discovery
 - Added `Inspect` and `Draft bridge` actions for each revealed connection
 - Updated the agent guide, screenshots, and smoke test to the new relation-first concept
+- Added a full stabilization smoke that verifies discovery, note/inspector split, Obsidian new, in-shell bridge drafting, export, and reset
 
 ## Archive Reset
 

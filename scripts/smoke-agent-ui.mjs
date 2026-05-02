@@ -32,14 +32,26 @@ async function main() {
     );
 
     const bubble = page.locator("#agent-launcher");
+    const shell = page.locator(".assistant-shell");
     await bubble.waitFor({ state: "visible" });
 
-    const beforeHover = await bubble.boundingBox();
+    const bubbleBox = await bubble.boundingBox();
+    const shellBox = await shell.boundingBox();
+    if (!bubbleBox || !shellBox) {
+      throw new Error("Agent bubble geometry could not be measured.");
+    }
+
     await bubble.hover();
-    await page.waitForTimeout(180);
-    const afterHover = await bubble.boundingBox();
-    if (!beforeHover || !afterHover || afterHover.width <= beforeHover.width) {
-      throw new Error("Agent bubble did not expand on hover.");
+    await page.waitForTimeout(260);
+    const hoverLabel = await page.locator(".assistant-bubble-label").evaluate((node) => {
+      const style = window.getComputedStyle(node);
+      return {
+        opacity: Number(style.opacity || "0"),
+        maxWidth: style.maxWidth,
+      };
+    });
+    if (hoverLabel.opacity <= 0) {
+      throw new Error(`Closed agent bubble did not reveal its label on hover. maxWidth=${hoverLabel.maxWidth}`);
     }
 
     const viewport = page.viewportSize();
@@ -47,8 +59,8 @@ async function main() {
       throw new Error("Viewport size unavailable.");
     }
 
-    if (afterHover.x < viewport.width * 0.6 || afterHover.y < viewport.height * 0.65) {
-      throw new Error(`Agent bubble is not in the bottom-right region. x=${afterHover.x} y=${afterHover.y}`);
+    if (bubbleBox.x < viewport.width * 0.6 || bubbleBox.y < viewport.height * 0.65) {
+      throw new Error(`Agent bubble is not in the bottom-right region. x=${bubbleBox.x} y=${bubbleBox.y}`);
     }
 
     const panel = page.locator("#agent-panel");
@@ -58,7 +70,7 @@ async function main() {
 
     await page.locator("#note-tree .tree-item").filter({ hasText: "Connectome" }).first().click();
     await page.waitForTimeout(250);
-    await bubble.click();
+    await bubble.click({ force: true });
     await panel.waitFor({ state: "visible" });
 
     const revealButton = page.locator("#agent-action-reveal");
@@ -100,22 +112,20 @@ async function main() {
     }
     await page.waitForTimeout(300);
 
-    const editorPanel = page.locator("#editor-panel");
-    if (!(await editorPanel.isVisible())) {
-      throw new Error("Draft bridge did not open the editor.");
+    const draftPanel = page.locator("#agent-draft-panel");
+    if (!(await draftPanel.isVisible())) {
+      throw new Error("Draft bridge did not open inside the assistant shell.");
     }
 
-    const draftTitle = await page.locator("#editor-title").inputValue();
+    const draftTitle = await page.locator("#agent-draft-title").inputValue();
     if (!draftTitle.trim()) {
       throw new Error("Draft bridge title is empty.");
     }
 
-    await page.evaluate(() => {
-      document.getElementById("cancel-editor")?.click();
-    });
+    await page.click("#agent-draft-cancel");
     await page.waitForTimeout(250);
     if (await panel.evaluate((node) => node.hidden)) {
-      await bubble.click();
+      await bubble.click({ force: true });
       await panel.waitFor({ state: "visible" });
     }
     await revealButton.click({ force: true });
@@ -173,8 +183,8 @@ async function main() {
           ok: true,
           url,
           bubble: {
-            beforeHover,
-            afterHover,
+            bubbleBox,
+            shellBox,
           },
           suggestionCount,
           revealSummary,

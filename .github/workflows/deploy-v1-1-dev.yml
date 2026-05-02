@@ -1,4 +1,4 @@
-name: Deploy The Vault v1.1-dev
+name: Deploy The Vault v2-agentic
 
 on:
   workflow_dispatch:
@@ -8,10 +8,7 @@ on:
       - main
       - master
     paths:
-      - index.html
-      - styles.css
-      - script.js
-      - vendor/**
+      - release/the-vault-2.0-agentic/**
       - .github/workflows/deploy-v1-1-dev.yml
 
 permissions:
@@ -37,8 +34,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p dist
-          cp index.html styles.css script.js dist/
-          cp -R vendor dist/vendor
+          cp -R release/the-vault-2.0-agentic/. dist/
           touch dist/.nojekyll
 
       - name: Upload Pages artifact

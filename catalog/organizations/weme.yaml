@@ -1,0 +1,15 @@
+id: nous:organization:weme
+type: organization
+name: WEME
+alternate_names:
+  - WE-MEDIA
+  - 微米
+status: active
+founder:
+  ref: nous:person:lu-dahuang
+web_presence:
+  - ref: nous:source:we-media-net
+  - ref: nous:source:weme-im
+related:
+  - ref: nous:agent:weme-creative-agent
+rights: NOASSERTION

@@ -1,0 +1,22 @@
+id: nous:space:nous-container
+type: space
+name: NOUS Container
+alternate_names:
+  - NOUS 集装箱空间
+status: historical-active
+form:
+  standard: ISO 668
+  nominal_length: 40ft
+mechanisms:
+  - mobility
+  - rapid-assembly
+  - distributed-manufacturing
+  - remote-exhibition
+  - data-curation
+  - public-interface
+derived_forms:
+  - ref: nous:agent:weme-creative-agent
+sources:
+  - ref: nous:source:nous-we-media-net
+  - ref: nous:source:we-media-net
+rights: NOASSERTION

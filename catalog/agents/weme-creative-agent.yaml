@@ -1,0 +1,24 @@
+id: nous:agent:weme-creative-agent
+type: agent
+name: WEME Creative Agent
+status: active-development
+owner:
+  ref: nous:organization:weme
+founder:
+  ref: nous:person:lu-dahuang
+implementation:
+  path: agents/weme-creative-agent
+purposes:
+  - creative-collaboration
+  - curatorial-research
+  - relationship-discovery
+  - project-generation
+  - source-aware-expression
+projects:
+  - ref: nous:project:the-vault
+authority_policy: agents/weme-creative-agent/authority-policy.md
+memory_policy: agents/weme-creative-agent/memory-policy.md
+sources:
+  - ref: nous:source:we-media-net
+  - ref: nous:source:rebui1t-com
+rights: NOASSERTION

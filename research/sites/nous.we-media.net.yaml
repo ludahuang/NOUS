@@ -1,0 +1,30 @@
+id: nous:source:nous-we-media-net
+type: source
+name: NOUS 2015-2025
+url: https://nous.we-media.net/
+status: active-archive
+accessed: 2026-07-17
+platform: WordPress
+interfaces:
+  rest_api: https://nous.we-media.net/wp-json/
+  sitemap: https://nous.we-media.net/wp-sitemap.xml
+inventory:
+  pages: 15
+  posts: 16
+  portfolio_items: 21
+curatorial_role:
+  - space-history
+  - exhibition-history
+  - distributed-event-history
+  - design-and-object-portfolio
+selected_routes:
+  - title: NOUS 2015-2025
+    url: https://nous.we-media.net/
+  - title: 亚洲艺术节 城际互动
+    url: https://nous.we-media.net/nous-hamburg-quanzhou/
+  - title: LEGO DADA
+    url: https://nous.we-media.net/lego-dada/
+  - title: NOUS Container portfolio
+    url: https://nous.we-media.net/portfolio/
+content_policy: reference-and-metadata-only
+rights: NOASSERTION

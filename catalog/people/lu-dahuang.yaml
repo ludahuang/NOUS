@@ -1,0 +1,21 @@
+id: nous:person:lu-dahuang
+type: person
+name: 鲁大荒
+alternate_names:
+  - LU Dahuang
+roles:
+  - founder
+  - artist
+  - curator
+  - designer
+  - engineer
+  - developer
+status: active
+affiliations:
+  - ref: nous:organization:weme
+founded:
+  - ref: nous
+rights: NOASSERTION
+sources:
+  - ref: nous:source:we-media-net
+  - ref: nous:source:nous-we-media-net

@@ -1,10 +1,11 @@
 id: nous:project:the-vault
 type: project
 name: The Vault
-status: active-migration
+status: active-imported
 parent:
   ref: nous:agent:weme-creative-agent
 project_path: projects/the-vault
+runtime_path: projects/the-vault/runtime
 historical_branch:
   remote: origin
   name: agent
@@ -21,4 +22,6 @@ capabilities:
   - bridge-discovery
 provenance:
   migration_rfc: docs/rfcs/0002-the-vault-history-migration.md
+  preservation_record: projects/the-vault/PRESERVATION.md
+  import_method: git-subtree-without-squash
 rights: NOASSERTION

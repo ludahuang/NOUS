@@ -25,11 +25,13 @@ Exit condition:
 
 ## Phase 3 - Integrate The Vault
 
-- freeze and tag the current Agent-era release;
-- import or split The Vault with history preserved;
-- move runtime code under a project boundary;
+- [ ] freeze and push a tag for the current Agent-era release;
+- [x] import The Vault with history preserved;
+- [x] move runtime code under a project boundary;
 - remove checked-in release duplication after preservation review;
-- deploy The Vault independently from the NOUS public atlas.
+- [x] define an independent deployment workflow from the NOUS public atlas;
+- [x] verify the imported runtime with both smoke suites;
+- [ ] verify GitHub Pages deployment behavior after branch review.
 
 ## Phase 4 - Formalize WEME Creative Agent
 

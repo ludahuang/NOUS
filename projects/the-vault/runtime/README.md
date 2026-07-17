@@ -4,9 +4,9 @@ The current `agent` branch is marked as `v2-agentic`.
 
 Its active app is still the static root connectome, now carrying the next-version agent prototype. The stable baseline remains `1.1-dev` in the release snapshot.
 
-`2.0-alpha` is frozen and archived in [archive/the-vault-2.0-alpha](/Users/mini/Documents/New%20project/archive/the-vault-2.0-alpha). It is preserved for salvage, not active product work.
+`2.0-alpha` is frozen and archived in [archive/the-vault-2.0-alpha](archive/the-vault-2.0-alpha). It is preserved for salvage, not active product work.
 
-NOUS usage is documented in [docs/agent-use.md](/Users/mini/Documents/New%20project/docs/agent-use.md).
+NOUS usage is documented in [docs/agent-use.md](docs/agent-use.md).
 
 ## Active Build
 
@@ -26,7 +26,7 @@ script.js
 vendor/
 ```
 
-The packaged `v2-agentic` snapshot is [release/the-vault-2.0-agentic](/Users/mini/Documents/New%20project/release/the-vault-2.0-agentic). The earlier stable reference remains [release/the-vault-1.1-dev](/Users/mini/Documents/New%20project/release/the-vault-1.1-dev).
+The packaged `v2-agentic` snapshot is [release/the-vault-2.0-agentic](release/the-vault-2.0-agentic). The earlier stable reference remains [release/the-vault-1.1-dev](release/the-vault-1.1-dev).
 
 ## Run Locally
 
@@ -56,7 +56,10 @@ http://127.0.0.1:8765/index.html
 
 ## Run On GitHub
 
-`v2-agentic` is now wired for GitHub Pages through [deploy-v2-agentic.yml](/Users/mini/Documents/New%20project/.github/workflows/deploy-v2-agentic.yml).
+The history-preserving import includes the former branch-local workflow at
+[deploy-v2-agentic.yml](.github/workflows/deploy-v2-agentic.yml). The canonical
+mother-repository deployment now lives at
+[deploy-the-vault.yml](../../../.github/workflows/deploy-the-vault.yml).
 
 What it publishes:
 

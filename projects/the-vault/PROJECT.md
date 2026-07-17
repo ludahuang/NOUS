@@ -1,6 +1,6 @@
 # The Vault
 
-Status: migration scaffold
+Status: history imported, runtime validation in progress
 
 The Vault is a graph-native knowledge environment and the first active
 Agent-era project being integrated into the NOUS mother repository.
@@ -13,25 +13,50 @@ Agent-era project being integrated into the NOUS mother repository.
 - agent behavior reveals missing relations and drafts bridges;
 - generated output requires review before becoming durable knowledge.
 
-## Current Source
+## Current Runtime
 
-The active historical implementation remains on the remote `agent` branch.
-It is not copied into this directory yet.
+The reviewed `agent` branch was imported with its commit history under:
 
-Migration is governed by:
+```text
+projects/the-vault/runtime/
+```
+
+The import was made from commit:
+
+```text
+fa5d23ebe91ff1e73fae5e3f6782bf2ecf5dcbe8
+```
+
+The current uncommitted files in the separate Agent worktree were not included.
+
+Migration and preservation are governed by:
 
 - `catalog/projects/the-vault.yaml`;
 - `docs/rfcs/0002-the-vault-history-migration.md`.
+- `projects/the-vault/PRESERVATION.md`.
+
+## Run
+
+From `projects/the-vault/runtime/`:
+
+```bash
+npm run serve
+npm run smoke:agent
+npm run smoke:stability
+```
 
 ## Intended Project Shape
 
 ```text
 projects/the-vault/
 ├── PROJECT.md
-├── apps/web/
-├── packages/graph/
-├── docs/
-├── tests/
-├── fixtures/
-└── preservation/
+├── PRESERVATION.md
+├── runtime/            # history-preserving import of the Agent branch
+├── apps/               # future normalized application boundary
+├── packages/           # future proven shared modules
+└── preservation/       # future frozen runtime packages and checksums
 ```
+
+The `runtime/` directory remains intact until tests, deployment, and release
+equivalence are proven. Normalization into `apps/`, `packages/`, and
+`preservation/` is a later reversible step.

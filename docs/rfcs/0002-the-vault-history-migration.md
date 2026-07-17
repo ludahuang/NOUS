@@ -1,10 +1,10 @@
 # RFC 0002: The Vault History Migration
 
-Status: proposed
+Status: stage 1 implemented
 
 Date: 2026-07-17
 
-## Current State
+## Initial State
 
 - NOUS canonical history originates on `master`.
 - The Vault implementation is on remote branch `agent`.
@@ -17,17 +17,27 @@ Date: 2026-07-17
 Preserve The Vault's meaningful commit history while placing the project behind
 a clear NOUS project boundary.
 
-## Recommended Migration
+## Implemented Stage 1
 
-1. verify and commit or intentionally exclude all current Agent working changes;
-2. tag the reviewed Agent baseline as `the-vault/v2-agentic`;
-3. create a clean temporary worktree from the remote Agent tag;
-4. rewrite only the imported project paths under `projects/the-vault/`, or split
-   The Vault into a dedicated repository and register it here;
-5. preserve author, date, message, and original commit mapping;
-6. validate the static app, smoke tests, import/export, and Pages deployment;
-7. switch project deployment only after URL and artifact verification;
-8. keep the old `agent` branch read-only until the new location is proven.
+1. the dirty Agent worktree was inspected and its uncommitted paths were excluded;
+2. the reviewed remote baseline was fixed at `fa5d23e`;
+3. `git subtree` imported the unsquashed Agent history under
+   `projects/the-vault/runtime/`;
+4. the subtree merge preserved the original Agent commits as a second parent;
+5. project and preservation records were added outside the imported runtime;
+6. a root-level Pages workflow was added for the new project path.
+
+## Remaining Stages
+
+1. create and push the `the-vault/v2-agentic` tag;
+2. run the Agent and stabilization smoke suites from the imported path;
+   **completed 2026-07-17 with Playwright 1.58.2**
+3. verify the packaged release and root Pages workflow;
+4. keep the old `agent` branch read-only during the verification period;
+5. normalize the runtime into `apps/`, `packages/`, and `preservation/` only
+   after behavior equivalence is proven;
+6. decide later whether independent ownership or deployment justifies a
+   dedicated repository.
 
 ## Preferred Near-Term Choice
 
@@ -53,5 +63,18 @@ The Agent branch currently keeps repeated full source snapshots under
 
 - no force push to `agent`;
 - no deletion of current releases;
-- no default-branch switch during the architecture scaffold;
-- no migration from a dirty working tree.
+- no default-branch switch during the architecture branch;
+- no inclusion of uncommitted Agent worktree material;
+- no release cleanup before preservation verification.
+
+## Verification Evidence
+
+Both imported runtime test suites passed:
+
+```text
+smoke:agent      ok
+smoke:stability  ok
+```
+
+The test covered graph initialization, Wikipedia discovery, Note/Inspector
+separation, local note creation, Agent bridge drafting, vault export, and reset.

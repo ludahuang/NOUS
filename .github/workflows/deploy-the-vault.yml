@@ -1,0 +1,50 @@
+name: Deploy The Vault
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "projects/the-vault/runtime/release/the-vault-2.0-agentic/**"
+      - ".github/workflows/deploy-the-vault.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare The Vault site
+        run: |
+          mkdir -p dist
+          cp -R projects/the-vault/runtime/release/the-vault-2.0-agentic/. dist/
+          touch dist/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v4

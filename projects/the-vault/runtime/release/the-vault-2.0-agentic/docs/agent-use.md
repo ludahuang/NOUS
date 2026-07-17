@@ -123,7 +123,7 @@ npm run capture:agent-docs
 
 ## Files
 
-- [/Users/mini/Documents/New project/index.html](/Users/mini/Documents/New%20project/index.html)
-- [/Users/mini/Documents/New project/styles.css](/Users/mini/Documents/New%20project/styles.css)
-- [/Users/mini/Documents/New project/script.js](/Users/mini/Documents/New%20project/script.js)
-- [/Users/mini/Documents/New project/scripts/smoke-agent-ui.mjs](/Users/mini/Documents/New%20project/scripts/smoke-agent-ui.mjs)
+- [index.html](../index.html)
+- [styles.css](../styles.css)
+- [script.js](../script.js)
+- [smoke-agent-ui.mjs](../../../scripts/smoke-agent-ui.mjs)

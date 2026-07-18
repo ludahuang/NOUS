@@ -29,7 +29,8 @@ Exit condition:
 - [x] import The Vault with history preserved;
 - [x] move runtime code under a project boundary;
 - remove checked-in release duplication after preservation review;
-- [x] define an independent deployment workflow from the NOUS public atlas;
+- [x] define a manually triggered project deployment workflow that cannot
+  automatically replace the future NOUS public atlas;
 - [x] verify the imported runtime with both smoke suites;
 - [ ] verify GitHub Pages deployment behavior after branch review.
 

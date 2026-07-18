@@ -25,14 +25,15 @@ a clear NOUS project boundary.
    `projects/the-vault/runtime/`;
 4. the subtree merge preserved the original Agent commits as a second parent;
 5. project and preservation records were added outside the imported runtime;
-6. a root-level Pages workflow was added for the new project path.
+6. a manual root-level Pages workflow was added for project verification
+   without claiming the NOUS public root.
 
 ## Remaining Stages
 
 1. create and push the `the-vault/v2-agentic` tag;
 2. run the Agent and stabilization smoke suites from the imported path;
    **completed 2026-07-17 with Playwright 1.58.2**
-3. verify the packaged release and root Pages workflow;
+3. verify the packaged release and manually triggered Pages workflow;
 4. keep the old `agent` branch read-only during the verification period;
 5. normalize the runtime into `apps/`, `packages/`, and `preservation/` only
    after behavior equivalence is proven;

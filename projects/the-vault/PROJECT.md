@@ -60,3 +60,7 @@ projects/the-vault/
 The `runtime/` directory remains intact until tests, deployment, and release
 equivalence are proven. Normalization into `apps/`, `packages/`, and
 `preservation/` is a later reversible step.
+
+The root `deploy-the-vault.yml` workflow is intentionally manual. Automatic
+Pages deployment is reserved for the future NOUS Atlas so a project release
+cannot replace the mother repository's public identity.

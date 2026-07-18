@@ -79,6 +79,34 @@ The subtree merge commit `87ec6c2` has `fa5d23e` as its second parent. The
 remote `agent` branch and `the-vault/v2-agentic` tag both resolve to that same
 reviewed baseline.
 
+## Follow-Up Local Asset Migration
+
+On 2026-07-18, the previously untracked Agent worktree material was reviewed.
+It contained a coherent The Vault research package rather than cache or
+temporary output:
+
+- 1 Psychology Genealogy Atlas source document;
+- 1 deterministic Node.js generator;
+- 38 Obsidian vault files, including 36 notes, app settings, and a manifest.
+
+All 40 source files were copied into `projects/the-vault/runtime/` without
+moving or modifying the originals. SHA-256 comparison reported 0 mismatches.
+
+The migrated generator was then executed in the project runtime. Its generated
+vault matched the original 38 files with:
+
+- 0 missing files;
+- 0 extra files;
+- 0 content differences;
+- 6 clusters;
+- 36 notes;
+- 111 undirected edges;
+- 1 connected component;
+- 0 isolated notes.
+
+The original Agent worktree remains available as a separate local worktree
+until the follow-up migration is merged and verified on remote `master`.
+
 ## Preservation Rule
 
 Do not delete duplicated releases or the archived alpha until:

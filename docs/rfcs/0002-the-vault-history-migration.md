@@ -84,3 +84,13 @@ On 2026-07-18, the same checks were repeated from a clean worktree created from
 the pushed remote architecture branch. The imported runtime contained all 95
 source files from `origin/agent`, with no missing or unexpected paths. Only
 three documented Markdown-link repairs differed from the source branch.
+
+## Follow-Up Untracked Assets
+
+After the mother-repository merge, the Agent worktree still contained a
+previously untracked Psychology Genealogy Atlas source, generator, and vault.
+
+These files are handled in a separate migration branch rather than being
+silently added to the original subtree import. The migration preserves the
+original local files, compares all copied files by SHA-256, runs the generator,
+and requires exact vault-output equivalence before remote merge.

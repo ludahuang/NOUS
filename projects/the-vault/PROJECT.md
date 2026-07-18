@@ -12,6 +12,7 @@ Agent-era project being integrated into the NOUS mother repository.
 - source provenance remains visible;
 - agent behavior reveals missing relations and drafts bridges;
 - generated output requires review before becoming durable knowledge.
+- curated source material can be deterministically rebuilt into portable vaults.
 
 ## Current Runtime
 
@@ -27,7 +28,15 @@ The import was made from commit:
 fa5d23ebe91ff1e73fae5e3f6782bf2ecf5dcbe8
 ```
 
-The current uncommitted files in the separate Agent worktree were not included.
+The initial subtree import excluded uncommitted files in the separate Agent
+worktree. The later-reviewed Psychology Genealogy Atlas assets are migrated in
+a separate follow-up change:
+
+```text
+runtime/resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md
+runtime/scripts/build-psychology-genealogy-vault.mjs
+runtime/vaults/Psychology_Genealogy_Atlas/
+```
 
 Migration and preservation are governed by:
 
@@ -41,6 +50,7 @@ From `projects/the-vault/runtime/`:
 
 ```bash
 npm run serve
+npm run build:psychology-vault
 npm run smoke:agent
 npm run smoke:stability
 ```

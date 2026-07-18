@@ -48,11 +48,30 @@ For the full `v2-agentic` stabilization smoke:
 npm run smoke:stability
 ```
 
+To rebuild the curated Psychology Genealogy Atlas Obsidian vault:
+
+```bash
+npm run build:psychology-vault
+```
+
 Then open:
 
 ```text
 http://127.0.0.1:8765/index.html
 ```
+
+## Curated Vaults
+
+The runtime includes a source-backed Psychology Genealogy Atlas:
+
+```text
+resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md
+scripts/build-psychology-genealogy-vault.mjs
+vaults/Psychology_Genealogy_Atlas/
+```
+
+The generator validates duplicate titles, missing links, self-links, graph
+connectivity, cross-cluster edges, and hub statistics before writing the vault.
 
 ## Run On GitHub
 

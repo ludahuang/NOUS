@@ -1,0 +1,36 @@
+---
+title: 认知革命
+aliases:
+  - Cognitive Revolution
+description: 信息论、计算、语言学和心理实验共同推动的心智研究转向。
+tags:
+  - cluster/history
+  - cognition
+  - computation
+source: Psychology_Genealogy_Atlas_Obsidian.md
+status: curated
+updated: 2026-07-17
+---
+
+# 认知革命
+
+Shannon、Turing、Miller、Chomsky、Neisser、Newell 与 Simon 等人的工作使表征、编码、储存、检索和算法重新成为心理学的合法解释对象。
+
+## 核心命题
+
+- 心智被建模为信息处理系统。
+- 行为数据可以用于推断内部表征与加工阶段。
+- 计算隐喻连接了心理学、语言学、人工智能和神经科学。
+
+## 神经连接
+
+- [[心理学思想史]]
+- [[行为主义]]
+- [[认知与信息加工]]
+- [[智能意识与机器伦理]]
+- [[预测加工与主动推断]]
+
+## 张力与开放问题
+
+- 信息处理隐喻可能忽略身体、情感和环境。
+- 计算能力不自动意味着意识。

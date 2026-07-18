@@ -1,0 +1,99 @@
+{
+  "name": "Psychology Genealogy Atlas",
+  "generatedAt": "2026-07-17",
+  "source": "resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md",
+  "design": {
+    "principle": "Topology first: folders are modules, notes are neurons, wikilinks are synapses.",
+    "clusters": 6,
+    "notes": 36,
+    "directedLinks": 188,
+    "undirectedEdges": 111,
+    "reciprocalEdges": 77,
+    "crossClusterEdges": 63,
+    "averageDegree": 6.17,
+    "connectedComponents": 1,
+    "isolatedNotes": []
+  },
+  "clusterSummary": [
+    {
+      "folder": "01_起源与学派",
+      "title": "起源与学派",
+      "notes": 6
+    },
+    {
+      "folder": "02_心智行为与改变",
+      "title": "心智、行为与改变",
+      "notes": 6
+    },
+    {
+      "folder": "03_脑身体与环境",
+      "title": "脑、身体与环境",
+      "notes": 6
+    },
+    {
+      "folder": "04_意识与自我",
+      "title": "意识与自我",
+      "notes": 6
+    },
+    {
+      "folder": "05_文化方法与可信度",
+      "title": "文化、方法与可信度",
+      "notes": 6
+    },
+    {
+      "folder": "06_胼胝体桥接区",
+      "title": "胼胝体桥接区",
+      "notes": 6
+    }
+  ],
+  "hubs": [
+    {
+      "title": "意识与自我",
+      "inbound": 11
+    },
+    {
+      "title": "发展依恋与治疗",
+      "inbound": 8
+    },
+    {
+      "title": "智能意识与机器伦理",
+      "inbound": 8
+    },
+    {
+      "title": "第一第二第三人称方法",
+      "inbound": 8
+    },
+    {
+      "title": "学习与强化",
+      "inbound": 7
+    },
+    {
+      "title": "心理学思想史",
+      "inbound": 7
+    },
+    {
+      "title": "心理机制地图",
+      "inbound": 7
+    },
+    {
+      "title": "脑身体与环境",
+      "inbound": 7
+    },
+    {
+      "title": "认知与信息加工",
+      "inbound": 7
+    },
+    {
+      "title": "身体心智社会桥",
+      "inbound": 7
+    },
+    {
+      "title": "心理学谱系总图",
+      "inbound": 6
+    },
+    {
+      "title": "文化方法与科学可信度",
+      "inbound": 6
+    }
+  ]
+}

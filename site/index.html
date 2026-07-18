@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="NOUS is a curatorial mechanism spanning space, exhibitions, networks, knowledge environments, and creative agents."
+      content="NOUS is a six-facet curatorial system spanning space, exhibition, network, data curation, knowledge base, and intelligent agents."
     />
     <meta name="theme-color" content="#f4f2ed" />
     <title>NOUS — Curator Incubator</title>
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./assets/three.min.js" defer></script>
     <script src="./script.js" defer></script>
   </head>
   <body>
@@ -18,127 +19,77 @@
     <header class="site-header">
       <a class="wordmark" href="./" aria-label="NOUS 首页">NOUS</a>
       <nav class="site-nav" aria-label="主要导航">
-        <a href="#identity">身份</a>
+        <a href="#system">六面体</a>
         <a href="#protocol">机制</a>
-        <a href="#projects">项目</a>
+        <a href="#cases">案例</a>
         <a href="#archive">档案</a>
       </nav>
-      <a class="vault-link" href="./the-vault/">
-        <span>The Vault</span>
-        <span aria-hidden="true">↗</span>
-      </a>
+      <span class="header-edition">ATLAS 2026.07</span>
     </header>
 
     <main id="main">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-grid" aria-hidden="true"></div>
-        <div class="lineage-map" aria-label="NOUS 形态谱系">
-          <span class="edge edge-1" aria-hidden="true"></span>
-          <span class="edge edge-2" aria-hidden="true"></span>
-          <span class="edge edge-3" aria-hidden="true"></span>
-          <span class="edge edge-4" aria-hidden="true"></span>
-          <span class="edge edge-5" aria-hidden="true"></span>
-
-          <button
-            class="lineage-node node-space"
-            type="button"
-            data-node="space"
-            aria-pressed="false"
-          >
-            <span>01</span>
-            空间
-          </button>
-          <button
-            class="lineage-node node-exhibition"
-            type="button"
-            data-node="exhibition"
-            aria-pressed="false"
-          >
-            <span>02</span>
-            展览
-          </button>
-          <button
-            class="lineage-node node-network"
-            type="button"
-            data-node="network"
-            aria-pressed="false"
-          >
-            <span>03</span>
-            网络
-          </button>
-          <button
-            class="lineage-node node-data"
-            type="button"
-            data-node="data"
-            aria-pressed="false"
-          >
-            <span>04</span>
-            数据策展
-          </button>
-          <button
-            class="lineage-node node-knowledge"
-            type="button"
-            data-node="knowledge"
-            aria-pressed="false"
-          >
-            <span>05</span>
-            知识环境
-          </button>
-          <button
-            class="lineage-node node-agent is-active"
-            type="button"
-            data-node="agent"
-            aria-pressed="true"
-          >
-            <span>06</span>
-            Creative Agent
-          </button>
+        <div class="cube-stage" aria-hidden="true">
+          <canvas id="cube-canvas"></canvas>
         </div>
 
         <div class="hero-copy">
           <h1 id="hero-title">NOUS</h1>
           <p class="hero-definition">策展孵化器 / Curator Incubator</p>
           <p class="hero-intro">
-            NOUS 不是某一个网站或单一应用。它是一套持续生成空间、展览、知识项目与智能体的策展机制。
+            NOUS 由六个相互作用的系统面构成。每一个实验、空间与项目，都是这六个面以不同权重共同发生的结果。
           </p>
           <div class="hero-actions">
-            <a class="primary-action" href="./the-vault/">进入 The Vault</a>
-            <a class="text-action" href="#protocol">阅读策展机制</a>
+            <a class="primary-action" href="#system">进入六面体</a>
+            <a class="text-action" href="#cases">查看案例</a>
           </div>
         </div>
 
-        <div class="lineage-detail" aria-live="polite">
-          <span id="lineage-index">06 / CURRENT</span>
-          <strong id="lineage-title">Creative Agent</strong>
-          <p id="lineage-description">
-            让策展机制获得可持续行动、保留来源并提出新关系的主体。
+        <div class="facet-detail" aria-live="polite">
+          <span id="facet-index">05 / KNOWLEDGE BASE</span>
+          <strong id="facet-title">知识库</strong>
+          <p id="facet-description">
+            将材料、笔记、来源与关系保存为可检索、可导航、可再次激活的共同记忆。
           </p>
         </div>
       </section>
 
-      <section class="identity-section" id="identity" aria-labelledby="identity-title">
+      <section class="system-section" id="system" aria-labelledby="system-title">
         <div class="section-heading">
-          <p>NOUS / 我们 / 智性</p>
-          <h2 id="identity-title">同一机制，不同形态。</h2>
+          <p>THE SIX-FACET SYSTEM</p>
+          <h2 id="system-title">不是线性进化，<br />而是同时作用的六个面。</h2>
         </div>
-        <div class="identity-copy">
+        <div class="system-copy">
           <p>
-            NOUS 从集装箱空间、展览和跨城市连接出发，经过网络媒体、数据策展与知识环境，
-            延伸为今天的 WEME Creative Agent。
+            空间、展览、网络、数据策展、知识库与智能体并不互相取代。NOUS 的每一次实践都会在六个面上留下不同强度的痕迹。
           </p>
           <p lang="en">
-            Space, exhibition, network, data curation, knowledge environment,
-            and creative agent are not replacements for one another. They are
-            successive materializations of one continuous curatorial system.
+            A NOUS project is not a separate product line. It is a situated
+            expression of six interacting systems, with a particular balance
+            of emphasis in each case.
           </p>
         </div>
-        <div class="identity-sequence" aria-label="NOUS 演化序列">
-          <span>SPACE</span>
-          <span>EXHIBITION</span>
-          <span>NETWORK</span>
-          <span>DATA</span>
-          <span>KNOWLEDGE</span>
-          <span>AGENT</span>
+
+        <div class="facet-controls" role="group" aria-label="选择六面体系统面">
+          <button class="facet-control face-space" type="button" data-facet="space" aria-pressed="false">
+            <span>01</span><strong>空间</strong><em>Space</em>
+          </button>
+          <button class="facet-control face-exhibition" type="button" data-facet="exhibition" aria-pressed="false">
+            <span>02</span><strong>展览</strong><em>Exhibition</em>
+          </button>
+          <button class="facet-control face-network" type="button" data-facet="network" aria-pressed="false">
+            <span>03</span><strong>网络</strong><em>Network</em>
+          </button>
+          <button class="facet-control face-data" type="button" data-facet="data" aria-pressed="false">
+            <span>04</span><strong>数据策展</strong><em>Data curation</em>
+          </button>
+          <button class="facet-control face-knowledge is-active" type="button" data-facet="knowledge" aria-pressed="true">
+            <span>05</span><strong>知识库</strong><em>Knowledge base</em>
+          </button>
+          <button class="facet-control face-agent" type="button" data-facet="agent" aria-pressed="false">
+            <span>06</span><strong>智能体</strong><em>Intelligent agent</em>
+          </button>
         </div>
       </section>
 
@@ -179,51 +130,79 @@
         </ol>
       </section>
 
-      <section class="projects-section" id="projects" aria-labelledby="projects-title">
-        <div class="project-copy">
-          <p class="section-index">ACTIVE PROJECT / 01</p>
-          <h2 id="projects-title">The Vault</h2>
-          <p class="project-lead">
-            一个图谱原生的知识环境，也是 NOUS 进入 Agent 时代后第一个完成母仓库迁移的项目。
-          </p>
+      <section class="cases-section" id="cases" aria-labelledby="cases-title">
+        <div class="case-heading">
+          <p>CASE STUDY / 01</p>
+          <h2 id="cases-title">The Vault</h2>
           <p>
-            The Vault 将 Wikipedia 发现、Obsidian 笔记、三维 connectome
-            与关系发现型智能体放在同一个工作界面中。它不占据 NOUS 的根目录，
-            而以独立项目身份持续运行。
+            The Vault 不是 NOUS 的并列入口，而是六面体系统的一种案例表达：
+            以知识库与智能体为主面，以数据策展为支撑。
           </p>
-          <dl class="project-facts">
-            <div>
-              <dt>状态</dt>
-              <dd>v2-agentic</dd>
+        </div>
+
+        <div class="case-composition" aria-label="The Vault 在 NOUS 六面体中的侧重">
+          <div class="case-composition-title">
+            <span>NOUS SIX-FACET COMPOSITION</span>
+            <strong>主面：知识库 + 智能体</strong>
+          </div>
+          <dl class="case-weights">
+            <div data-weight="low">
+              <dt>空间</dt>
+              <dd><i></i></dd>
             </div>
-            <div>
-              <dt>形态</dt>
-              <dd>Knowledge environment</dd>
+            <div data-weight="low">
+              <dt>展览</dt>
+              <dd><i></i></dd>
             </div>
-            <div>
-              <dt>公共路径</dt>
-              <dd>/NOUS/the-vault/</dd>
+            <div data-weight="medium">
+              <dt>网络</dt>
+              <dd><i></i></dd>
+            </div>
+            <div data-weight="strong">
+              <dt>数据策展</dt>
+              <dd><i></i></dd>
+            </div>
+            <div data-weight="primary">
+              <dt>知识库</dt>
+              <dd><i></i></dd>
+            </div>
+            <div data-weight="primary">
+              <dt>智能体</dt>
+              <dd><i></i></dd>
             </div>
           </dl>
-          <a class="primary-action dark-action" href="./the-vault/">打开 The Vault</a>
         </div>
-        <a class="project-visual" href="./the-vault/" aria-label="打开 The Vault">
-          <img
-            src="./the-vault/docs/images/agent-panel-open.png"
-            alt="The Vault 三维知识图谱与 Agent 面板"
-            width="1440"
-            height="980"
-            fetchpriority="high"
-          />
-          <span>Explore the live knowledge environment</span>
-        </a>
+
+        <div class="case-runtime">
+          <div class="case-copy">
+            <p class="case-lead">
+              一个将 Wikipedia 发现、Obsidian 笔记、三维 connectome
+              与关系发现型智能体共同置入的知识库运行时。
+            </p>
+            <p>
+              它把材料转化为可查询的图谱，把图谱转化为可提出连接、缺口与桥接笔记的工作场。
+              它是 NOUS 六面体在数字知识与智能体方向上的一次具体呈现。
+            </p>
+            <a class="primary-action dark-action" href="./the-vault/">进入案例运行时</a>
+          </div>
+          <a class="case-visual" href="./the-vault/" aria-label="打开 The Vault 案例运行时">
+            <img
+              src="./the-vault/docs/images/agent-panel-open.png"
+              alt="The Vault 三维知识图谱与智能体面板"
+              width="1440"
+              height="980"
+              fetchpriority="high"
+            />
+            <span>CASE RUNTIME / THE VAULT</span>
+          </a>
+        </div>
       </section>
 
       <section class="agent-section" aria-labelledby="agent-title">
         <div class="agent-statement">
-          <p>WEME CREATIVE AGENT</p>
+          <p>THE INTELLIGENT AGENT FACET</p>
           <h2 id="agent-title">
-            不是给 NOUS 增加一个聊天窗口，<br />而是让策展机制获得行动主体。
+            智能体不是一个聊天窗口，<br />而是能够参与策展机制的行动主体。
           </h2>
         </div>
         <div class="agent-principles">

@@ -26,8 +26,9 @@ NOUS 不是某一个网站或单一应用。它是一套持续生成空间、展
 - **WEME Creative Agent**: a creative collaborator with an explicit identity,
   aesthetic position, authority boundary, memory policy, and auditable
   capabilities.
-- **The Vault**: a graph-native knowledge environment and the first active
-  Agent-era project to be migrated into the NOUS project structure.
+- **The Vault**: a graph-native knowledge-base and intelligent-agent case,
+  with data curation as a supporting system face. It is the first active
+  Agent-era project migrated into the NOUS project structure.
 - **NOUS Archive**: the recovery and description of container spaces,
   exhibitions, distributed installations, research, media, and born-digital
   works.
@@ -69,8 +70,12 @@ and content-handling rules.
 The NOUS mother-repository architecture is active. The history-preserving
 The Vault import is maintained under [`projects/the-vault/`](projects/the-vault/)
 and its public runtime is published below the NOUS Atlas at `/the-vault/`.
+That runtime is a case implementation inside the NOUS system, not a peer
+public identity.
 
 The migration decision is documented in
 [`docs/rfcs/0002-the-vault-history-migration.md`](docs/rfcs/0002-the-vault-history-migration.md);
 the public URL structure is documented in
-[`docs/rfcs/0003-publication-structure.md`](docs/rfcs/0003-publication-structure.md).
+[`docs/rfcs/0003-publication-structure.md`](docs/rfcs/0003-publication-structure.md);
+the six-facet system is documented in
+[`docs/rfcs/0004-six-facet-system.md`](docs/rfcs/0004-six-facet-system.md).

@@ -15,6 +15,14 @@ forms:
   - knowledge-environment
   - connectome
   - graph-native-agent
+system_emphasis:
+  primary:
+    - knowledge-base
+    - intelligent-agent
+  supporting:
+    - data-curation
+  contextual:
+    - network
 capabilities:
   - wikipedia-discovery
   - obsidian-import

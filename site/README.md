@@ -9,12 +9,14 @@ https://ludahuang.github.io/NOUS/
 
 The Atlas:
 
-- introduces NOUS as a continuous curatorial mechanism;
-- maps the lineage from space to Creative Agent;
+- introduces NOUS as a six-facet curatorial system;
+- visualizes space, exhibition, network, data curation, knowledge base, and
+  intelligent agent as simultaneous system faces;
 - explains the curatorial operating loop;
-- presents active projects without moving their runtimes into the root;
+- presents active projects as case expressions of the six-facet system;
 - links registered historical sources;
-- links The Vault at `./the-vault/`.
+- links The Vault as a case runtime at `./the-vault/`.
 
-The site intentionally uses relative URLs so it works both under the GitHub
-project path `/NOUS/` and through a local static server.
+The Pages build also copies the bundled Three.js runtime to `assets/three.min.js`
+for the interactive six-facet visual. Preview the assembled publication
+artifact, rather than `site/` alone, when testing locally.

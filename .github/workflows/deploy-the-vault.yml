@@ -30,6 +30,8 @@ jobs:
         run: |
           mkdir -p dist
           cp -R site/. dist/
+          mkdir -p dist/assets
+          cp projects/the-vault/runtime/vendor/three.min.js dist/assets/three.min.js
           mkdir -p dist/the-vault
           cp -R projects/the-vault/runtime/release/the-vault-2.0-agentic/. dist/the-vault/
           touch dist/.nojekyll
@@ -38,6 +40,7 @@ jobs:
         run: |
           test -f dist/index.html
           test -f dist/styles.css
+          test -f dist/assets/three.min.js
           test -f dist/the-vault/index.html
           test -f dist/the-vault/script.js
 

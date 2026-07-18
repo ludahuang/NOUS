@@ -20,6 +20,10 @@ The root public path represents NOUS itself: identity, curatorial protocols,
 project genealogy, agents, and historical sources. A project runtime is
 published only below its registered project path.
 
+The Vault path is a subordinate case runtime, not a peer entry point to NOUS.
+It is presented in the Atlas as a knowledge-base and intelligent-agent case
+with data curation as a supporting system face.
+
 ## Build Boundary
 
 The Pages workflow assembles, without rewriting source directories:

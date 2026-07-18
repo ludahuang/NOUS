@@ -7,13 +7,16 @@ NOUS 在法语中是第一人称复数“我们”，在英语思想传统中指
 
 NOUS 的名称最早出现在微米公司的主体信息和官方邮件前缀中。它后来
 成为由鲁大荒发起的实验空间、集装箱系统、策展机制、跨城市连接方式、
-知识环境，并继续演化为 Creative Agent。
+知识库，并继续演化为智能体（Creative Agent）。
 
 这些形态不是彼此替代的版本，而是同一机制在不同媒介中的具体化：
 
 ```text
-空间 -> 展览 -> 网络 -> 数据策展 -> 知识环境 -> Creative Agent
+空间 -> 展览 -> 网络 -> 数据策展 -> 知识库 -> 智能体
 ```
+
+这不是一条用新阶段淘汰旧阶段的时间线，而是一个可以同时工作的六面体
+系统。每一项 NOUS 实验与项目，都是六个系统面以不同侧重形成的具体表达。
 
 ## NOUS 做什么
 
@@ -56,12 +59,24 @@ NOUS 的基本策展循环是：
 策展的对象不仅是作品，也包括关系、条件、工具、记忆、来源和未来的
 再生成能力。
 
-## Creative Agent
+## 六面体系统
 
-Creative Agent 不是给 NOUS 增加一个聊天窗口，而是让策展机制获得一个
+- **空间**：让策展获得可移动、可制造、可进入的物质接口；
+- **展览**：让作品、参与者、条件与发生过程共同构成一次可被经历的关系；
+- **网络**：让不同城市、现场与主体通过媒介、协作和传输协议彼此连接；
+- **数据策展**：将事件、来源、关系与过程转化为可追溯、可传送、可复用的结构；
+- **知识库**：将材料、笔记、来源与关系保存为可检索、可导航、可再次激活的共同记忆；
+- **智能体**：让策展机制获得能够提出关系、协助生成并保留行动记录的主体。
+
+“知识库”是六面体中的系统名称；“知识环境”可以用来描述一个具体运行时
+如何被组织和体验。
+
+## 智能体 / Creative Agent
+
+智能体不是给 NOUS 增加一个聊天窗口，而是让策展机制获得一个
 可持续行动的主体。
 
-一个 NOUS Creative Agent 应当：
+一个 NOUS 智能体应当：
 
 - 有明确身份与审美立场；
 - 能访问经过授权的资源；
@@ -82,7 +97,7 @@ NOUS 策展人。完成法国巴黎八大 Hypermedia 学业后，他持续发起
 
 NOUS is not a single venue or application. It is a curatorial mechanism that
 has moved through container architecture, exhibitions, networked media, data
-curation, knowledge environments, and creative agents.
+curation, knowledge bases, and intelligent agents.
 
 Its enduring principles are mobility, replicability, open participation,
 source awareness, distributed production, and the ability to reactivate an

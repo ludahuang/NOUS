@@ -1,6 +1,9 @@
-name: Deploy The Vault
+name: Deploy NOUS Atlas and The Vault
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -23,11 +26,20 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare The Vault site
+      - name: Prepare NOUS public site
         run: |
           mkdir -p dist
-          cp -R projects/the-vault/runtime/release/the-vault-2.0-agentic/. dist/
+          cp -R site/. dist/
+          mkdir -p dist/the-vault
+          cp -R projects/the-vault/runtime/release/the-vault-2.0-agentic/. dist/the-vault/
           touch dist/.nojekyll
+
+      - name: Verify publication structure
+        run: |
+          test -f dist/index.html
+          test -f dist/styles.css
+          test -f dist/the-vault/index.html
+          test -f dist/the-vault/script.js
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -37,7 +49,11 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Deploy Pages
+        id: deployment
         uses: actions/deploy-pages@v4

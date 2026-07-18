@@ -6,6 +6,7 @@ parent:
   ref: nous:agent:weme-creative-agent
 project_path: projects/the-vault
 runtime_path: projects/the-vault/runtime
+public_url: https://ludahuang.github.io/NOUS/the-vault/
 historical_branch:
   remote: origin
   name: agent

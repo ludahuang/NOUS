@@ -83,16 +83,13 @@ mother-repository deployment now lives at
 What it publishes:
 
 ```text
-release/the-vault-2.0-agentic/
+/NOUS/             -> site/
+/NOUS/the-vault/   -> release/the-vault-2.0-agentic/
 ```
 
-What still needs to happen outside this repo:
-
-1. Push this repo to GitHub.
-2. In the GitHub repo settings, set Pages to deploy from GitHub Actions.
-3. Push to `agent` or run the workflow manually.
-
-The published URL will be the normal GitHub Pages address for your repo.
+The mother-repository workflow runs on pushes to `master` and can also be run
+manually. The former Agent-branch workflow is retained only as migration
+history and should remain disabled.
 
 ## Releases
 

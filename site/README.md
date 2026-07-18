@@ -1,14 +1,20 @@
 # Public Site
 
-This directory will contain the public NOUS atlas.
+This directory contains the static public NOUS Atlas published at the GitHub
+Pages root:
 
-The first public version should:
+```text
+https://ludahuang.github.io/NOUS/
+```
 
-- introduce NOUS as a continuous mechanism rather than a single product;
-- navigate across spaces, exhibitions, projects, agents, and research;
-- expose source and preservation status;
-- link to project-specific runtimes such as The Vault;
-- support Chinese and English reading;
-- generate machine-readable catalog output.
+The Atlas:
 
-No site implementation is selected in the root-architecture phase.
+- introduces NOUS as a continuous curatorial mechanism;
+- maps the lineage from space to Creative Agent;
+- explains the curatorial operating loop;
+- presents active projects without moving their runtimes into the root;
+- links registered historical sources;
+- links The Vault at `./the-vault/`.
+
+The site intentionally uses relative URLs so it works both under the GitHub
+project path `/NOUS/` and through a local static server.

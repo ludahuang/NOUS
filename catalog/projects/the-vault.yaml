@@ -6,6 +6,7 @@ parent:
   ref: nous:agent:weme-creative-agent
 project_path: projects/the-vault
 runtime_path: projects/the-vault/runtime
+public_url: https://ludahuang.github.io/NOUS/the-vault/
 historical_branch:
   remote: origin
   name: agent
@@ -20,6 +21,12 @@ capabilities:
   - obsidian-export
   - graph-navigation
   - bridge-discovery
+  - deterministic-vault-generation
+  - psychology-genealogy-atlas
+curated_assets:
+  - source: projects/the-vault/runtime/resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md
+    generator: projects/the-vault/runtime/scripts/build-psychology-genealogy-vault.mjs
+    output: projects/the-vault/runtime/vaults/Psychology_Genealogy_Atlas
 provenance:
   migration_rfc: docs/rfcs/0002-the-vault-history-migration.md
   preservation_record: projects/the-vault/PRESERVATION.md

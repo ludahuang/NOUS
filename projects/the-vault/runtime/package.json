@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "serve": "python3 -m http.server 8765",
+    "build:psychology-vault": "node scripts/build-psychology-genealogy-vault.mjs",
     "smoke:agent": "node scripts/smoke-agent-ui.mjs",
     "smoke:stability": "node scripts/smoke-stability-ui.mjs",
     "capture:agent-docs": "node scripts/capture-agent-docs.mjs",

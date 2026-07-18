@@ -66,6 +66,11 @@ and content-handling rules.
 
 ## Status
 
-This root architecture is being introduced before any history-preserving import
-of the existing `agent` branch. The current migration decision is documented in
-[`docs/rfcs/0002-the-vault-history-migration.md`](docs/rfcs/0002-the-vault-history-migration.md).
+The NOUS mother-repository architecture is active. The history-preserving
+The Vault import is maintained under [`projects/the-vault/`](projects/the-vault/)
+and its public runtime is published below the NOUS Atlas at `/the-vault/`.
+
+The migration decision is documented in
+[`docs/rfcs/0002-the-vault-history-migration.md`](docs/rfcs/0002-the-vault-history-migration.md);
+the public URL structure is documented in
+[`docs/rfcs/0003-publication-structure.md`](docs/rfcs/0003-publication-structure.md).

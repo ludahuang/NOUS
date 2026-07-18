@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="NOUS is a curatorial mechanism spanning space, exhibitions, networks, knowledge environments, and creative agents."
+    />
+    <meta name="theme-color" content="#f4f2ed" />
+    <title>NOUS — Curator Incubator</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳至主要内容</a>
+
+    <header class="site-header">
+      <a class="wordmark" href="./" aria-label="NOUS 首页">NOUS</a>
+      <nav class="site-nav" aria-label="主要导航">
+        <a href="#identity">身份</a>
+        <a href="#protocol">机制</a>
+        <a href="#projects">项目</a>
+        <a href="#archive">档案</a>
+      </nav>
+      <a class="vault-link" href="./the-vault/">
+        <span>The Vault</span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="lineage-map" aria-label="NOUS 形态谱系">
+          <span class="edge edge-1" aria-hidden="true"></span>
+          <span class="edge edge-2" aria-hidden="true"></span>
+          <span class="edge edge-3" aria-hidden="true"></span>
+          <span class="edge edge-4" aria-hidden="true"></span>
+          <span class="edge edge-5" aria-hidden="true"></span>
+
+          <button
+            class="lineage-node node-space"
+            type="button"
+            data-node="space"
+            aria-pressed="false"
+          >
+            <span>01</span>
+            空间
+          </button>
+          <button
+            class="lineage-node node-exhibition"
+            type="button"
+            data-node="exhibition"
+            aria-pressed="false"
+          >
+            <span>02</span>
+            展览
+          </button>
+          <button
+            class="lineage-node node-network"
+            type="button"
+            data-node="network"
+            aria-pressed="false"
+          >
+            <span>03</span>
+            网络
+          </button>
+          <button
+            class="lineage-node node-data"
+            type="button"
+            data-node="data"
+            aria-pressed="false"
+          >
+            <span>04</span>
+            数据策展
+          </button>
+          <button
+            class="lineage-node node-knowledge"
+            type="button"
+            data-node="knowledge"
+            aria-pressed="false"
+          >
+            <span>05</span>
+            知识环境
+          </button>
+          <button
+            class="lineage-node node-agent is-active"
+            type="button"
+            data-node="agent"
+            aria-pressed="true"
+          >
+            <span>06</span>
+            Creative Agent
+          </button>
+        </div>
+
+        <div class="hero-copy">
+          <h1 id="hero-title">NOUS</h1>
+          <p class="hero-definition">策展孵化器 / Curator Incubator</p>
+          <p class="hero-intro">
+            NOUS 不是某一个网站或单一应用。它是一套持续生成空间、展览、知识项目与智能体的策展机制。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="./the-vault/">进入 The Vault</a>
+            <a class="text-action" href="#protocol">阅读策展机制</a>
+          </div>
+        </div>
+
+        <div class="lineage-detail" aria-live="polite">
+          <span id="lineage-index">06 / CURRENT</span>
+          <strong id="lineage-title">Creative Agent</strong>
+          <p id="lineage-description">
+            让策展机制获得可持续行动、保留来源并提出新关系的主体。
+          </p>
+        </div>
+      </section>
+
+      <section class="identity-section" id="identity" aria-labelledby="identity-title">
+        <div class="section-heading">
+          <p>NOUS / 我们 / 智性</p>
+          <h2 id="identity-title">同一机制，不同形态。</h2>
+        </div>
+        <div class="identity-copy">
+          <p>
+            NOUS 从集装箱空间、展览和跨城市连接出发，经过网络媒体、数据策展与知识环境，
+            延伸为今天的 WEME Creative Agent。
+          </p>
+          <p lang="en">
+            Space, exhibition, network, data curation, knowledge environment,
+            and creative agent are not replacements for one another. They are
+            successive materializations of one continuous curatorial system.
+          </p>
+        </div>
+        <div class="identity-sequence" aria-label="NOUS 演化序列">
+          <span>SPACE</span>
+          <span>EXHIBITION</span>
+          <span>NETWORK</span>
+          <span>DATA</span>
+          <span>KNOWLEDGE</span>
+          <span>AGENT</span>
+        </div>
+      </section>
+
+      <section class="protocol-section" id="protocol" aria-labelledby="protocol-title">
+        <div class="protocol-intro">
+          <h2 id="protocol-title">策展不是陈列结果，<br />而是让关系继续生成。</h2>
+          <p>
+            每一次 NOUS 发生，都从问题开始，经过临时界面、共同参与和结构化记录，
+            最终在新的地点、媒介或智能体中再次激活。
+          </p>
+        </div>
+        <ol class="protocol-steps">
+          <li>
+            <span>01</span>
+            <strong>提出问题</strong>
+            <p>确定值得共同进入的未知，而不是预设一个封闭答案。</p>
+          </li>
+          <li>
+            <span>02</span>
+            <strong>建立界面</strong>
+            <p>空间、展览、网站、知识图谱或智能体都可以成为临时界面。</p>
+          </li>
+          <li>
+            <span>03</span>
+            <strong>邀请主体</strong>
+            <p>让艺术家、研究者、公众、组织与机器进入同一关系场。</p>
+          </li>
+          <li>
+            <span>04</span>
+            <strong>生成与记录</strong>
+            <p>保存作品，也保存来源、条件、关系、工具和未解决的问题。</p>
+          </li>
+          <li>
+            <span>05</span>
+            <strong>再次激活</strong>
+            <p>把记录转化为可传送、可修订、可被下一种形态继续使用的结构。</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="projects-section" id="projects" aria-labelledby="projects-title">
+        <div class="project-copy">
+          <p class="section-index">ACTIVE PROJECT / 01</p>
+          <h2 id="projects-title">The Vault</h2>
+          <p class="project-lead">
+            一个图谱原生的知识环境，也是 NOUS 进入 Agent 时代后第一个完成母仓库迁移的项目。
+          </p>
+          <p>
+            The Vault 将 Wikipedia 发现、Obsidian 笔记、三维 connectome
+            与关系发现型智能体放在同一个工作界面中。它不占据 NOUS 的根目录，
+            而以独立项目身份持续运行。
+          </p>
+          <dl class="project-facts">
+            <div>
+              <dt>状态</dt>
+              <dd>v2-agentic</dd>
+            </div>
+            <div>
+              <dt>形态</dt>
+              <dd>Knowledge environment</dd>
+            </div>
+            <div>
+              <dt>公共路径</dt>
+              <dd>/NOUS/the-vault/</dd>
+            </div>
+          </dl>
+          <a class="primary-action dark-action" href="./the-vault/">打开 The Vault</a>
+        </div>
+        <a class="project-visual" href="./the-vault/" aria-label="打开 The Vault">
+          <img
+            src="./the-vault/docs/images/agent-panel-open.png"
+            alt="The Vault 三维知识图谱与 Agent 面板"
+            width="1440"
+            height="980"
+            fetchpriority="high"
+          />
+          <span>Explore the live knowledge environment</span>
+        </a>
+      </section>
+
+      <section class="agent-section" aria-labelledby="agent-title">
+        <div class="agent-statement">
+          <p>WEME CREATIVE AGENT</p>
+          <h2 id="agent-title">
+            不是给 NOUS 增加一个聊天窗口，<br />而是让策展机制获得行动主体。
+          </h2>
+        </div>
+        <div class="agent-principles">
+          <p>发现关系与缺口</p>
+          <p>提出创作与策展问题</p>
+          <p>保留来源与不确定性</p>
+          <p>协助生成项目和表达形式</p>
+          <p>让授权、工具与过程可审计</p>
+        </div>
+      </section>
+
+      <section class="archive-section" id="archive" aria-labelledby="archive-title">
+        <div class="archive-heading">
+          <p>HISTORICAL SOURCES</p>
+          <h2 id="archive-title">历史不是旧版本，<br />而是仍可被调用的材料。</h2>
+        </div>
+        <div class="source-list">
+          <a href="https://nous.we-media.net/" rel="noreferrer">
+            <span>01</span>
+            <strong>NOUS 2015–2025</strong>
+            <em>空间、展览与跨城市事件</em>
+            <b aria-hidden="true">↗</b>
+          </a>
+          <a href="https://we-media.net/" rel="noreferrer">
+            <span>02</span>
+            <strong>WEME Creative Agent</strong>
+            <em>组织历史、项目与智能体方向</em>
+            <b aria-hidden="true">↗</b>
+          </a>
+          <a href="https://weme.im/" rel="noreferrer">
+            <span>03</span>
+            <strong>WEME</strong>
+            <em>品牌与网络服务历史界面</em>
+            <b aria-hidden="true">↗</b>
+          </a>
+          <a href="https://rebui1t.com/" rel="noreferrer">
+            <span>04</span>
+            <strong>Rebui1t AI Projects</strong>
+            <em>AI 项目、生成作品与研究</em>
+            <b aria-hidden="true">↗</b>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="wordmark" href="./">NOUS</a>
+      <p>Curator Incubator / 策展孵化器</p>
+      <p>Atlas edition 2026.07</p>
+    </footer>
+  </body>
+</html>

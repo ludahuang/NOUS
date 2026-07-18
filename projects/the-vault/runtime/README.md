@@ -48,11 +48,30 @@ For the full `v2-agentic` stabilization smoke:
 npm run smoke:stability
 ```
 
+To rebuild the curated Psychology Genealogy Atlas Obsidian vault:
+
+```bash
+npm run build:psychology-vault
+```
+
 Then open:
 
 ```text
 http://127.0.0.1:8765/index.html
 ```
+
+## Curated Vaults
+
+The runtime includes a source-backed Psychology Genealogy Atlas:
+
+```text
+resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md
+scripts/build-psychology-genealogy-vault.mjs
+vaults/Psychology_Genealogy_Atlas/
+```
+
+The generator validates duplicate titles, missing links, self-links, graph
+connectivity, cross-cluster edges, and hub statistics before writing the vault.
 
 ## Run On GitHub
 
@@ -64,16 +83,13 @@ mother-repository deployment now lives at
 What it publishes:
 
 ```text
-release/the-vault-2.0-agentic/
+/NOUS/             -> site/
+/NOUS/the-vault/   -> release/the-vault-2.0-agentic/
 ```
 
-What still needs to happen outside this repo:
-
-1. Push this repo to GitHub.
-2. In the GitHub repo settings, set Pages to deploy from GitHub Actions.
-3. Push to `agent` or run the workflow manually.
-
-The published URL will be the normal GitHub Pages address for your repo.
+The mother-repository workflow runs on pushes to `master` and can also be run
+manually. The former Agent-branch workflow is retained only as migration
+history and should remain disabled.
 
 ## Releases
 

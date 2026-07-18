@@ -79,3 +79,8 @@ smoke:stability  ok
 
 The test covered graph initialization, Wikipedia discovery, Note/Inspector
 separation, local note creation, Agent bridge drafting, vault export, and reset.
+
+On 2026-07-18, the same checks were repeated from a clean worktree created from
+the pushed remote architecture branch. The imported runtime contained all 95
+source files from `origin/agent`, with no missing or unexpected paths. Only
+three documented Markdown-link repairs differed from the source branch.

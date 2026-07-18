@@ -53,6 +53,32 @@ Results:
 - Obsidian-compatible export completed;
 - reset restored the default 43-page graph with no retained smoke notes.
 
+## Remote Branch Verification
+
+Verified again on 2026-07-18 from a clean detached worktree created directly
+from `origin/codex/nous-root-architecture` at commit `69b2e56`.
+
+Source-tree comparison against `origin/agent`:
+
+- source files: 95;
+- imported runtime files: 95;
+- missing files: 0;
+- unexpected files: 0;
+- unexpected changed files: 0;
+- intentional documentation link repairs: 3.
+
+The clean remote checkout passed:
+
+- catalog validation: 9 records, 9 unique IDs, 33 local Markdown links;
+- Agent smoke with Playwright `1.58.2`;
+- full stability smoke with Playwright `1.58.2`;
+- local note creation, Agent bridge creation, export, and reset;
+- default reset state: 43 Wikipedia pages and 0 retained smoke notes.
+
+The subtree merge commit `87ec6c2` has `fa5d23e` as its second parent. The
+remote `agent` branch and `the-vault/v2-agentic` tag both resolve to that same
+reviewed baseline.
+
 ## Preservation Rule
 
 Do not delete duplicated releases or the archived alpha until:

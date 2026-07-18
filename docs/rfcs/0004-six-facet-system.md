@@ -20,6 +20,14 @@ These facets can be active together. A NOUS experiment, space, exhibition,
 project, or agent is a situated expression of the six facets with a specific
 distribution of emphasis.
 
+The public Atlas represents the system as an irregular six-faced polyhedron,
+not a regular cube. Visitors can rotate the body and activate any visible face;
+the selected face updates the active structural quadrant and its explanation.
+
+The irregular form is semantic. Each facet is treated as a structural pole;
+project-specific emphasis expands or contracts the vertices influenced by that
+pole. Every NOUS project or case therefore produces its own polyhedral shape.
+
 ## Vocabulary
 
 `knowledge base` is the system-level term because it names the durable,
@@ -34,7 +42,8 @@ the name of the WEME implementation direction.
 
 ## Case Rule
 
-The Vault is a case of the six-facet system, not a public identity parallel to
-NOUS. Its primary facets are knowledge base and intelligent agent; data
-curation is a supporting facet. Its dedicated URL remains a runtime endpoint
-under `/the-vault/`.
+The Vault is the NOUS six-facet form weighted toward knowledge base and
+intelligent agent, not a public identity parallel to NOUS. These two adjacent
+poles remain the stable primary definition of the case while any individual
+face is being inspected. Data curation is a supporting facet. Its dedicated URL
+remains a runtime endpoint under `/the-vault/`.

@@ -30,15 +30,18 @@
     <main id="main">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-grid" aria-hidden="true"></div>
-        <div class="cube-stage" aria-hidden="true">
-          <canvas id="cube-canvas"></canvas>
+        <div class="polyhedron-stage">
+          <canvas
+            id="polyhedron-canvas"
+            aria-label="可拖拽并选择系统面的 NOUS 不规则六面体"
+          ></canvas>
         </div>
 
         <div class="hero-copy">
           <h1 id="hero-title">NOUS</h1>
           <p class="hero-definition">策展孵化器 / Curator Incubator</p>
           <p class="hero-intro">
-            NOUS 由六个相互作用的系统面构成。每一个实验、空间与项目，都是这六个面以不同权重共同发生的结果。
+            NOUS 由六个相互作用的结构象限构成。每个项目对六个象限极点的侧重不同，因此形成各自的不规则六面体。
           </p>
           <div class="hero-actions">
             <a class="primary-action" href="#system">进入六面体</a>
@@ -62,7 +65,7 @@
         </div>
         <div class="system-copy">
           <p>
-            空间、展览、网络、数据策展、知识库与智能体并不互相取代。NOUS 的每一次实践都会在六个面上留下不同强度的痕迹。
+            空间、展览、网络、数据策展、知识库与智能体并不互相取代。象限极点的强弱改变六面体的伸展方向，也构成每项实践的异形特征。
           </p>
           <p lang="en">
             A NOUS project is not a separate product line. It is a situated
@@ -135,8 +138,8 @@
           <p>CASE STUDY / 01</p>
           <h2 id="cases-title">The Vault</h2>
           <p>
-            The Vault 不是 NOUS 的并列入口，而是六面体系统的一种案例表达：
-            以知识库与智能体为主面，以数据策展为支撑。
+            The Vault 就是一个侧重知识库与智能体的 NOUS 六面体：
+            两个相邻极点形成主要伸展方向，数据策展提供次级支撑。
           </p>
         </div>
 
@@ -145,28 +148,38 @@
             <span>NOUS SIX-FACET COMPOSITION</span>
             <strong>主面：知识库 + 智能体</strong>
           </div>
+          <div class="case-shape">
+            <canvas
+              id="vault-polyhedron-canvas"
+              aria-label="可拖拽查看的 The Vault 异形六面体"
+            ></canvas>
+            <p>
+              <span>知识库 + 智能体</span>
+              <em id="vault-shape-view">查看面 / 知识库</em>
+            </p>
+          </div>
           <dl class="case-weights">
-            <div data-weight="low">
+            <div data-facet-weight="space" data-weight="low">
               <dt>空间</dt>
               <dd><i></i></dd>
             </div>
-            <div data-weight="low">
+            <div data-facet-weight="exhibition" data-weight="low">
               <dt>展览</dt>
               <dd><i></i></dd>
             </div>
-            <div data-weight="medium">
+            <div data-facet-weight="network" data-weight="medium">
               <dt>网络</dt>
               <dd><i></i></dd>
             </div>
-            <div data-weight="strong">
+            <div data-facet-weight="data" data-weight="strong">
               <dt>数据策展</dt>
               <dd><i></i></dd>
             </div>
-            <div data-weight="primary">
+            <div class="is-dominant" data-facet-weight="knowledge" data-weight="primary">
               <dt>知识库</dt>
               <dd><i></i></dd>
             </div>
-            <div data-weight="primary">
+            <div class="is-dominant" data-facet-weight="agent" data-weight="primary">
               <dt>智能体</dt>
               <dd><i></i></dd>
             </div>

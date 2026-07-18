@@ -11,7 +11,7 @@ The Atlas:
 
 - introduces NOUS as a six-facet curatorial system;
 - visualizes space, exhibition, network, data curation, knowledge base, and
-  intelligent agent as simultaneous system faces;
+  intelligent agent as selectable faces of an irregular draggable polyhedron;
 - explains the curatorial operating loop;
 - presents active projects as case expressions of the six-facet system;
 - links registered historical sources;

@@ -1,0 +1,24 @@
+id: nous
+type: curatorial-system
+name: NOUS
+alternate_names:
+  - Curator Incubator
+  - 策展孵化器
+status: active
+founded_before: 2015
+founder:
+  ref: nous:person:lu-dahuang
+current_directions:
+  - ref: nous:agent:weme-creative-agent
+  - ref: nous:project:the-vault
+principles:
+  - mobility
+  - replicability
+  - distributed-production
+  - open-data-curation
+  - source-awareness
+  - reversible-experimentation
+canonical_branch: master
+target_branch_name: main
+catalog: catalog/index.yaml
+schema: schemas/nous-entity.schema.json

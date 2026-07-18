@@ -1,0 +1,15 @@
+id: nous:agent:weme-creative-agent
+name: WEME Creative Agent
+type: creative-curatorial-agent
+status: active-development
+lineage:
+  - nous:space:nous-container
+  - nous:organization:weme
+  - nous:project:the-vault
+roles:
+  - relationship-discovery
+  - curatorial-research
+  - creative-development
+  - source-aware-expression
+default_review: human-required
+catalog_entry: catalog/agents/weme-creative-agent.yaml

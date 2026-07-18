@@ -1,0 +1,28 @@
+id: nous:source:we-media-net
+type: source
+name: WEME Creative Agent / WE-MEDIA
+url: https://we-media.net/
+status: active
+accessed: 2026-07-17
+platform: WordPress
+interfaces:
+  rest_api: https://we-media.net/wp-json/
+  sitemap: https://we-media.net/wp-sitemap.xml
+inventory:
+  pages: 41
+  posts: 6
+observed_home_modified: 2026-02-11
+curatorial_role:
+  - organization-history
+  - creative-agent-narrative
+  - project-index
+  - research-publication
+selected_routes:
+  - title: WEME Creative Agent
+    url: https://we-media.net/
+  - title: BrandAI 第五维人格
+    url: https://we-media.net/2025/05/07/brandais-fifth-dimension-of-personality-from-ego-to-agent/
+  - title: Imengine Agent
+    url: https://we-media.net/2025/04/24/imengine-agent-%e9%9d%9e%e5%8a%a0%e5%af%86%e6%95%b0%e5%ad%97%e8%b5%84%e4%ba%a7%e7%9a%84%e4%bb%b7%e5%80%bc%e5%88%9b%e9%80%a0%e5%92%8c%e6%83%b3%e8%b1%a1%e5%8a%9b%e5%bc%95%e6%93%8e/
+content_policy: reference-and-metadata-only
+rights: NOASSERTION

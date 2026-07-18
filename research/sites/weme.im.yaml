@@ -1,0 +1,25 @@
+id: nous:source:weme-im
+type: source
+name: WEME
+url: https://weme.im/
+status: active-historical-surface
+accessed: 2026-07-17
+platform: WordPress
+interfaces:
+  rest_api: https://weme.im/wp-json/
+  sitemap: https://weme.im/wp-sitemap.xml
+inventory:
+  pages: 2
+  posts: 1
+observed_home_modified: 2026-02-11
+curatorial_role:
+  - brand-history
+  - web-service-history
+  - visual-reference
+selected_routes:
+  - title: Home
+    url: https://weme.im/
+  - title: Lunar Seed
+    url: https://weme.im/lunar-seed/
+content_policy: reference-and-metadata-only
+rights: NOASSERTION

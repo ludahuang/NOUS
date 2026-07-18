@@ -1,30 +1,71 @@
 # NOUS
-Curator Incubator
 
-## 关于NOUS
+**Curator Incubator / 策展孵化器**
 
-NOUS（在法语中nous是第一人称复数“我们”，在英语中为名词“智性”和“知性”，亦可理解为“常识common sense”）的源起由来已久，最早可见于微米公司的主体信息和官方邮件地址前缀，最新的形态是由微米创始人鲁大荒创建的Agent智能体。
+NOUS is a long-running curatorial system that can take the form of a space,
+an exhibition, a knowledge environment, a research process, or a creative
+agent.
 
-### 关于创始人
+NOUS 不是某一个网站或单一应用。它是一套持续生成空间、展览、知识项目与智能体的策展机制。
 
-鲁大荒，生于1972年，现居北京，跨媒介艺术家，微米公司创始人，NOUS策展人。他是70年代艺术家中很前卫的一个，他工作非常敏捷和灵活。在完成法国巴黎八大Hypermedia学业后，大荒开创并推动了大量的媒体、艺术和社会项目，在中国传统艺术为主导的群体中树立起跨媒介艺术领域的国际化地标。
+## Current Map
 
-## What is NOUS?
+| Area | Purpose | Entry |
+| --- | --- | --- |
+| Identity | NOUS 的历史、概念与连续性 | [`NOUS.md`](NOUS.md) |
+| Catalog | 人物、空间、展览、智能体和项目注册表 | [`catalog/`](catalog/) |
+| Protocols | 策展、复制、来源、发布与智能体协作机制 | [`protocols/`](protocols/) |
+| Research | 研究问题、站点盘点和来源记录 | [`research/`](research/) |
+| Projects | 可运行、部署和独立发布的作品 | [`projects/`](projects/) |
+| Agents | 智能体身份、原则、权限、能力与评估 | [`agents/`](agents/) |
+| Archive | 已结束但需要保持可解释的历史形态 | [`archive/`](archive/) |
+| Public Site | NOUS 的公共地图和入口 | [`site/`](site/) |
 
-NOUS is made of a set of 40’ ISO containers to travel international voyages, export and exhibit for art data delivery. Standardized container offers the best carrier for open-source data curation, therefore the prototype can also be download and remotely installed a NOUS Container. The cooperation of NOUS artists and co-curators is built on a concept of digitization and replicability, results an interactive experience throughout the open space and social network, reinventing a new form of art museum system.
+## Active Directions
 
-## Why is NOUS?
+- **WEME Creative Agent**: a creative collaborator with an explicit identity,
+  aesthetic position, authority boundary, memory policy, and auditable
+  capabilities.
+- **The Vault**: a graph-native knowledge environment and the first active
+  Agent-era project to be migrated into the NOUS project structure.
+- **NOUS Archive**: the recovery and description of container spaces,
+  exhibitions, distributed installations, research, media, and born-digital
+  works.
 
-Centralized prefabrication & Distributed manufacturing.
-Large sites and small sites.
-The basic units of NOUS. Gallery, Hotel & Coffee.
-Exhibit remotely and Rapid-assembly.
-Open-source and data curation.
-The age of crowd art.
-Reinventing art & museum systems
-The OpenChain and Franchising.
-Creative Agent.
+## Repository Rule
 
-### About founder & curator
+The default branch is the canonical NOUS atlas and operating protocol.
+Products do not occupy the repository root, and long-lived Git branches are
+not used as project categories.
 
-LU Dahuang is a creator. He involved himself into maker, entrepreneur, writer, artist, curator, designer, engineer and developer and demonstrates professional role competence throughout his careers. 
+Every active project or agent should have:
+
+1. a catalog entry;
+2. a human-readable project or agent document;
+3. provenance and license information;
+4. a clear runtime or preservation location;
+5. an explicit relationship to other NOUS entities.
+
+Validate the machine-readable records with:
+
+```bash
+ruby scripts/validate_catalog.rb
+```
+
+## Historical Sources
+
+The first source inventory covers:
+
+- `we-media.net` - WEME organization, projects, research, and Creative Agent narrative;
+- `nous.we-media.net` - NOUS spaces, exhibitions, design objects, and projects;
+- `weme.im` - historical WEME brand and web-service surface;
+- `rebui1t.com` - AI projects, generated works, research, and post-human experiments.
+
+See [`research/sites/`](research/sites/) for access dates, APIs, selected routes,
+and content-handling rules.
+
+## Status
+
+This root architecture is being introduced before any history-preserving import
+of the existing `agent` branch. The current migration decision is documented in
+[`docs/rfcs/0002-the-vault-history-migration.md`](docs/rfcs/0002-the-vault-history-migration.md).

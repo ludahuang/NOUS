@@ -1,0 +1,13 @@
+catalog_version: 0.1.0
+updated: 2026-07-17
+entities:
+  - catalog/people/lu-dahuang.yaml
+  - catalog/organizations/weme.yaml
+  - catalog/spaces/nous-container.yaml
+  - catalog/agents/weme-creative-agent.yaml
+  - catalog/projects/the-vault.yaml
+sources:
+  - research/sites/we-media.net.yaml
+  - research/sites/nous.we-media.net.yaml
+  - research/sites/weme.im.yaml
+  - research/sites/rebui1t.com.yaml

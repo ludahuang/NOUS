@@ -1,0 +1,31 @@
+id: nous:source:rebui1t-com
+type: source
+name: Rebui1t AI Projects
+url: https://rebui1t.com/
+status: active
+accessed: 2026-07-17
+platform: WordPress
+interfaces:
+  rest_api: https://rebui1t.com/wp-json/
+  sitemap: https://rebui1t.com/wp-sitemap.xml
+inventory:
+  pages: 14
+  posts: 71
+  portfolio_items: 15
+observed_latest_post: 2026-07-11
+curatorial_role:
+  - ai-projects
+  - generated-art
+  - post-human-research
+  - agent-and-listening-experiments
+selected_routes:
+  - title: About R^
+    url: https://rebui1t.com/about-us/
+  - title: AIGC
+    url: https://rebui1t.com/portfolio/
+  - title: Multi-Agent Listening Ecology
+    url: https://rebui1t.com/multi-agent-listening-ecology/
+  - title: NOUS x ChatGPT 研究
+    url: https://rebui1t.com/nous-x-chatgpt-research-microsound-aesthetics-and-the-future-of-machine-lis/
+content_policy: reference-and-metadata-only
+rights: NOASSERTION

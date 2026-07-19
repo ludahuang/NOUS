@@ -4,7 +4,9 @@ import { chromium } from "playwright";
 import { installWikipediaMock } from "./agent-wikipedia-mock.mjs";
 
 async function main() {
-  const url = process.env.THE_VAULT_URL || "http://127.0.0.1:8765/index.html?refresh=1";
+  const url =
+    process.env.THE_VAULT_URL ||
+    "http://127.0.0.1:8765/index.html?refresh=1&e2e=1";
   const vaultPath = fileURLToPath(
     new URL("../vaults/Psychology_Genealogy_Atlas/", import.meta.url),
   );
@@ -12,7 +14,10 @@ async function main() {
     headless: true,
     args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
   });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 980 } });
+  const page = await browser.newPage({
+    viewport: { width: 1440, height: 980 },
+    deviceScaleFactor: 2,
+  });
   page.setDefaultTimeout(10000);
 
   const consoleMessages = [];
@@ -32,6 +37,42 @@ async function main() {
     await page.waitForFunction(
       () => document.querySelectorAll("#note-tree .tree-item").length >= 12,
     );
+    const rendererSizing = await page.evaluate(() => {
+      const viewport = document.getElementById("graph-viewport")?.getBoundingClientRect();
+      const canvas = document.querySelector("#graph-viewport canvas")?.getBoundingClientRect();
+      const header = document.querySelector(".stage-header")?.getBoundingClientRect();
+      const sidebar = document.querySelector(".vault-sidebar")?.getBoundingClientRect();
+      const notePane = document.querySelector(".note-pane")?.getBoundingClientRect();
+      return {
+        viewportLeft: viewport?.left || 0,
+        viewportTop: viewport?.top || 0,
+        viewportRight: viewport?.right || 0,
+        viewportWidth: viewport?.width || 0,
+        viewportHeight: viewport?.height || 0,
+        canvasWidth: canvas?.width || 0,
+        canvasHeight: canvas?.height || 0,
+        headerBottom: header?.bottom || 0,
+        sidebarRight: sidebar?.right || 0,
+        notePaneLeft: notePane?.left || 0,
+      };
+    });
+    if (
+      Math.abs(rendererSizing.canvasWidth - rendererSizing.viewportWidth) > 1 ||
+      Math.abs(rendererSizing.canvasHeight - rendererSizing.viewportHeight) > 1
+    ) {
+      throw new Error(
+        `Renderer CSS size drifted from its viewport: ${JSON.stringify(rendererSizing)}`,
+      );
+    }
+    if (
+      rendererSizing.viewportTop < rendererSizing.headerBottom ||
+      rendererSizing.viewportLeft < rendererSizing.sidebarRight ||
+      rendererSizing.viewportRight > rendererSizing.notePaneLeft
+    ) {
+      throw new Error(
+        `Renderer overlapped a workspace panel: ${JSON.stringify(rendererSizing)}`,
+      );
+    }
 
     await page.click("#menu-obsidian");
     await page.locator("#vault-input").setInputFiles(vaultPath);
@@ -39,6 +80,112 @@ async function main() {
       () => /Imported "Psychology_Genealogy_Atlas"/.test(
         document.getElementById("graph-status")?.textContent || "",
       ),
+    );
+    await page.waitForFunction(
+      () =>
+        window.__THE_VAULT_E2E__ &&
+        !window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot().cameraAnimating,
+    );
+
+    const overviewAlignment = await page.evaluate(() =>
+      window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+    );
+    if (
+      Math.abs(overviewAlignment.graphCenter?.x || 0) > 0.015 ||
+      Math.abs(overviewAlignment.graphCenter?.y || 0) > 0.015 ||
+      overviewAlignment.maxGraphX > 0.94 ||
+      overviewAlignment.maxGraphY > 0.94
+    ) {
+      throw new Error(
+        `Imported graph was not centered and framed: ${JSON.stringify(overviewAlignment)}`,
+      );
+    }
+
+    const labelTarget = await page.evaluate(() => {
+      const targets = window.__THE_VAULT_E2E__.getTagClickTargets();
+      const canvas = document.querySelector("#graph-viewport canvas");
+      const rect = canvas.getBoundingClientRect();
+      const candidates = targets
+        .filter((target) => target.id !== window.__THE_VAULT_E2E__
+          .getCameraAlignmentSnapshot().selectedPageId)
+        .map((target) => {
+          const clientX = rect.left + ((target.x + 1) * rect.width) / 2;
+          const clientY = rect.top + ((1 - target.y) * rect.height) / 2;
+          const nearestDistance = targets.reduce((nearest, other) => {
+            if (other.id === target.id) {
+              return nearest;
+            }
+            return Math.min(
+              nearest,
+              Math.hypot(other.x - target.x, other.y - target.y),
+            );
+          }, Infinity);
+
+          return {
+            ...target,
+            clientX,
+            clientY,
+            nearestDistance,
+            unobstructed: document.elementFromPoint(clientX, clientY) === canvas,
+          };
+        })
+        .filter((target) => target.unobstructed)
+        .sort((left, right) => right.nearestDistance - left.nearestDistance);
+
+      return candidates[0] || null;
+    });
+    if (!labelTarget) {
+      throw new Error("No unobstructed in-scene label was available for the click test.");
+    }
+
+    await page.mouse.click(labelTarget.clientX, labelTarget.clientY);
+    await page.waitForFunction(
+      (expectedPageId) => {
+        const snapshot =
+          window.__THE_VAULT_E2E__?.getCameraAlignmentSnapshot();
+        return (
+          snapshot &&
+          snapshot.selectedPageId === expectedPageId &&
+          !snapshot.cameraAnimating &&
+          Math.abs(snapshot.selected?.x || 0) < 0.015 &&
+          Math.abs(snapshot.selected?.y || 0) < 0.015
+        );
+      },
+      labelTarget.id,
+    );
+    const clickedAlignment = await page.evaluate(() =>
+      window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+    );
+
+    await page.locator("#note-tree .tree-item", { hasText: "心理学思想史" }).first().click();
+    await page.waitForFunction(
+      () => {
+        const snapshot =
+          window.__THE_VAULT_E2E__?.getCameraAlignmentSnapshot();
+        return (
+          snapshot &&
+          snapshot.selectedTitle === "心理学思想史" &&
+          !snapshot.cameraAnimating &&
+          Math.abs(snapshot.selected?.x || 0) < 0.015 &&
+          Math.abs(snapshot.selected?.y || 0) < 0.015
+        );
+      },
+    );
+    const focusedAlignment = await page.evaluate(() =>
+      window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+    );
+
+    await page.locator("#note-tree .tree-item", { hasText: "心理学谱系总图" }).first().click();
+    await page.waitForFunction(
+      () => {
+        const snapshot =
+          window.__THE_VAULT_E2E__?.getCameraAlignmentSnapshot();
+        return (
+          snapshot &&
+          snapshot.selectedTitle === "心理学谱系总图" &&
+          !snapshot.cameraAnimating
+        );
+      },
     );
 
     const fusionState = await page.evaluate(() => ({
@@ -116,6 +263,11 @@ async function main() {
         {
           ok: true,
           url,
+          rendererSizing,
+          overviewAlignment,
+          labelTarget,
+          clickedAlignment,
+          focusedAlignment,
           vaultState,
           fusionState,
         },

@@ -672,7 +672,11 @@ button:disabled {
 .graph-viewport,
 .label-layer {
   position: absolute;
-  inset: 0;
+  inset:
+    var(--graph-top-inset, 0)
+    var(--graph-right-inset, 0)
+    0
+    var(--graph-left-inset, 0);
 }
 
 .graph-viewport {

@@ -239,6 +239,8 @@ const noteTree = document.getElementById("note-tree");
 const vaultCount = document.getElementById("vault-count");
 const graphStatus = document.getElementById("graph-status");
 const legend = document.getElementById("legend");
+const graphViewSwitch = document.getElementById("graph-view-switch");
+const graphViewButtons = [...graphViewSwitch.querySelectorAll("[data-graph-view]")];
 
 const articleKicker = document.getElementById("article-kicker");
 const articleTitle = document.getElementById("article-title");
@@ -334,12 +336,16 @@ controls.enableZoom = true;
 controls.enableRotate = true;
 controls.keyPanSpeed = 22;
 controls.autoRotate = false;
-controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
 controls.mouseButtons.MIDDLE = THREE.MOUSE.DOLLY;
-controls.mouseButtons.RIGHT = THREE.MOUSE.ROTATE;
+controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
 controls.screenSpacePanning = true;
-controls.touches.ONE = THREE.TOUCH.PAN;
-controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
+controls.touches.ONE = THREE.TOUCH.ROTATE;
+controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
+controls.rotateSpeed = 0.58;
+controls.panSpeed = 0.72;
+controls.zoomSpeed = 0.82;
+controls.dampingFactor = 0.075;
 controls.target.copy(initialTarget);
 controls.update();
 
@@ -439,12 +445,14 @@ const state = {
   agentHasRevealed: false,
   agentDraftIndex: -1,
   graphMode: "default",
+  graphViewMode: "fusion",
   motionEnabled: true,
   loading: true,
   editorOpen: false,
   editingNoteId: "",
   localNoteSequence: 0,
   dragTag: null,
+  stagePointerPress: null,
   cameraGoal: null,
   targetGoal: null,
   trackedPageId: null,
@@ -460,6 +468,25 @@ function slugify(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function stableHash(value) {
+  let hash = 2166136261;
+
+  for (const character of String(value || "")) {
+    hash ^= character.codePointAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+function stableSlug(value) {
+  return slugify(value) || `u-${stableHash(value).toString(36)}`;
+}
+
+function stableUnit(value, salt = "") {
+  return stableHash(`${salt}:${value}`) / 0xffffffff;
 }
 
 function clamp(value, min, max) {
@@ -721,9 +748,11 @@ function parseObsidianDraft(file, markdown, index, vaultRootName) {
   const extract =
     excerptText(frontmatter.description || plainText, 320) ||
     `${title} imported from Obsidian markdown.`;
+  const idLabel = slugify(relativePath) || slugify(title) || "note";
+  const idHash = stableHash(relativePath || title || `untitled-${index + 1}`).toString(36);
 
   return {
-    id: `note-import-${slugify(relativePath) || slugify(title) || `untitled-${index + 1}`}`,
+    id: `note-import-${idLabel}-${idHash}`,
     title: title || `Untitled ${index + 1}`,
     aliases,
     description: frontmatter.description || "Obsidian note",
@@ -743,7 +772,53 @@ function parseObsidianDraft(file, markdown, index, vaultRootName) {
     folderPath,
     folderName,
     tags,
+    nodeKind: frontmatter.node_kind || "note",
+    wikipediaTitle: frontmatter.wikipedia || "",
   };
+}
+
+async function readWikipediaManifest(fileList) {
+  const manifestFile = [...fileList].find(
+    (file) => /(?:^|\/)the-vault\.wikipedia\.json$/i.test(
+      file.webkitRelativePath || file.name,
+    ),
+  );
+  if (!manifestFile) {
+    return null;
+  }
+
+  try {
+    const manifest = JSON.parse(await manifestFile.text());
+    if (
+      manifest.schema !== "the-vault.wikipedia-graph/v1" ||
+      !Array.isArray(manifest.records)
+    ) {
+      throw new Error("unsupported manifest schema");
+    }
+
+    return {
+      ...manifest,
+      records: manifest.records
+        .filter((record) => record?.title)
+        .map((record) => ({
+          ...record,
+          sourceType: "wikipedia",
+          sourceLabel: record.sourceLabel || manifest.source || "Wikipedia",
+          mergedSources: uniqueValues([
+            ...(record.mergedSources || []),
+            record.sourceLabel || manifest.source || "Wikipedia",
+          ]),
+          anchorTitles: uniqueValues(record.anchorTitles || []),
+          anchorPaths: uniqueValues(record.anchorPaths || []),
+        })),
+    };
+  } catch (error) {
+    setGraphStatus(
+      `Wikipedia source manifest could not be read: ${error.message}`,
+      "warning",
+    );
+    return null;
+  }
 }
 
 function getObsidianDuplicateKey(record) {
@@ -776,8 +851,8 @@ function prepareWikipediaRecords(records) {
     sourceLabel:
       record.sourceLabel ||
       ((record.sourceAnnotations || []).length
-        ? "English Wikipedia + Obsidian Import"
-        : "English Wikipedia"),
+        ? "Wikipedia + Obsidian Import"
+        : "Wikipedia"),
     aliases: record.aliases || [],
     tags: record.tags || [],
     sourceAnnotations: (record.sourceAnnotations || []).map((annotation) => ({
@@ -787,12 +862,19 @@ function prepareWikipediaRecords(records) {
     })),
     mergedSources: uniqueValues(
       record.mergedSources || [
-        "English Wikipedia",
+        record.sourceLabel || "Wikipedia",
         ...(record.sourceAnnotations || []).map(
           (annotation) => annotation.sourceLabel || "Obsidian Import",
         ),
       ],
     ),
+    anchorTitles: uniqueValues(record.anchorTitles || []),
+    anchorPaths: uniqueValues(record.anchorPaths || []),
+    expansionDepth: Number(record.expansionDepth || 0),
+    folderName:
+      record.folderName ||
+      record.anchorPaths?.[0]?.split("/").filter(Boolean)[0] ||
+      "",
   }));
   const titleToId = new Map(normalizedRecords.map((record) => [record.title, record.id]));
 
@@ -838,6 +920,18 @@ function mergeWikipediaRecordSets(existingRecords, incomingRecords) {
         ...(existing.sourceAnnotations || []),
         ...(record.sourceAnnotations || []),
       ],
+      anchorTitles: uniqueValues([
+        ...(existing.anchorTitles || []),
+        ...(record.anchorTitles || []),
+      ]),
+      anchorPaths: uniqueValues([
+        ...(existing.anchorPaths || []),
+        ...(record.anchorPaths || []),
+      ]),
+      expansionDepth: Math.min(
+        Number(existing.expansionDepth || 0),
+        Number(record.expansionDepth || 0),
+      ),
       mergedSources: uniqueValues([
         ...(existing.mergedSources || []),
         ...(record.mergedSources || []),
@@ -858,6 +952,7 @@ function findWikipediaRecordByTitle(title) {
 
 function buildImportSourceAnnotation(record) {
   return {
+    id: record.id,
     title: record.title,
     sourceType: "obsidian",
     sourceLabel: "Obsidian Import",
@@ -866,11 +961,17 @@ function buildImportSourceAnnotation(record) {
     markdown: record.markdown,
     previewBlocks: [...(record.previewBlocks || [])],
     tags: [...(record.tags || [])],
+    nodeKind: record.nodeKind || "note",
+    wikipediaTitle: record.wikipediaTitle || "",
+    rawLinks: [...(record.rawLinks || [])],
+    links: [...(record.links || [])],
+    linkIds: [...(record.linkIds || [])],
   };
 }
 
 function mergeImportedRecordIntoWikipediaRecord(targetRecord, importRecord) {
   const annotation = buildImportSourceAnnotation(importRecord);
+  const publicSourceLabel = targetRecord.sourceLabel || "Wikipedia";
   const annotationKey = normalizeLinkKey(annotation.relativePath || annotation.title);
   const existingAnnotations = new Map(
     (targetRecord.sourceAnnotations || []).map((entry) => [
@@ -887,13 +988,15 @@ function mergeImportedRecordIntoWikipediaRecord(targetRecord, importRecord) {
 
   return {
     ...targetRecord,
-    sourceLabel: "English Wikipedia + Obsidian Import",
+    sourceLabel: `${publicSourceLabel} + Obsidian Import`,
     mergedSources: uniqueValues([
       ...(targetRecord.mergedSources || []),
-      "English Wikipedia",
+      publicSourceLabel,
       annotation.sourceLabel,
     ]),
     sourceAnnotations: [...existingAnnotations.values()],
+    folderName: importRecord.folderName || targetRecord.folderName || "",
+    relativePath: importRecord.relativePath || targetRecord.relativePath || "",
     aliases: uniqueValues([...(targetRecord.aliases || []), ...(importRecord.aliases || [])]),
     tags: uniqueValues([...(targetRecord.tags || []), ...(importRecord.tags || [])]),
     links: uniqueValues([
@@ -934,6 +1037,10 @@ function resolveObsidianLinks(drafts, externalTargets = []) {
   externalTargets.forEach((target) => {
     registerLookup(target.title, target.id);
     (target.aliases || []).forEach((alias) => registerLookup(alias, target.id));
+    (target.anchorTitles || []).forEach((title) => registerLookup(title, target.id));
+    (target.sourceAnnotations || []).forEach((annotation) => {
+      registerLookup(annotation.title, target.id);
+    });
   });
 
   drafts.forEach((draft) => {
@@ -970,9 +1077,65 @@ function resolveObsidianLinks(drafts, externalTargets = []) {
   return drafts;
 }
 
-function buildVaultClusterContext(records, options = {}) {
+function getTopologyRole(record) {
+  const tags = new Set(
+    toArray(record.tags || record.importedTags)
+      .map((tag) => String(tag).trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+  if (tags.has("role/global-hub")) {
+    return "global-hub";
+  }
+
+  if (tags.has("bridge") || tags.has("role/bridge")) {
+    return "bridge";
+  }
+
+  if (tags.has("role/hub")) {
+    return "hub";
+  }
+
+  return "note";
+}
+
+function findBridgeFolder(records, neighborMap) {
+  const recordById = new Map(records.map((record) => [record.id, record]));
+  const scores = new Map();
+
+  records.forEach((record) => {
+    const folderName = record.folderName || "Root Notes";
+    const role = getTopologyRole(record);
+    let score = /bridge|callosum|桥|胼胝体/i.test(folderName) ? 12 : 0;
+
+    if (role === "global-hub") {
+      score += 14;
+    } else if (role === "bridge") {
+      score += 7;
+    } else if (role === "hub") {
+      score += 1;
+    }
+
+    (neighborMap.get(record.id) || new Map()).forEach((_, neighborId) => {
+      const neighbor = recordById.get(neighborId);
+      if (neighbor && neighbor.folderName !== folderName) {
+        score += 1;
+      }
+    });
+
+    scores.set(folderName, (scores.get(folderName) || 0) + score);
+  });
+
+  const [folderName, score] =
+    [...scores.entries()].sort(
+      (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
+    )[0] || [];
+
+  return score >= 6 ? folderName : "";
+}
+
+function buildVaultClusterContext(records, neighborMap, options = {}) {
   const idPrefix = options.idPrefix || "vault";
-  const radiusBase = options.hasWikiShell ? 56 : 24;
   const folderCounts = new Map();
 
   records.forEach((record) => {
@@ -991,23 +1154,43 @@ function buildVaultClusterContext(records, options = {}) {
     folderNames.push("Other Notes");
   }
 
-  const ringCount = Math.max(folderNames.length, 1);
+  const bridgeFolder = options.topologyFirst
+    ? findBridgeFolder(records, neighborMap)
+    : "";
+  const ringFolders = folderNames.filter((folderName) => folderName !== bridgeFolder);
+  const ringCount = Math.max(ringFolders.length, 1);
+  const densityRadius = Math.min(26, Math.sqrt(Math.max(records.length, 1)) * 1.7);
+  const ringRadius = options.hasWikiShell
+    ? 56 + ringCount * 4.2
+    : 32 + ringCount * 2.8 + densityRadius;
+  const clusterIds = new Map(
+    folderNames.map((folderName) => [
+      folderName,
+      `cluster-${idPrefix}-${stableSlug(folderName)}`,
+    ]),
+  );
+
   const clusters = folderNames.map((folderName, index) => {
-    const angle = (index / ringCount) * Math.PI * 2;
-    const radius = radiusBase + ringCount * 4.2;
+    const isBridgeCluster = folderName === bridgeFolder;
+    const ringIndex = Math.max(ringFolders.indexOf(folderName), 0);
+    const angle = -Math.PI / 2 + (ringIndex / ringCount) * Math.PI * 2;
+
     return {
-      id: `cluster-${idPrefix}-${slugify(folderName)}`,
+      id: clusterIds.get(folderName),
       name: folderName,
       theme:
         folderName === "Other Notes"
           ? "Overflow notes grouped from smaller folders."
           : `Imported notes from ${folderName}.`,
-      center: [
-        Math.cos(angle) * radius,
-        Math.sin(angle * 1.4) * 10 + (index % 2 === 0 ? 4 : -4),
-        Math.sin(angle) * radius * 0.74,
-      ],
-      spread: [11, 9, 9],
+      topologyRole: isBridgeCluster ? "bridge" : "module",
+      center: isBridgeCluster
+        ? [0, 0, 0]
+        : [
+          Math.cos(angle) * ringRadius,
+          Math.sin(angle * 1.45) * 8 + (ringIndex % 2 === 0 ? 3 : -3),
+          Math.sin(angle) * ringRadius * 0.7,
+        ],
+      spread: isBridgeCluster ? [10, 8, 10] : [11, 9, 9],
       accent: DYNAMIC_CLUSTER_COLORS[index % DYNAMIC_CLUSTER_COLORS.length],
     };
   });
@@ -1015,18 +1198,106 @@ function buildVaultClusterContext(records, options = {}) {
   const assignments = new Map();
   records.forEach((record) => {
     const folderName = visibleNames.has(record.folderName) ? record.folderName : "Other Notes";
-    assignments.set(record.id, `cluster-${idPrefix}-${slugify(folderName)}`);
+    assignments.set(record.id, clusterIds.get(folderName));
   });
 
   return { clusters, assignments };
 }
 
+function buildFusionClusterContext(pages, neighborMap) {
+  const privatePages = pages.filter(
+    (page) => page.sourceType === "obsidian" || page.sourceAnnotations?.length,
+  );
+  const vaultContext = buildVaultClusterContext(privatePages, neighborMap, {
+    idPrefix: "vault",
+    topologyFirst: true,
+  });
+  const assignments = new Map(vaultContext.assignments);
+  const clusterByFolder = new Map();
+
+  privatePages.forEach((page) => {
+    const clusterId = assignments.get(page.id);
+    if (clusterId && page.folderName) {
+      clusterByFolder.set(page.folderName, clusterId);
+    }
+  });
+
+  pages.forEach((page) => {
+    if (assignments.has(page.id)) {
+      return;
+    }
+
+    const folderHint =
+      page.folderName ||
+      page.anchorPaths?.[0]?.split("/").filter(Boolean)[0] ||
+      "";
+    const clusterId = clusterByFolder.get(folderHint);
+    if (clusterId) {
+      assignments.set(page.id, clusterId);
+    }
+  });
+
+  for (let pass = 0; pass < 5; pass += 1) {
+    let changed = false;
+    pages.forEach((page) => {
+      if (assignments.has(page.id)) {
+        return;
+      }
+
+      const scores = new Map();
+      (neighborMap.get(page.id) || new Map()).forEach((weight, neighborId) => {
+        const clusterId = assignments.get(neighborId);
+        if (clusterId) {
+          scores.set(clusterId, (scores.get(clusterId) || 0) + weight);
+        }
+      });
+      const clusterId = [...scores.entries()]
+        .sort((left, right) => right[1] - left[1])[0]?.[0];
+      if (clusterId) {
+        assignments.set(page.id, clusterId);
+        changed = true;
+      }
+    });
+    if (!changed) {
+      break;
+    }
+  }
+
+  const fallbackClusters = vaultContext.clusters.filter(
+    (cluster) => cluster.topologyRole !== "bridge",
+  );
+  pages.forEach((page) => {
+    if (!assignments.has(page.id)) {
+      const index = Math.floor(stableUnit(page.id, "fusion-cluster") * fallbackClusters.length);
+      assignments.set(
+        page.id,
+        (fallbackClusters[index] || vaultContext.clusters[0]).id,
+      );
+    }
+  });
+
+  return {
+    clusters: vaultContext.clusters,
+    assignments,
+  };
+}
+
 function buildHybridClusterContext(pages, neighborMap, options = {}) {
+  if (
+    options.fusionTopology &&
+    pages.some((page) => page.sourceType === "obsidian" || page.sourceAnnotations?.length)
+  ) {
+    return buildFusionClusterContext(pages, neighborMap);
+  }
+
   const wikipediaPages = pages.filter((page) => page.sourceType === "wikipedia");
   const obsidianPages = pages.filter((page) => page.sourceType === "obsidian");
 
   if (!wikipediaPages.length) {
-    return buildVaultClusterContext(obsidianPages, { idPrefix: "vault" });
+    return buildVaultClusterContext(obsidianPages, neighborMap, {
+      idPrefix: "vault",
+      topologyFirst: options.topologyFirst,
+    });
   }
 
   const wikipediaContext =
@@ -1042,9 +1313,10 @@ function buildHybridClusterContext(pages, neighborMap, options = {}) {
     return wikipediaContext;
   }
 
-  const vaultContext = buildVaultClusterContext(obsidianPages, {
+  const vaultContext = buildVaultClusterContext(obsidianPages, neighborMap, {
     idPrefix: "vault",
     hasWikiShell: true,
+    topologyFirst: false,
   });
 
   return {
@@ -1063,20 +1335,104 @@ function syncObsidianLinks() {
   );
 }
 
+function getVaultGraphRecords() {
+  const mergedImports = state.wikipediaRecords
+    .filter((record) => record.sourceAnnotations?.length)
+    .flatMap((record) => record.sourceAnnotations.map((annotation, annotationIndex) => {
+      const relativePath = annotation.relativePath || "";
+      const pathParts = relativePath.split("/").filter(Boolean);
+      const fallbackId = `note-import-${stableSlug(relativePath || annotation.title)}-${stableHash(
+        `${relativePath}:${annotation.title}:${annotationIndex}`,
+      ).toString(36)}`;
+
+      return {
+        ...record,
+        id: annotation.id || fallbackId,
+        title: annotation.title || record.title,
+        description: "Obsidian note",
+        extract:
+          excerptText(stripMarkdown(annotation.markdown || ""), 320) ||
+          record.extract ||
+          "",
+        sourceType: "obsidian",
+        sourceLabel: record.sourceLabel || "English Wikipedia + Obsidian Import",
+        markdown: annotation.markdown || record.markdown || "",
+        previewBlocks: annotation.previewBlocks || record.previewBlocks || [],
+        relativePath,
+        folderPath: pathParts.slice(0, -1).join("/"),
+        folderName: annotation.folderName || pathParts[0] || "Imported",
+        tags: uniqueValues([...(record.tags || []), ...(annotation.tags || [])]),
+        nodeKind: annotation.nodeKind || "note",
+        wikipediaTitle: annotation.wikipediaTitle || record.title || "",
+        rawLinks: annotation.rawLinks || annotation.links || [],
+        links: annotation.links || [],
+        linkIds: [],
+        anchorTitles: [],
+        anchorPaths: [],
+      };
+    }));
+
+  return [...state.obsidianRecords, ...mergedImports];
+}
+
+function updateGraphViewSwitch() {
+  const hasVault = getVaultGraphRecords().length > 0;
+  graphViewSwitch.hidden = !hasVault;
+
+  graphViewButtons.forEach((button) => {
+    const active = button.dataset.graphView === state.graphViewMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
 function rebuildActiveGraph(preferredPageId = "") {
   syncObsidianLinks();
+  const vaultRecords = getVaultGraphRecords();
   const combinedRecords = [...state.wikipediaRecords, ...state.obsidianRecords];
+  const useVaultTopology = state.graphViewMode === "vault" && vaultRecords.length > 0;
+  const useFusionTopology =
+    state.graphViewMode === "fusion" &&
+    vaultRecords.length > 0 &&
+    state.wikipediaRecords.length > 0;
+  const activeRecords = useVaultTopology ? vaultRecords : combinedRecords;
 
-  if (!combinedRecords.length) {
+  if (!activeRecords.length) {
+    updateGraphViewSwitch();
     return;
   }
 
-  buildGraph(combinedRecords, {
+  buildGraph(activeRecords, {
     mode: state.graphMode,
-    seedTitle: state.activeSeedTitle || combinedRecords[0]?.title || "",
+    seedTitle: state.activeSeedTitle || activeRecords[0]?.title || "",
     seedPageId: preferredPageId || state.selectedPageId || state.activeSeedPageId || "",
-    includeLocalLayer: state.obsidianRecords.length > 0,
+    includeLocalLayer: activeRecords.some((record) => record.sourceType === "obsidian"),
+    vaultTopology: useVaultTopology || useFusionTopology,
+    fusionTopology: useFusionTopology,
   });
+  updateGraphViewSwitch();
+}
+
+function setGraphViewMode(mode) {
+  const nextMode = mode === "vault" && getVaultGraphRecords().length ? "vault" : "fusion";
+  if (nextMode === state.graphViewMode) {
+    return;
+  }
+
+  state.graphViewMode = nextMode;
+  state.filterCluster = "all";
+  regionFilter.value = "all";
+  rebuildActiveGraph(state.selectedPageId || "");
+
+  if (state.graphViewMode === "vault") {
+    setGraphStatus(
+      `Vault topology: ${state.pages.length} imported notes arranged by links across ${state.clusters.length} folders.`,
+    );
+  } else {
+    setGraphStatus(
+      `Fusion topology: ${getVaultGraphRecords().length} private notes connected with ${state.wikipediaRecords.length} Wikipedia pages.`,
+    );
+  }
 }
 
 function buildLocalNoteRecord({ id = "", title = "", folderName = "Scratchpad", markdown = "" }) {
@@ -1205,7 +1561,7 @@ function normalizeSearchTitle(value) {
     String(value || "")
       .toLowerCase()
       .replace(/\s*\(.+?\)\s*/g, " ")
-      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/[^\p{L}\p{N} ]+/gu, " ")
       .replace(/\s+/g, " "),
   );
 }
@@ -1771,32 +2127,28 @@ function drawRoundedRect(context, x, y, width, height, radius) {
 function createTagSprite(page) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-  context.font = "600 30px Avenir Next, Segoe UI, sans-serif";
+  context.font = "600 26px Avenir Next, Segoe UI, sans-serif";
   const metrics = context.measureText(page.title);
-  const width = Math.ceil(metrics.width + 84);
-  const height = 62;
-  canvas.width = width * 2;
-  canvas.height = height * 2;
+  const width = Math.ceil(metrics.width + 36);
+  const height = 52;
+  const textureScale = 1.5;
+  canvas.width = Math.ceil(width * textureScale);
+  canvas.height = Math.ceil(height * textureScale);
 
-  context.scale(2, 2);
+  context.scale(textureScale, textureScale);
   context.clearRect(0, 0, width, height);
-  drawRoundedRect(context, 1, 1, width - 2, height - 2, 22);
-  context.fillStyle = "rgba(12, 16, 22, 0.84)";
+  drawRoundedRect(context, 1, 1, width - 2, height - 2, 14);
+  context.fillStyle = "rgba(12, 16, 22, 0.88)";
   context.fill();
-  context.strokeStyle = "rgba(255,255,255,0.16)";
-  context.lineWidth = 1.2;
+  const accent = new THREE.Color(page.color);
+  context.strokeStyle = `rgba(${Math.round(accent.r * 255)}, ${Math.round(accent.g * 255)}, ${Math.round(accent.b * 255)}, 0.58)`;
+  context.lineWidth = 1.4;
   context.stroke();
 
-  const dotColor = shiftColor(page.color, 0, 0.18, 0.1);
-  context.beginPath();
-  context.fillStyle = `#${dotColor.getHexString()}`;
-  context.arc(24, height / 2, 8, 0, Math.PI * 2);
-  context.fill();
-
   context.fillStyle = "#e7eefb";
-  context.font = "600 30px Avenir Next, Segoe UI, sans-serif";
+  context.font = "600 26px Avenir Next, Segoe UI, sans-serif";
   context.textBaseline = "middle";
-  context.fillText(page.title, 40, height / 2 + 1);
+  context.fillText(page.title, 18, height / 2 + 1);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
@@ -1810,7 +2162,7 @@ function createTagSprite(page) {
     depthTest: false,
   });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(width * 0.042, height * 0.042, 1);
+  sprite.scale.set(width * 0.038, height * 0.038, 1);
   sprite.center.set(0.5, 0.5);
   sprite.renderOrder = 24;
   sprite.userData.baseScale = sprite.scale.clone();
@@ -1908,6 +2260,7 @@ function clearGraphCanvas(title = "Blank canvas", summary = "Discovering a new n
   statPages.textContent = "0";
   statLinks.textContent = "0";
   statFolders.textContent = "0";
+  updateGraphViewSwitch();
   regionFilter.innerHTML = '<option value="all">All folders</option>';
   regionFilter.value = "all";
   articleKicker.textContent = "Wikipedia discovery";
@@ -2483,6 +2836,10 @@ function setAgentOpen(open) {
 }
 
 function getGraphModeLabel() {
+  if (state.graphViewMode === "vault" && getVaultGraphRecords().length) {
+    return "Obsidian vault topology";
+  }
+
   if (state.obsidianRecords.length && state.wikipediaRecords.length) {
     return "Wikipedia + Obsidian overlay";
   }
@@ -3102,7 +3459,14 @@ function updateInspector(page) {
   articleTitle.textContent = page.title;
   articleSummary.textContent = buildArticleSummary(page);
   clearArticleBody();
+  const sourceBadgeLabel = String(page.sourceLabel || "").includes("中文")
+    ? "中文维基百科"
+    : String(page.sourceLabel || "").includes("English")
+      ? "English Wikipedia"
+      : "Wikipedia";
   sourceLink.href = page.url || "https://en.wikipedia.org/";
+  sourceLink.textContent = sourceBadgeLabel;
+  sourceLink.setAttribute("aria-label", `Open on ${sourceBadgeLabel}`);
   sourceLink.hidden = !page.url;
   editNoteButton.hidden = page.sourceType !== "obsidian";
   infoRegion.textContent = page.clusterName;
@@ -3502,7 +3866,8 @@ async function loadTopicGraphFromQuery(query, preferredTitle = "") {
 }
 
 async function loadObsidianVaultFromFiles(fileList) {
-  const markdownFiles = [...fileList].filter((file) => /\.(md|markdown)$/i.test(file.name));
+  const files = [...fileList];
+  const markdownFiles = files.filter((file) => /\.(md|markdown)$/i.test(file.name));
   if (!markdownFiles.length) {
     setGraphStatus("No markdown files were found in the imported selection.", "error");
     return;
@@ -3518,6 +3883,7 @@ async function loadObsidianVaultFromFiles(fileList) {
   state.activeVaultName = vaultName;
   setGraphStatus(`Importing "${vaultName}"… 0/${markdownFiles.length}`);
 
+  const wikipediaManifestPromise = readWikipediaManifest(files);
   let completed = 0;
   const drafts = await mapWithConcurrency(markdownFiles, 8, async (file, index) => {
     const markdown = await file.text();
@@ -3534,15 +3900,25 @@ async function loadObsidianVaultFromFiles(fileList) {
     return;
   }
 
+  const wikipediaManifest = await wikipediaManifestPromise;
+  if (requestId !== state.graphRequestId) {
+    return;
+  }
+  const importedWikipediaRecords = wikipediaManifest
+    ? prepareWikipediaRecords(wikipediaManifest.records)
+    : state.wikipediaRecords;
   const resolvedDrafts = resolveObsidianLinks(
     drafts.map((draft) => ({ ...draft })),
-    [...state.wikipediaRecords, ...state.obsidianRecords],
+    [...importedWikipediaRecords, ...state.obsidianRecords],
   );
   const existingByKey = new Map(
     state.obsidianRecords.map((record) => [getObsidianDuplicateKey(record), record]),
   );
   const nextWikipediaRecords = new Map(
-    state.wikipediaRecords.map((record) => [normalizeSearchTitle(record.title), { ...record }]),
+    importedWikipediaRecords.map((record) => [
+      normalizeSearchTitle(record.title),
+      { ...record },
+    ]),
   );
   const nextRecords = new Map(state.obsidianRecords.map((record) => [record.id, record]));
   let addedCount = 0;
@@ -3595,10 +3971,14 @@ async function loadObsidianVaultFromFiles(fileList) {
   });
   state.wikipediaRecords = prepareWikipediaRecords([...nextWikipediaRecords.values()]);
   state.obsidianRecords = [...nextRecords.values()];
-  rebuildActiveGraph(preferredPageId || resolvedDrafts[0]?.id || "");
+  state.graphViewMode = wikipediaManifest ? "fusion" : "vault";
+  const topologySeed = getVaultGraphRecords().find(
+    (record) => getTopologyRole(record) === "global-hub",
+  );
+  rebuildActiveGraph(topologySeed?.id || preferredPageId || resolvedDrafts[0]?.id || "");
 
   setGraphStatus(
-    `Imported "${vaultName}": ${addedCount} added, ${updatedCount} refreshed, ${mergedCount} merged into Wikipedia, ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} skipped.`,
+    `Imported "${vaultName}": ${addedCount} private notes, ${mergedCount} public/private merges, ${wikipediaManifest?.records.length || 0} Wikipedia sources, ${updatedCount} refreshed, ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} skipped.`,
   );
 }
 
@@ -3784,6 +4164,197 @@ function buildDynamicClusterContext(pages, neighborMap, seedTitle) {
   return { clusters, assignments };
 }
 
+function getTopologyAnchor(page, pageMap, neighborMap) {
+  const cluster = state.clusterMap.get(page.clusterId);
+  const clusterCenter = new THREE.Vector3(...(cluster?.center || [0, 0, 0]));
+  const role = getTopologyRole(page);
+
+  if (role === "global-hub") {
+    return new THREE.Vector3(0, 0, 0);
+  }
+
+  if (role !== "bridge") {
+    return clusterCenter;
+  }
+
+  const linkedClusterCenters = [];
+  const seenClusters = new Set();
+
+  (neighborMap.get(page.id) || new Map()).forEach((_, neighborId) => {
+    const neighbor = pageMap.get(neighborId);
+    if (!neighbor || neighbor.clusterId === page.clusterId || seenClusters.has(neighbor.clusterId)) {
+      return;
+    }
+
+    const neighborCluster = state.clusterMap.get(neighbor.clusterId);
+    if (!neighborCluster) {
+      return;
+    }
+
+    seenClusters.add(neighbor.clusterId);
+    linkedClusterCenters.push(new THREE.Vector3(...neighborCluster.center));
+  });
+
+  if (!linkedClusterCenters.length) {
+    return clusterCenter;
+  }
+
+  const anchor = linkedClusterCenters
+    .reduce((sum, center) => sum.add(center), new THREE.Vector3())
+    .multiplyScalar(1 / linkedClusterCenters.length);
+
+  return anchor.multiplyScalar(0.82);
+}
+
+function createDeterministicClusterPoint(page, cluster, index, count) {
+  const center = new THREE.Vector3(...cluster.center);
+  const angle =
+    (index / Math.max(count, 1)) * Math.PI * 2 +
+    stableUnit(page.id, "angle") * 0.72;
+  const radius = 5 + stableUnit(page.id, "radius") * 6.5;
+  const height = (stableUnit(page.id, "height") - 0.5) * 9;
+
+  return center.add(
+    new THREE.Vector3(
+      Math.cos(angle) * radius,
+      height,
+      Math.sin(angle) * radius * 0.78,
+    ),
+  );
+}
+
+function buildVaultTopologyHomes(pages, edges, pageMap, neighborMap) {
+  const positions = new Map();
+  const velocities = new Map();
+  const clusterPages = new Map();
+
+  pages.forEach((page) => {
+    if (!clusterPages.has(page.clusterId)) {
+      clusterPages.set(page.clusterId, []);
+    }
+    clusterPages.get(page.clusterId).push(page);
+  });
+
+  clusterPages.forEach((clusterMembers, clusterId) => {
+    const cluster = state.clusterMap.get(clusterId);
+    const sortedMembers = [...clusterMembers].sort((left, right) =>
+      left.title.localeCompare(right.title),
+    );
+
+    sortedMembers.forEach((page, index) => {
+      const role = getTopologyRole(page);
+      const anchor = getTopologyAnchor(page, pageMap, neighborMap);
+      let position = createDeterministicClusterPoint(
+        page,
+        cluster,
+        index,
+        sortedMembers.length,
+      );
+
+      if (role === "global-hub") {
+        position = new THREE.Vector3(0, 0, 0);
+      } else if (role === "bridge") {
+        position = anchor.add(
+          new THREE.Vector3(
+            (stableUnit(page.id, "bridge-x") - 0.5) * 5,
+            (stableUnit(page.id, "bridge-y") - 0.5) * 4,
+            (stableUnit(page.id, "bridge-z") - 0.5) * 5,
+          ),
+        );
+      } else if (role === "hub") {
+        position = anchor.add(
+          new THREE.Vector3(0, (stableUnit(page.id, "hub-y") - 0.5) * 2.4, 0),
+        );
+      }
+
+      positions.set(page.id, position);
+      velocities.set(page.id, new THREE.Vector3());
+    });
+  });
+
+  const relaxationIterations =
+    pages.length > 460 ? 72 : pages.length > 300 ? 96 : 150;
+  for (let iteration = 0; iteration < relaxationIterations; iteration += 1) {
+    for (let leftIndex = 0; leftIndex < pages.length; leftIndex += 1) {
+      const left = pages[leftIndex];
+      const leftPosition = positions.get(left.id);
+
+      for (let rightIndex = leftIndex + 1; rightIndex < pages.length; rightIndex += 1) {
+        const right = pages[rightIndex];
+        const rightPosition = positions.get(right.id);
+        const delta = leftPosition.clone().sub(rightPosition);
+
+        if (delta.lengthSq() < 0.0001) {
+          delta.set(
+            stableUnit(`${left.id}:${right.id}`, "repel-x") - 0.5,
+            stableUnit(`${left.id}:${right.id}`, "repel-y") - 0.5,
+            stableUnit(`${left.id}:${right.id}`, "repel-z") - 0.5,
+          );
+        }
+
+        const distanceSq = Math.max(delta.lengthSq(), 0.4);
+        const force = 2.2 / (distanceSq + 2);
+        const push = delta.normalize().multiplyScalar(force);
+        velocities.get(left.id).add(push);
+        velocities.get(right.id).sub(push);
+      }
+    }
+
+    edges.forEach((edge) => {
+      const source = pageMap.get(edge.sourceId);
+      const target = pageMap.get(edge.targetId);
+      if (!source || !target) {
+        return;
+      }
+
+      const sourcePosition = positions.get(source.id);
+      const targetPosition = positions.get(target.id);
+      const delta = targetPosition.clone().sub(sourcePosition);
+      const distance = Math.max(delta.length(), 0.001);
+      const sameCluster = source.clusterId === target.clusterId;
+      const desiredDistance = sameCluster ? 10.5 : 17;
+      const strength = sameCluster ? 0.0054 : 0.0042;
+      const weightBoost = edge.weight > 1 ? 1.28 : 1;
+      const pull = delta
+        .normalize()
+        .multiplyScalar((distance - desiredDistance) * strength * weightBoost);
+
+      velocities.get(source.id).add(pull);
+      velocities.get(target.id).sub(pull);
+    });
+
+    pages.forEach((page) => {
+      const position = positions.get(page.id);
+      const velocity = velocities.get(page.id);
+      const role = getTopologyRole(page);
+      const anchor = getTopologyAnchor(page, pageMap, neighborMap);
+      const anchorStrength =
+        role === "global-hub"
+          ? 0.09
+          : role === "bridge"
+            ? 0.018
+            : role === "hub"
+              ? 0.028
+              : 0.009;
+
+      velocity.add(anchor.sub(position).multiplyScalar(anchorStrength));
+      velocity.add(position.clone().multiplyScalar(-0.0008));
+      velocity.multiplyScalar(0.76);
+
+      if (velocity.length() > 1.5) {
+        velocity.setLength(1.5);
+      }
+
+      position.add(velocity);
+      if (role === "global-hub") {
+        position.multiplyScalar(0.72);
+      }
+    });
+  }
+
+  return positions;
+}
+
 function buildGraph(records, options = {}) {
   clearThreeObjects();
 
@@ -3807,15 +4378,27 @@ function buildGraph(records, options = {}) {
       folderPath: record.folderPath || "",
       folderName: record.folderName || "",
       aliases: record.aliases || [],
+      nodeKind: record.nodeKind || "note",
+      wikipediaTitle: record.wikipediaTitle || "",
       sourceAnnotations: (record.sourceAnnotations || []).map((annotation) => ({
         ...annotation,
         previewBlocks: [...(annotation.previewBlocks || [])],
         tags: [...(annotation.tags || [])],
       })),
       mergedSources: record.mergedSources || [record.sourceLabel || "English Wikipedia"],
+      anchorTitles: record.anchorTitles || [],
+      anchorPaths: record.anchorPaths || [],
+      expansionDepth: Number(record.expansionDepth || 0),
       sourceClusterId: record.clusterId || null,
       velocity: new THREE.Vector3(),
-      radius: randomBetween(0.9, 1.45),
+      radius:
+        record.sourceType === "wikipedia" && !(record.sourceAnnotations || []).length
+          ? Number(record.expansionDepth || 0) > 0
+            ? 0.62
+            : 0.82
+          : record.nodeKind && record.nodeKind !== "curated"
+            ? 0.78
+            : randomBetween(0.98, 1.42),
       wobblePhase: randomBetween(0, Math.PI * 2),
       sparkPhase: randomBetween(0, Math.PI * 2),
       sparkRadius: randomBetween(1.4, 2.8),
@@ -3842,11 +4425,15 @@ function buildGraph(records, options = {}) {
       return;
     }
 
-    const matchedTargetIds = Array.isArray(record.linkIds) && record.linkIds.length
-      ? record.linkIds.filter((targetId) => pageMap.has(targetId))
-      : (record.links || [])
+    const matchedTargetIds = uniqueValues([
+      ...(record.linkIds || []).filter((targetId) => pageMap.has(targetId)),
+      ...(record.links || [])
         .map((linkedTitle) => titleToId.get(linkedTitle))
-        .filter((targetId) => targetId && pageMap.has(targetId));
+        .filter((targetId) => targetId && pageMap.has(targetId)),
+      ...(record.anchorTitles || [])
+        .map((anchorTitle) => titleToId.get(anchorTitle))
+        .filter((targetId) => targetId && pageMap.has(targetId)),
+    ]);
 
     sourcePage.linkCount = matchedTargetIds.length;
 
@@ -3889,7 +4476,12 @@ function buildGraph(records, options = {}) {
         ? buildHybridClusterContext(
           pages,
           neighborMap,
-          { mode: options.mode, seedTitle: options.seedTitle || pages[0]?.title || "" },
+          {
+            mode: options.mode,
+            seedTitle: options.seedTitle || pages[0]?.title || "",
+            topologyFirst: options.vaultTopology,
+            fusionTopology: options.fusionTopology,
+          },
         )
         : options.mode === "topic"
           ? buildDynamicClusterContext(pages, neighborMap, options.seedTitle || pages[0]?.title || "")
@@ -3899,17 +4491,25 @@ function buildGraph(records, options = {}) {
 
   pages.forEach((page) => {
     const cluster = state.clusterMap.get(clusterContext.assignments.get(page.id)) || state.clusters[0];
-    const home = randomPointInCluster(cluster);
     page.clusterId = cluster.id;
     page.clusterName = cluster.name;
     page.theme = cluster.theme;
     page.color = cluster.accent;
+  });
+
+  const topologyHomes = options.vaultTopology
+    ? buildVaultTopologyHomes(pages, edges, pageMap, neighborMap)
+    : null;
+
+  pages.forEach((page) => {
+    const cluster = state.clusterMap.get(page.clusterId) || state.clusters[0];
+    const home = topologyHomes?.get(page.id)?.clone() || randomPointInCluster(cluster);
     page.home = home;
     page.position = home.clone().add(
       new THREE.Vector3(
-        randomBetween(-1.6, 1.6),
-        randomBetween(-1.6, 1.6),
-        randomBetween(-1.6, 1.6),
+        options.vaultTopology ? 0 : randomBetween(-1.6, 1.6),
+        options.vaultTopology ? 0 : randomBetween(-1.6, 1.6),
+        options.vaultTopology ? 0 : randomBetween(-1.6, 1.6),
       ),
     );
     page.sparkPosition = home.clone();
@@ -3967,9 +4567,6 @@ function buildGraph(records, options = {}) {
 
   populateFilters();
   populateLegend();
-  createClusterClouds();
-  createNodeVisuals();
-  createSparkVisuals();
   createEdgeVisuals();
   createTagSprites();
   renderNoteTree();
@@ -4032,10 +4629,14 @@ function createClusterClouds() {
 
 function createNodeVisuals() {
   state.pages.forEach((page) => {
+    const isWikipediaOnly =
+      page.sourceType === "wikipedia" && !page.sourceAnnotations?.length;
+    const isMerged = page.sourceAnnotations?.length > 0;
     const nodeMaterial = new THREE.MeshBasicMaterial({
-      color: mixColor(page.color, "#f8fbff", 0.1),
+      color: mixColor(page.color, "#f8fbff", isMerged ? 0.34 : isWikipediaOnly ? 0.2 : 0.1),
       transparent: true,
-      opacity: 0.84,
+      opacity: isMerged ? 0.96 : isWikipediaOnly ? 0.56 : 0.84,
+      wireframe: isWikipediaOnly,
     });
     const mesh = new THREE.Mesh(sharedNodeGeometry, nodeMaterial);
     mesh.scale.setScalar(page.radius);
@@ -4046,7 +4647,7 @@ function createNodeVisuals() {
     const glowMaterial = new THREE.MeshBasicMaterial({
       color: new THREE.Color(page.color),
       transparent: true,
-      opacity: 0.08,
+      opacity: isMerged ? 0.14 : isWikipediaOnly ? 0.035 : 0.08,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -4088,7 +4689,13 @@ function createEdgeVisuals() {
     const source = getPageById(edge.sourceId);
     const target = getPageById(edge.targetId);
     const strands = [];
-    const strandCount = edge.weight > 1 ? 5 : 3;
+    const sourceIsPublic =
+      source.sourceType === "wikipedia" && !source.sourceAnnotations?.length;
+    const targetIsPublic =
+      target.sourceType === "wikipedia" && !target.sourceAnnotations?.length;
+    const isPublicOnly = sourceIsPublic && targetIsPublic;
+    const isFusionEdge = sourceIsPublic !== targetIsPublic;
+    const strandCount = isPublicOnly ? 1 : edge.weight > 1 ? 4 : 2;
 
     for (let strandIndex = 0; strandIndex < strandCount; strandIndex += 1) {
       const geometry = new THREE.BufferGeometry();
@@ -4112,7 +4719,7 @@ function createEdgeVisuals() {
       geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
       const material = new THREE.LineBasicMaterial({
         transparent: true,
-        opacity: 0.072,
+        opacity: isFusionEdge ? 0.12 : isPublicOnly ? 0.038 : 0.082,
         blending: THREE.NormalBlending,
         depthWrite: false,
         vertexColors: true,
@@ -4188,88 +4795,25 @@ function getPageAnchor(page) {
   return (page.position || page.home || state.defaultTarget).clone();
 }
 
-function getScreenCenterInStageNdc() {
-  const rect = stage.getBoundingClientRect();
-  const viewport = window.visualViewport;
-  const viewportCenterX = viewport
-    ? viewport.offsetLeft + viewport.width * 0.5
-    : window.innerWidth * 0.5;
-  const viewportCenterY = viewport
-    ? viewport.offsetTop + viewport.height * 0.5
-    : window.innerHeight * 0.5;
-  const relativeX = clamp(
-    (viewportCenterX - rect.left) / Math.max(rect.width, 1),
-    0.14,
-    0.86,
-  );
-  const relativeY = clamp(
-    (viewportCenterY - rect.top) / Math.max(rect.height, 1),
-    0.14,
-    0.86,
-  );
-
-  return new THREE.Vector2(relativeX * 2 - 1, 1 - relativeY * 2);
-}
-
-function getCameraPlaneOffset(cameraPosition, targetPosition, desiredNdc) {
-  const viewDirection = targetPosition.clone().sub(cameraPosition).normalize();
-  const right = new THREE.Vector3().crossVectors(viewDirection, camera.up).normalize();
-  const up = new THREE.Vector3().crossVectors(right, viewDirection).normalize();
-  const distance = Math.max(cameraPosition.distanceTo(targetPosition), 0.001);
-  const halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) * distance;
-  const halfWidth = halfHeight * camera.aspect;
-
-  return right
-    .multiplyScalar(-desiredNdc.x * halfWidth * 0.94)
-    .add(up.multiplyScalar(-desiredNdc.y * halfHeight * 0.94));
-}
-
 function focusOnPage(page) {
   if (!page) {
     return;
   }
 
   const anchor = getPageAnchor(page);
-  const desiredNdc = getScreenCenterInStageNdc();
-  const outwardNormal = anchor.clone().sub(state.defaultTarget);
-  const currentDirection = camera.position.clone().sub(controls.target).normalize();
-  const fallbackDirection = currentDirection.lengthSq() > 0.0001
-    ? currentDirection
-    : new THREE.Vector3(0.22, 0.12, 1).normalize();
-  const normalDirection = outwardNormal.lengthSq() > 1
-    ? outwardNormal.normalize()
-    : fallbackDirection.clone();
-  const projected = anchor.clone().project(camera);
-  const centerDistance = clamp(
-    Math.hypot(projected.x - desiredNdc.x, (projected.y - desiredNdc.y) * 0.86),
-    0,
-    1.35,
-  );
-  const centerResponse = clamp(centerDistance / 0.92, 0.18, 1);
-  const viewportAspect = clamp(stage.clientWidth / Math.max(stage.clientHeight, 1), 0.9, 1.9);
-  const focusDirection = normalDirection
-    .multiplyScalar(0.42 + centerResponse * 0.5)
-    .add(fallbackDirection.clone().multiplyScalar(0.8 - centerResponse * 0.26))
-    .add(new THREE.Vector3(0, 0.1 + centerResponse * 0.12 + (viewportAspect - 1) * 0.04, 0))
-    .normalize();
+  const currentOffset = camera.position.clone().sub(controls.target);
+  const focusDirection =
+    currentOffset.lengthSq() > 0.0001
+      ? currentOffset.normalize()
+      : new THREE.Vector3(0.22, 0.12, 1).normalize();
   const distance = clamp(
-    Math.max(
-      camera.position.distanceTo(anchor) * (0.74 - centerResponse * 0.08),
-      state.graphRadius * (0.38 + centerResponse * 0.1),
-    ),
+    state.graphRadius * 1.2,
     controls.minDistance * 1.08,
-    Math.min(controls.maxDistance * 0.46, state.graphRadius * 1.18),
+    Math.min(controls.maxDistance * 0.72, state.graphRadius * 1.24),
   );
   state.trackedCameraOffset = focusDirection.multiplyScalar(distance);
   state.targetGoal = anchor.clone();
   state.cameraGoal = anchor.clone().add(state.trackedCameraOffset);
-  const framingOffset = getCameraPlaneOffset(
-    state.cameraGoal,
-    state.targetGoal,
-    desiredNdc,
-  );
-  state.targetGoal.add(framingOffset);
-  state.cameraGoal.add(framingOffset);
   state.trackedPageId = page.id;
 }
 
@@ -4280,32 +4824,46 @@ function focusPage(pageId) {
   }
 
   state.selectedPageId = page.id;
+  if (!page.tagSprite) {
+    page.tagSprite = createTagSprite(page);
+  }
   updateInspector(page);
   renderNoteTree();
   focusOnPage(page);
 }
 
 function shouldShowTag(page) {
-  return true;
+  return getVisibleScore(page) > 0.3;
 }
 
-function updateNavigationFeel() {
-  const distance = camera.position.distanceTo(controls.target);
-  const normalized = clamp((distance - controls.minDistance) / (controls.maxDistance - controls.minDistance), 0, 1);
-  controls.rotateSpeed = 0.56 + normalized * 0.44;
-  controls.zoomSpeed = 0.9 + normalized * 0.5;
-  controls.panSpeed = 0.42 + normalized * 1.08;
-  controls.dampingFactor = 0.045 + normalized * 0.04;
+function stabilizeControlsTarget() {
+  const maxOffset = Math.max(state.graphRadius * 1.08, 32);
+  const offset = controls.target.clone().sub(state.defaultTarget);
+  if (offset.length() <= maxOffset) {
+    return;
+  }
+
+  const clampedTarget = state.defaultTarget
+    .clone()
+    .add(offset.setLength(maxOffset));
+  const correction = clampedTarget.clone().sub(controls.target);
+  controls.target.copy(clampedTarget);
+  camera.position.add(correction);
 }
 
 function updateTags() {
   state.pages.forEach((page) => {
     const tag = page.tagSprite;
-    if (!tag || !page.spark) {
+    if (!tag) {
       return;
     }
 
-    const anchor = page.sparkPosition || page.position;
+    if (!shouldShowTag(page)) {
+      tag.visible = false;
+      return;
+    }
+
+    const anchor = page.position;
     const vector = anchor.clone().project(camera);
     const onScreen =
       vector.z < 1 &&
@@ -4317,7 +4875,6 @@ function updateTags() {
 
     if (!onScreen) {
       tag.visible = false;
-      page.spark.visible = true;
       return;
     }
 
@@ -4338,7 +4895,6 @@ function updateTags() {
       baseScale.z,
     );
     tag.material.opacity = isSelected ? 1 : isHovered ? 0.92 : clamp(0.5 + distanceFade * 0.32, 0.48, 0.82);
-    page.spark.visible = false;
   });
 }
 
@@ -4360,7 +4916,7 @@ function pickPageIdFromClient(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
   raycaster.setFromCamera(pointer, camera);
   const intersections = raycaster.intersectObjects(
-    state.pages.flatMap((page) => [page.tagSprite, page.spark, page.mesh]).filter(Boolean),
+    state.pages.map((page) => page.tagSprite).filter(Boolean),
     false,
   );
   return intersections[0]?.object?.userData?.pageId || null;
@@ -4393,9 +4949,6 @@ function moveDraggedPage(clientX, clientY) {
   page.position.copy(nextPosition);
   page.home.add(delta);
   page.sparkPosition.copy(nextPosition);
-  if (page.spark) {
-    page.spark.position.copy(nextPosition);
-  }
 }
 
 function startPageDrag(pageId, clientX, clientY) {
@@ -4420,25 +4973,47 @@ function startPageDrag(pageId, clientX, clientY) {
   controls.enabled = false;
 }
 
-function handleStagePointerDown(event) {
-  if (
-    event.button !== 0 ||
-    event.shiftKey ||
-    event.ctrlKey ||
-    event.metaKey
-  ) {
+function updateStagePointerPress(event) {
+  const press = state.stagePointerPress;
+  if (!press || press.pointerId !== event.pointerId || press.moved) {
     return;
   }
 
-  const pageId = pickPageIdFromClient(event.clientX, event.clientY) || state.hoveredPageId;
+  const deltaX = event.clientX - press.clientX;
+  const deltaY = event.clientY - press.clientY;
+  if (deltaX * deltaX + deltaY * deltaY > 36) {
+    press.moved = true;
+  }
+}
+
+function handleStagePointerDown(event) {
+  if (event.button !== 0 || event.ctrlKey || event.metaKey) {
+    return;
+  }
+
+  const pageId = pickPageIdFromClient(event.clientX, event.clientY);
   if (!pageId) {
+    state.stagePointerPress = null;
     return;
   }
 
   state.hoveredPageId = pageId;
-  startPageDrag(pageId, event.clientX, event.clientY);
-  event.preventDefault();
-  event.stopPropagation();
+
+  if (event.shiftKey) {
+    state.stagePointerPress = null;
+    startPageDrag(pageId, event.clientX, event.clientY);
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
+  }
+
+  state.stagePointerPress = {
+    pageId,
+    pointerId: event.pointerId,
+    clientX: event.clientX,
+    clientY: event.clientY,
+    moved: false,
+  };
 }
 
 function handleStagePointerMove(event) {
@@ -4447,8 +5022,13 @@ function handleStagePointerMove(event) {
     return;
   }
 
+  updateStagePointerPress(event);
   const nextHoveredId = pickPageIdFromClient(event.clientX, event.clientY);
-  stage.style.cursor = nextHoveredId ? "pointer" : "default";
+  stage.style.cursor = nextHoveredId
+    ? event.shiftKey
+      ? "move"
+      : "pointer"
+    : "grab";
 
   if (nextHoveredId !== state.hoveredPageId) {
     state.hoveredPageId = nextHoveredId;
@@ -4456,23 +5036,32 @@ function handleStagePointerMove(event) {
 }
 
 function handleWindowPointerMove(event) {
-  moveDraggedPage(event.clientX, event.clientY);
-}
-
-function handlePointerUp() {
-  if (!state.dragTag) {
-    controls.enabled = true;
+  if (state.dragTag) {
+    moveDraggedPage(event.clientX, event.clientY);
     return;
   }
 
-  const { pageId, moved } = state.dragTag;
-  controls.enabled = true;
+  updateStagePointerPress(event);
+}
 
-  if (!moved) {
-    focusPage(pageId);
+function handlePointerUp(event) {
+  if (state.dragTag) {
+    controls.enabled = true;
+    state.dragTag = null;
+    stage.style.cursor = state.hoveredPageId ? "pointer" : "grab";
+    return;
   }
 
-  state.dragTag = null;
+  controls.enabled = true;
+  const press = state.stagePointerPress;
+  state.stagePointerPress = null;
+  if (
+    press &&
+    press.pointerId === event.pointerId &&
+    !press.moved
+  ) {
+    focusPage(press.pageId);
+  }
 }
 
 function updateNodeVisuals(time) {
@@ -4713,7 +5302,6 @@ function animate() {
   dust.rotation.y += delta * 0.01;
   dust.rotation.x += delta * 0.005;
 
-  updateNavigationFeel();
   stepSimulation(delta, elapsedTime);
 
   if (state.cameraGoal && state.targetGoal) {
@@ -4843,6 +5431,7 @@ async function resetToDefaultVault() {
   state.activeVaultName = "";
   state.obsidianRecords = [];
   state.wikipediaRecords = [];
+  state.graphViewMode = "fusion";
   state.activeSeedTitle = "";
   state.activeSeedPageId = "";
   state.agentMessages = [];
@@ -4863,6 +5452,15 @@ function bindEvents() {
 
   tabInspector.addEventListener("click", () => {
     setNoteTab("inspector");
+  });
+
+  graphViewSwitch.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-graph-view]");
+    if (!button) {
+      return;
+    }
+
+    setGraphViewMode(button.dataset.graphView);
   });
 
   wikipediaMenuButton.addEventListener("click", () => {
@@ -5071,13 +5669,13 @@ function bindEvents() {
   });
 
   renderer.domElement.addEventListener("pointermove", handleStagePointerMove);
-  renderer.domElement.addEventListener("pointerdown", handleStagePointerDown);
+  renderer.domElement.addEventListener("pointerdown", handleStagePointerDown, true);
   renderer.domElement.addEventListener("contextmenu", (event) => {
     event.preventDefault();
   });
   renderer.domElement.addEventListener("pointerleave", () => {
     state.hoveredPageId = null;
-    stage.style.cursor = "default";
+    stage.style.cursor = "grab";
   });
 
   document.addEventListener("pointerdown", (event) => {
@@ -5125,8 +5723,19 @@ function bindEvents() {
     toggleMotionButton.textContent = state.motionEnabled ? "❚❚" : "▶";
   });
 
+  controls.addEventListener("start", () => {
+    state.cameraGoal = null;
+    state.targetGoal = null;
+    state.trackedPageId = null;
+  });
+
+  controls.addEventListener("end", () => {
+    stabilizeControlsTarget();
+    controls.update();
+  });
+
   controls.addEventListener("change", () => {
-    if (state.selectedPageId && !state.dragTag) {
+    if (state.selectedPageId && !state.dragTag && !state.cameraGoal) {
       state.trackedCameraOffset.copy(camera.position).sub(controls.target);
     }
 

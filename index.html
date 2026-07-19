@@ -114,7 +114,7 @@
             <input
               id="vault-input"
               type="file"
-              accept=".md,.markdown,text/markdown"
+              accept=".md,.markdown,.json,text/markdown,application/json"
               multiple
               webkitdirectory
               directory
@@ -146,7 +146,7 @@
               <p class="eyebrow">3D Connectome</p>
               <h2>Live neural graph of structured knowledge.</h2>
               <p class="stage-copy">
-                Orbit, pan, zoom, and inspect pages through in-scene spark markers.
+                Follow the connectome through its source-aware bubble labels.
               </p>
             </div>
 
@@ -164,6 +164,31 @@
                   <span class="stat-label">Folders</span>
                   <strong id="stat-regions">0</strong>
                 </div>
+              </div>
+              <div
+                id="graph-view-switch"
+                class="graph-view-switch"
+                role="group"
+                aria-label="Graph view"
+                hidden
+              >
+                <button
+                  type="button"
+                  class="active"
+                  data-graph-view="vault"
+                  aria-pressed="true"
+                  title="Show the imported Obsidian vault"
+                >
+                  Vault
+                </button>
+                <button
+                  type="button"
+                  data-graph-view="fusion"
+                  aria-pressed="false"
+                  title="Show Wikipedia and the imported vault together"
+                >
+                  Fusion
+                </button>
               </div>
               <button id="download-vault" type="button" class="stage-action-button">
                 Download Vault

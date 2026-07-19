@@ -1,0 +1,217 @@
+{
+  "main": {
+    "id": "a04809c201b6fa55",
+    "type": "split",
+    "children": [
+      {
+        "id": "ff7da0c625595b0c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "982eb4b2ac24e6fb",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "关系图谱"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "5b5f88e1e12a898a",
+    "type": "split",
+    "children": [
+      {
+        "id": "60c97b344ab6eb22",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8f51199aa60e4e3d",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "e68cef9a1812697e",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "1ce8378f477fc2d1",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "7f95e7be49e23f1c",
+    "type": "split",
+    "children": [
+      {
+        "id": "256f8828390055d7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "48d88ff36acb0e21",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "反向链接"
+            }
+          },
+          {
+            "id": "fdbf5f0dffb00851",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "出链"
+            }
+          },
+          {
+            "id": "a0b2c0644da36140",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "9b78262ae202f645",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "1cc07421366a2a29",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "982eb4b2ac24e6fb",
+  "lastOpenFiles": [
+    "04_意识与自我/意识理论/幻觉论 Illusionism.md",
+    "01_起源与学派/历史谱系/Alan Baddeley.md",
+    "01_起源与学派/历史谱系/结构主义 Structuralism.md",
+    "01_起源与学派/历史谱系/孔子.md",
+    "01_起源与学派/历史谱系/格式塔心理学 Gestalt.md",
+    "06_胼胝体桥接区/预测焦虑现实桥.md",
+    "01_起源与学派/精神分析.md",
+    "06_胼胝体桥接区/阅读路径/William James - The Principles of Psychology.md",
+    "06_胼胝体桥接区/阅读路径/William James - I and Me.md",
+    "06_胼胝体桥接区/阅读路径/Martin Seligman - Flourish.md",
+    "06_胼胝体桥接区/阅读路径/Ulric Neisser - Cognitive Psychology.md",
+    "06_胼胝体桥接区/阅读路径/Thomas Metzinger - Being No One.md",
+    "06_胼胝体桥接区/阅读路径/Stanislas Dehaene - Consciousness and the Brain.md",
+    "06_胼胝体桥接区/阅读路径/David Marr - Vision.md",
+    "06_胼胝体桥接区/阅读路径/David Chalmers - The Conscious Mind.md",
+    "06_胼胝体桥接区/阅读路径/David Hume - Bundle Theory.md",
+    "06_胼胝体桥接区/阅读路径/Daniel Kahneman - Thinking, Fast and Slow.md",
+    "06_胼胝体桥接区/阅读路径/Butlin et al - Consciousness in Artificial Intelligence.md",
+    "06_胼胝体桥接区/阅读路径/Andy Clark - Surfing Uncertainty.md",
+    "06_胼胝体桥接区/阅读路径/Anil Seth - Being You.md",
+    "06_胼胝体桥接区/阅读路径/AI意识伦理.md",
+    "06_胼胝体桥接区/阅读路径",
+    "04_意识与自我/自我谱系/Shaun Gallagher.md",
+    "04_意识与自我/自我谱系/Thomas Metzinger.md",
+    "04_意识与自我/自我谱系/Erving Goffman.md",
+    "04_意识与自我/自我谱系/George Herbert Mead.md",
+    "05_文化方法与可信度/方法与主体位置",
+    "06_胼胝体桥接区/桥接节点",
+    "03_脑身体与环境/解释尺度",
+    "04_意识与自我/意识理论",
+    "06_胼胝体桥接区/AI与机器意识",
+    "04_意识与自我/自我谱系",
+    "01_起源与学派/历史谱系",
+    "02_心智行为与改变/问题深度",
+    "06_胼胝体桥接区/总入口"
+  ]
+}

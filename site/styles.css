@@ -142,7 +142,7 @@ button {
 
 .polyhedron-stage {
   position: absolute;
-  inset: 0;
+  inset: -8% -10% -6% -8%;
   z-index: 1;
 }
 
@@ -969,7 +969,7 @@ button {
   }
 
   .polyhedron-stage {
-    inset: -28px -80px 160px 30px;
+    inset: -10% -28% -4% -24%;
   }
 
   .hero-copy {

@@ -132,11 +132,6 @@ function createIrregularHexahedron(weights) {
     [1.16, 1.52, -1.42],
     [-1.58, 1.16, -1.08],
   ];
-  const vertices = baseVertices.map(([x, y, z]) => [
-    x * (x >= 0 ? weights.agent : weights.exhibition),
-    y * (y >= 0 ? weights.network : weights.data),
-    z * (z >= 0 ? weights.knowledge : weights.space),
-  ]);
   const faces = [
     [1, 5, 6, 2],
     [4, 0, 3, 7],
@@ -145,20 +140,13 @@ function createIrregularHexahedron(weights) {
     [0, 1, 2, 3],
     [5, 4, 7, 6],
   ];
-  const positions = [];
+  const faceVertexIndices = [];
   const geometry = new THREE.BufferGeometry();
 
   faces.forEach(([a, b, c, d], materialIndex) => {
-    const start = positions.length / 3;
-    [a, b, c, a, c, d].forEach((vertexIndex) => {
-      positions.push(...vertices[vertexIndex]);
-    });
-    geometry.addGroup(start, 6, materialIndex);
+    faceVertexIndices.push(a, b, c, a, c, d);
+    geometry.addGroup(materialIndex * 6, 6, materialIndex);
   });
-
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.computeVertexNormals();
-  geometry.computeBoundingSphere();
 
   const edgePairs = [
     [0, 1],
@@ -174,18 +162,55 @@ function createIrregularHexahedron(weights) {
     [2, 6],
     [3, 7],
   ];
-  const edgePositions = [];
-  edgePairs.forEach(([start, end]) => {
-    edgePositions.push(...vertices[start], ...vertices[end]);
-  });
-
+  const positions = new Float32Array(faceVertexIndices.length * 3);
+  const edgePositions = new Float32Array(edgePairs.length * 6);
   const edgeGeometry = new THREE.BufferGeometry();
-  edgeGeometry.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(edgePositions, 3),
-  );
+  const positionAttribute = new THREE.Float32BufferAttribute(positions, 3);
+  const edgePositionAttribute = new THREE.Float32BufferAttribute(edgePositions, 3);
+  const positionArray = positionAttribute.array;
+  const edgePositionArray = edgePositionAttribute.array;
+  geometry.setAttribute("position", positionAttribute);
+  edgeGeometry.setAttribute("position", edgePositionAttribute);
 
-  return { geometry, edgeGeometry };
+  function update(time = 0, morphStrength = 0) {
+    const nextVertices = baseVertices.map(([x, y, z], index) => {
+      const weightedX = x * (x >= 0 ? weights.agent : weights.exhibition);
+      const weightedY = y * (y >= 0 ? weights.network : weights.data);
+      const weightedZ = z * (z >= 0 ? weights.knowledge : weights.space);
+
+      if (!morphStrength) {
+        return [weightedX, weightedY, weightedZ];
+      }
+
+      const radialWave = Math.sin(time * 0.58 + index * 1.43);
+      const lateralWave = Math.cos(time * 0.37 + index * 2.11);
+      const verticalWave = Math.sin(time * 0.43 + index * 0.83);
+
+      return [
+        weightedX * (1 + radialWave * morphStrength)
+          + lateralWave * morphStrength * 0.28,
+        weightedY * (1 + verticalWave * morphStrength * 0.82)
+          + radialWave * morphStrength * 0.2,
+        weightedZ * (1 + lateralWave * morphStrength * 0.74)
+          + verticalWave * morphStrength * 0.24,
+      ];
+    });
+
+    faceVertexIndices.forEach((vertexIndex, index) => {
+      positionArray.set(nextVertices[vertexIndex], index * 3);
+    });
+    edgePairs.forEach(([start, end], index) => {
+      edgePositionArray.set(nextVertices[start], index * 6);
+      edgePositionArray.set(nextVertices[end], index * 6 + 3);
+    });
+
+    geometry.attributes.position.needsUpdate = true;
+    edgeGeometry.attributes.position.needsUpdate = true;
+    geometry.computeBoundingSphere();
+  }
+
+  update();
+  return { geometry, edgeGeometry, update };
 }
 
 function createPolyhedronScene({
@@ -195,6 +220,10 @@ function createPolyhedronScene({
   layout,
   weightedOpacity = false,
   dominantFacets = [],
+  morphStrength = 0,
+  ambientMotion = false,
+  autoTour = [],
+  onAutoFacet,
   onFacetSelect,
 }) {
   if (!canvas || !window.THREE) {
@@ -211,7 +240,11 @@ function createPolyhedronScene({
     powerPreference: "high-performance",
   });
   const targetRotation = { ...initialRotation, z: 0 };
-  const { geometry, edgeGeometry } = createIrregularHexahedron(weights);
+  const {
+    geometry,
+    edgeGeometry,
+    update: updateGeometry,
+  } = createIrregularHexahedron(weights);
   const weightValues = Object.values(weights);
   const minimumWeight = Math.min(...weightValues);
   const weightRange = Math.max(Math.max(...weightValues) - minimumWeight, 0.01);
@@ -253,6 +286,22 @@ function createPolyhedronScene({
     lastY: 0,
     distance: 0,
   };
+  const restingPosition = new THREE.Vector3();
+  let restingScale = 1;
+  const animationStart = performance.now();
+  const autoState = {
+    index: 0,
+    phase: autoTour.length ? "travel" : "idle",
+    phaseStartedAt: animationStart,
+    pauseUntil: 0,
+    from: { x: initialRotation.x, y: initialRotation.y },
+    to: autoTour[0]?.rotation || initialRotation,
+    announced: false,
+  };
+  if (autoTour.length) {
+    canvas.dataset.autoFacet = autoTour[0].name;
+    canvas.dataset.autoPhase = prefersReducedMotion ? "reduced" : "travel";
+  }
   const facetNormals = {
     agent: new THREE.Vector3(1, 0, 0),
     exhibition: new THREE.Vector3(-1, 0, 0),
@@ -269,7 +318,18 @@ function createPolyhedronScene({
   polyhedron.rotation.set(targetRotation.x, targetRotation.y, targetRotation.z);
   scene.add(polyhedron);
 
+  function pauseAutoTour(duration = 6200) {
+    if (!autoTour.length) {
+      return;
+    }
+
+    autoState.phase = "manual";
+    autoState.pauseUntil = performance.now() + duration;
+    canvas.dataset.autoPhase = "manual";
+  }
+
   function orient(rotation) {
+    pauseAutoTour();
     targetRotation.x = rotation.x;
     targetRotation.y = rotation.y;
   }
@@ -327,6 +387,7 @@ function createPolyhedronScene({
   }
 
   canvas.addEventListener("pointerdown", (event) => {
+    pauseAutoTour();
     drag.pointerId = event.pointerId;
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
@@ -393,15 +454,126 @@ function createPolyhedronScene({
     camera.updateProjectionMatrix();
 
     const placement = layout(window.innerWidth < 760);
-    polyhedron.position.set(...placement.position);
-    polyhedron.scale.setScalar(placement.scale);
+    restingPosition.set(...placement.position);
+    restingScale = placement.scale;
+    polyhedron.position.copy(restingPosition);
+    polyhedron.scale.setScalar(restingScale);
+  }
+
+  function beginAutoTransition(now) {
+    autoState.index = (autoState.index + 1) % autoTour.length;
+    const step = autoTour[autoState.index];
+    autoState.phase = "travel";
+    autoState.phaseStartedAt = now;
+    autoState.from = {
+      x: polyhedron.rotation.x,
+      y: polyhedron.rotation.y,
+    };
+    autoState.to = step.rotation;
+    autoState.announced = false;
+    canvas.dataset.autoFacet = step.name;
+    canvas.dataset.autoPhase = "travel";
+  }
+
+  function montageEase(progress, style) {
+    if (style === "snap") {
+      return progress < 0.72
+        ? 0.5 * Math.pow(progress / 0.72, 3)
+        : 0.5 + 0.5 * (1 - Math.pow((1 - progress) / 0.28, 4));
+    }
+    if (style === "quint") {
+      return progress < 0.5
+        ? 16 * Math.pow(progress, 5)
+        : 1 - Math.pow(-2 * progress + 2, 5) / 2;
+    }
+    if (style === "sine") {
+      return -(Math.cos(Math.PI * progress) - 1) / 2;
+    }
+
+    return progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+  }
+
+  function updateAutoTour(now) {
+    if (!autoTour.length || prefersReducedMotion) {
+      return false;
+    }
+
+    if (now < autoState.pauseUntil) {
+      return false;
+    }
+
+    if (autoState.phase === "manual") {
+      beginAutoTransition(now);
+      return true;
+    }
+
+    const step = autoTour[autoState.index];
+    if (autoState.phase === "hold") {
+      if (now - autoState.phaseStartedAt >= step.hold) {
+        beginAutoTransition(now);
+      }
+      return false;
+    }
+
+    const progress = Math.min(
+      1,
+      (now - autoState.phaseStartedAt) / step.travel,
+    );
+    const easedProgress = montageEase(progress, step.easing);
+    const deltaX = Math.atan2(
+      Math.sin(autoState.to.x - autoState.from.x),
+      Math.cos(autoState.to.x - autoState.from.x),
+    );
+    const deltaY = Math.atan2(
+      Math.sin(autoState.to.y - autoState.from.y),
+      Math.cos(autoState.to.y - autoState.from.y),
+    );
+    polyhedron.rotation.x = autoState.from.x + deltaX * easedProgress;
+    polyhedron.rotation.y = autoState.from.y + deltaY * easedProgress;
+
+    if (!autoState.announced && progress >= 0.68) {
+      autoState.announced = true;
+      onAutoFacet?.(step.name);
+    }
+
+    if (progress >= 1) {
+      targetRotation.x = autoState.to.x;
+      targetRotation.y = autoState.to.y;
+      autoState.phase = "hold";
+      autoState.phaseStartedAt = now;
+      canvas.dataset.autoPhase = "hold";
+      if (!autoState.announced) {
+        autoState.announced = true;
+        onAutoFacet?.(step.name);
+      }
+    }
+
+    return true;
   }
 
   function render() {
-    polyhedron.rotation.x += (targetRotation.x - polyhedron.rotation.x) * 0.08;
-    polyhedron.rotation.y += (targetRotation.y - polyhedron.rotation.y) * 0.08;
+    const now = performance.now();
+    const elapsed = (now - animationStart) / 1000;
+    const autoDriving = updateAutoTour(now);
+    if (!autoDriving) {
+      polyhedron.rotation.x += (targetRotation.x - polyhedron.rotation.x) * 0.08;
+      polyhedron.rotation.y += (targetRotation.y - polyhedron.rotation.y) * 0.08;
+    }
     if (!prefersReducedMotion) {
-      polyhedron.rotation.z += 0.0012;
+      polyhedron.rotation.z +=
+        autoTour.length && autoState.phase === "hold" ? 0.00018 : 0.0012;
+      if (morphStrength) {
+        updateGeometry(elapsed, morphStrength);
+      }
+      if (ambientMotion) {
+        polyhedron.position.x = restingPosition.x + Math.sin(elapsed * 0.24) * 0.16;
+        polyhedron.position.y = restingPosition.y + Math.cos(elapsed * 0.2) * 0.12;
+        polyhedron.scale.setScalar(
+          restingScale * (1 + Math.sin(elapsed * 0.31) * 0.025),
+        );
+      }
     }
 
     renderer.render(scene, camera);
@@ -418,11 +590,58 @@ function createPolyhedronScene({
 const atlasScene = createPolyhedronScene({
   canvas: atlasCanvas,
   weights: atlasWeights,
-  initialRotation: facets.knowledge.rotation,
+  initialRotation: { x: -0.32, y: -0.56 },
   layout: (mobile) => ({
-    position: mobile ? [0.64, 0.16, 0] : [1.35, 0.16, 0],
-    scale: 0.66,
+    position: mobile ? [0.88, 0.46, 0] : [2.08, 0.38, 0],
+    scale: mobile ? 1.34 : 1.62,
   }),
+  morphStrength: 0.12,
+  ambientMotion: true,
+  autoTour: [
+    {
+      name: "knowledge",
+      rotation: facets.knowledge.rotation,
+      travel: 920,
+      hold: 1180,
+      easing: "sine",
+    },
+    {
+      name: "agent",
+      rotation: facets.agent.rotation,
+      travel: 560,
+      hold: 940,
+      easing: "quint",
+    },
+    {
+      name: "network",
+      rotation: facets.network.rotation,
+      travel: 1160,
+      hold: 820,
+      easing: "sine",
+    },
+    {
+      name: "exhibition",
+      rotation: facets.exhibition.rotation,
+      travel: 480,
+      hold: 1260,
+      easing: "snap",
+    },
+    {
+      name: "data",
+      rotation: facets.data.rotation,
+      travel: 980,
+      hold: 880,
+      easing: "cubic",
+    },
+    {
+      name: "space",
+      rotation: facets.space.rotation,
+      travel: 720,
+      hold: 1340,
+      easing: "quint",
+    },
+  ],
+  onAutoFacet: (name) => selectFacet(name, { orient: false }),
   onFacetSelect: (name) => selectFacet(name, { orient: false }),
 });
 

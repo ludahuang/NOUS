@@ -4,56 +4,59 @@ const facets = {
     title: "空间",
     mechanism: "把问题转化为可进入的现场",
     description: "通过尺度、动线、材料和停留方式组织参与，让问题成为可以共同进入的现场。",
-    rotation: { x: 0, y: Math.PI },
+    rotation: { x: -0.16, y: 0.08, z: -0.12 },
   },
-  exhibition: {
-    index: "02 / EXHIBITION",
-    title: "展览",
-    mechanism: "把关系组织为共同经历",
-    description: "将作品、参与者与发生条件编排在一起，使关系能够被经历、讨论并继续变化。",
-    rotation: { x: 0, y: Math.PI / 2 },
+  experience: {
+    index: "02 / EXPERIENCE",
+    title: "体验",
+    mechanism: "组织感知与共同参与",
+    description: "让身体、媒介、情境与反馈共同作用，使问题能够被感知、进入并留下经验。",
+    rotation: { x: -0.12, y: -0.12, z: -0.05 },
   },
   network: {
     index: "03 / NETWORK",
     title: "网络",
     mechanism: "让协作跨越地点持续",
     description: "连接不同城市、主体与现场，使协作、信息和行动能够跨越一次事件持续传递。",
-    rotation: { x: Math.PI / 2, y: 0 },
+    rotation: { x: 0.08, y: -0.16, z: 0.04 },
   },
   data: {
     index: "04 / DATA CURATION",
     title: "数据策展",
     mechanism: "让过程成为可追溯记录",
     description: "记录事件、来源、关系与过程，使策展判断可被核查，也能被后续项目重新调用。",
-    rotation: { x: -Math.PI / 2, y: 0 },
+    rotation: { x: 0.14, y: 0.08, z: 0.12 },
   },
   knowledge: {
     index: "05 / KNOWLEDGE BASE",
     title: "知识库",
     mechanism: "组织可继续工作的共同记忆",
     description: "将分散材料组织为可检索、可导航的共同记忆，支持持续研究与再次激活。",
-    rotation: { x: 0, y: 0 },
+    rotation: { x: -0.08, y: 0.14, z: 0.18 },
   },
   agent: {
     index: "06 / INTELLIGENT AGENT",
     title: "智能体",
     mechanism: "让行动主体参与策展",
     description: "参与发现关系、提出问题和生成行动，同时保留来源、不确定性与过程记录。",
-    rotation: { x: 0, y: -Math.PI / 2 },
+    rotation: { x: -0.08, y: 0.06, z: 0 },
   },
 };
 
-const facetByMaterial = [
-  "agent",
-  "exhibition",
+const outerFacets = [
+  "space",
+  "experience",
   "network",
   "data",
   "knowledge",
-  "space",
+];
+const facetByMaterial = [
+  "agent",
+  ...outerFacets,
 ];
 const facetColors = {
   space: 0x101010,
-  exhibition: 0xf0d735,
+  experience: 0xf0d735,
   network: 0x16c7d8,
   data: 0x3da66c,
   knowledge: 0xf7f5f0,
@@ -61,7 +64,7 @@ const facetColors = {
 };
 const atlasWeights = {
   space: 0.92,
-  exhibition: 0.88,
+  experience: 0.88,
   network: 1.02,
   data: 0.92,
   knowledge: 1.04,
@@ -69,7 +72,7 @@ const atlasWeights = {
 };
 const vaultWeights = {
   space: 0.46,
-  exhibition: 0.42,
+  experience: 0.42,
   network: 0.66,
   data: 0.9,
   knowledge: 1.58,
@@ -83,8 +86,8 @@ const facetDescription = document.querySelector("#facet-description");
 const systemFacetIndex = document.querySelector("#system-facet-index");
 const systemFacetMechanism = document.querySelector("#system-facet-mechanism");
 const systemFacetDescription = document.querySelector("#system-facet-description");
-const atlasCanvas = document.querySelector("#polyhedron-canvas");
-const vaultCanvas = document.querySelector("#vault-polyhedron-canvas");
+const atlasCanvas = document.querySelector("#symbiote-canvas");
+const vaultCanvas = document.querySelector("#vault-symbiote-canvas");
 const vaultShapeView = document.querySelector("#vault-shape-view");
 const vaultWeightRows = [...document.querySelectorAll("[data-facet-weight]")];
 
@@ -121,99 +124,184 @@ controls.forEach((control) => {
   control.addEventListener("click", () => selectFacet(control.dataset.facet));
 });
 
-function createIrregularHexahedron(weights) {
-  const baseVertices = [
-    [-1.62, -1.32, 1.3],
-    [1.34, -1.5, 1.12],
-    [1.52, 1.18, 1.42],
-    [-1.22, 1.58, 1.08],
-    [-1.38, -1.12, -1.5],
-    [1.62, -1.2, -1.18],
-    [1.16, 1.52, -1.42],
-    [-1.58, 1.16, -1.08],
+function createNousSymbiote(weights) {
+  const facetCount = 5;
+  const outerPointCount = 10;
+  const outerBase = [
+    [-3.02, -0.04, -0.08],
+    [-2.22, -1.04, 0.02],
+    [-0.96, -1.52, -0.12],
+    [0.72, -1.46, 0.08],
+    [2.08, -0.92, -0.04],
+    [3.06, 0.06, -0.16],
+    [2.04, 0.98, 0.04],
+    [0.76, 1.5, -0.1],
+    [-0.94, 1.46, 0.1],
+    [-2.2, 0.9, -0.02],
   ];
-  const faces = [
-    [1, 5, 6, 2],
-    [4, 0, 3, 7],
-    [3, 2, 6, 7],
-    [4, 5, 1, 0],
-    [0, 1, 2, 3],
-    [5, 4, 7, 6],
+  const innerBase = [
+    [-1.02, -0.04, 0.46],
+    [-0.36, -0.88, 0.42],
+    [0.78, -0.5, 0.48],
+    [0.78, 0.54, 0.44],
+    [-0.34, 0.92, 0.5],
   ];
-  const faceVertexIndices = [];
+  const mainVertexRefs = [];
+  const edgeVertexRefs = [];
+  const triangleFacets = [];
   const geometry = new THREE.BufferGeometry();
+  const edgeGeometry = new THREE.BufferGeometry();
 
-  faces.forEach(([a, b, c, d], materialIndex) => {
-    faceVertexIndices.push(a, b, c, a, c, d);
-    geometry.addGroup(materialIndex * 6, 6, materialIndex);
+  function pushMainTriangle(facetName, ...references) {
+    mainVertexRefs.push(...references);
+    triangleFacets.push(facetName);
+  }
+
+  for (let index = 0; index < facetCount; index += 1) {
+    const next = (index + 1) % facetCount;
+    pushMainTriangle(
+      "agent",
+      { kind: "center" },
+      { kind: "inner", index },
+      { kind: "inner", index: next },
+    );
+  }
+  geometry.addGroup(0, facetCount * 3, 0);
+
+  outerFacets.forEach((facetName, index) => {
+    const next = (index + 1) % facetCount;
+    const outerStart = index * 2;
+    const outerMiddle = outerStart + 1;
+    const outerEnd = (outerStart + 2) % outerPointCount;
+    const start = facetCount * 3 + index * 9;
+    pushMainTriangle(
+      facetName,
+      { kind: "inner", index },
+      { kind: "outer", index: outerStart },
+      { kind: "outer", index: outerMiddle },
+    );
+    pushMainTriangle(
+      facetName,
+      { kind: "inner", index },
+      { kind: "outer", index: outerMiddle },
+      { kind: "outer", index: outerEnd },
+    );
+    pushMainTriangle(
+      facetName,
+      { kind: "inner", index },
+      { kind: "outer", index: outerEnd },
+      { kind: "inner", index: next },
+    );
+    geometry.addGroup(start, 9, index + 1);
   });
 
-  const edgePairs = [
-    [0, 1],
-    [1, 2],
-    [2, 3],
-    [3, 0],
-    [4, 5],
-    [5, 6],
-    [6, 7],
-    [7, 4],
-    [0, 4],
-    [1, 5],
-    [2, 6],
-    [3, 7],
-  ];
-  const positions = new Float32Array(faceVertexIndices.length * 3);
-  const edgePositions = new Float32Array(edgePairs.length * 6);
-  const edgeGeometry = new THREE.BufferGeometry();
-  const positionAttribute = new THREE.Float32BufferAttribute(positions, 3);
-  const edgePositionAttribute = new THREE.Float32BufferAttribute(edgePositions, 3);
-  const positionArray = positionAttribute.array;
-  const edgePositionArray = edgePositionAttribute.array;
+  for (let index = 0; index < facetCount; index += 1) {
+    const next = (index + 1) % facetCount;
+    edgeVertexRefs.push(
+      { kind: "inner", index },
+      { kind: "inner", index: next },
+      { kind: "inner", index },
+      { kind: "outer", index: index * 2 },
+    );
+  }
+  for (let index = 0; index < outerPointCount; index += 1) {
+    edgeVertexRefs.push(
+      { kind: "outer", index },
+      { kind: "outer", index: (index + 1) % outerPointCount },
+    );
+  }
+
+  const positionAttribute = new THREE.Float32BufferAttribute(
+    new Float32Array(mainVertexRefs.length * 3),
+    3,
+  );
+  const edgePositionAttribute = new THREE.Float32BufferAttribute(
+    new Float32Array(edgeVertexRefs.length * 3),
+    3,
+  );
   geometry.setAttribute("position", positionAttribute);
   edgeGeometry.setAttribute("position", edgePositionAttribute);
 
   function update(time = 0, morphStrength = 0) {
-    const nextVertices = baseVertices.map(([x, y, z], index) => {
-      const weightedX = x * (x >= 0 ? weights.agent : weights.exhibition);
-      const weightedY = y * (y >= 0 ? weights.network : weights.data);
-      const weightedZ = z * (z >= 0 ? weights.knowledge : weights.space);
+    const centerWave = Math.sin(time * 0.36) * morphStrength;
+    const center = [
+      Math.cos(time * 0.21) * morphStrength * 0.08,
+      Math.sin(time * 0.24) * morphStrength * 0.07,
+      0.58 + (weights.agent - 1) * 0.2 + centerWave * 0.18,
+    ];
+    const inner = [];
+    const outer = [];
 
-      if (!morphStrength) {
-        return [weightedX, weightedY, weightedZ];
+    for (let index = 0; index < facetCount; index += 1) {
+      const radialWave = Math.sin(time * 0.48 + index * 1.37);
+      const depthWave = Math.cos(time * 0.39 + index * 1.91);
+      const agentScale = 0.78 + weights.agent * 0.22;
+      const [baseX, baseY, baseZ] = innerBase[index];
+
+      inner.push([
+        baseX * agentScale * (1 + radialWave * morphStrength * 0.28),
+        baseY * agentScale * (1 + radialWave * morphStrength * 0.28),
+        baseZ
+          + (weights.agent - 1) * 0.16
+          + depthWave * 0.06
+          + radialWave * morphStrength * 0.18,
+      ]);
+    }
+
+    for (let index = 0; index < outerPointCount; index += 1) {
+      const facetIndex = Math.floor(index / 2);
+      const currentFacet = outerFacets[facetIndex];
+      const previousFacet =
+        outerFacets[(facetIndex - 1 + facetCount) % facetCount];
+      const vertexWeight = index % 2 === 0
+        ? ((weights[previousFacet] || 1) + (weights[currentFacet] || 1)) / 2
+        : (weights[currentFacet] || 1);
+      const radialWave = Math.sin(time * 0.44 + index * 0.83);
+      const depthWave = Math.cos(time * 0.38 + index * 1.19);
+      const [baseX, baseY, baseZ] = outerBase[index];
+      const weightScale = 0.76 + vertexWeight * 0.28;
+
+      outer.push([
+        baseX * weightScale * (1 + radialWave * morphStrength),
+        baseY * weightScale * (1 + radialWave * morphStrength * 0.72),
+        baseZ
+          + (vertexWeight - 1) * 0.1
+          + depthWave * morphStrength * 0.26,
+      ]);
+    }
+
+    const resolve = ({ kind, index = 0 }) => {
+      if (kind === "center") {
+        return center;
       }
+      if (kind === "inner") {
+        return inner[index];
+      }
+      return outer[index];
+    };
 
-      const radialWave = Math.sin(time * 0.58 + index * 1.43);
-      const lateralWave = Math.cos(time * 0.37 + index * 2.11);
-      const verticalWave = Math.sin(time * 0.43 + index * 0.83);
-
-      return [
-        weightedX * (1 + radialWave * morphStrength)
-          + lateralWave * morphStrength * 0.28,
-        weightedY * (1 + verticalWave * morphStrength * 0.82)
-          + radialWave * morphStrength * 0.2,
-        weightedZ * (1 + lateralWave * morphStrength * 0.74)
-          + verticalWave * morphStrength * 0.24,
-      ];
+    mainVertexRefs.forEach((reference, index) => {
+      positionAttribute.array.set(resolve(reference), index * 3);
+    });
+    edgeVertexRefs.forEach((reference, index) => {
+      edgePositionAttribute.array.set(resolve(reference), index * 3);
     });
 
-    faceVertexIndices.forEach((vertexIndex, index) => {
-      positionArray.set(nextVertices[vertexIndex], index * 3);
-    });
-    edgePairs.forEach(([start, end], index) => {
-      edgePositionArray.set(nextVertices[start], index * 6);
-      edgePositionArray.set(nextVertices[end], index * 6 + 3);
-    });
-
-    geometry.attributes.position.needsUpdate = true;
-    edgeGeometry.attributes.position.needsUpdate = true;
+    positionAttribute.needsUpdate = true;
+    edgePositionAttribute.needsUpdate = true;
     geometry.computeBoundingSphere();
   }
 
   update();
-  return { geometry, edgeGeometry, update };
+  return {
+    geometry,
+    edgeGeometry,
+    triangleFacets,
+    update,
+  };
 }
 
-function createPolyhedronScene({
+function createSymbioteScene({
   canvas,
   weights,
   initialRotation,
@@ -239,12 +327,17 @@ function createPolyhedronScene({
     antialias: true,
     powerPreference: "high-performance",
   });
-  const targetRotation = { ...initialRotation, z: 0 };
+  const targetRotation = {
+    x: initialRotation.x || 0,
+    y: initialRotation.y || 0,
+    z: initialRotation.z || 0,
+  };
   const {
     geometry,
     edgeGeometry,
+    triangleFacets,
     update: updateGeometry,
-  } = createIrregularHexahedron(weights);
+  } = createNousSymbiote(weights);
   const weightValues = Object.values(weights);
   const minimumWeight = Math.min(...weightValues);
   const weightRange = Math.max(Math.max(...weightValues) - minimumWeight, 0.01);
@@ -263,13 +356,15 @@ function createPolyhedronScene({
         transparent: true,
         opacity: Math.min(
           0.96,
-          getBaseOpacity(name) + (dominantFacets.includes(name) ? 0.05 : 0),
+          getBaseOpacity(name)
+            + (name === "agent" ? 0.12 : 0)
+            + (dominantFacets.includes(name) ? 0.05 : 0),
         ),
-        depthWrite: false,
+        depthWrite: true,
         side: THREE.DoubleSide,
       }),
   );
-  const polyhedron = new THREE.Mesh(geometry, materials);
+  const symbiote = new THREE.Mesh(geometry, materials);
   const edges = new THREE.LineSegments(
     edgeGeometry,
     new THREE.LineBasicMaterial({
@@ -294,7 +389,7 @@ function createPolyhedronScene({
     phase: autoTour.length ? "travel" : "idle",
     phaseStartedAt: animationStart,
     pauseUntil: 0,
-    from: { x: initialRotation.x, y: initialRotation.y },
+    from: { ...targetRotation },
     to: autoTour[0]?.rotation || initialRotation,
     announced: false,
   };
@@ -302,21 +397,14 @@ function createPolyhedronScene({
     canvas.dataset.autoFacet = autoTour[0].name;
     canvas.dataset.autoPhase = prefersReducedMotion ? "reduced" : "travel";
   }
-  const facetNormals = {
-    agent: new THREE.Vector3(1, 0, 0),
-    exhibition: new THREE.Vector3(-1, 0, 0),
-    network: new THREE.Vector3(0, 1, 0),
-    data: new THREE.Vector3(0, -1, 0),
-    knowledge: new THREE.Vector3(0, 0, 1),
-    space: new THREE.Vector3(0, 0, -1),
-  };
-
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
   camera.position.set(0, 0, 8.2);
-  polyhedron.add(edges);
-  polyhedron.rotation.set(targetRotation.x, targetRotation.y, targetRotation.z);
-  scene.add(polyhedron);
+  symbiote.renderOrder = 1;
+  edges.renderOrder = 2;
+  symbiote.add(edges);
+  symbiote.rotation.set(targetRotation.x, targetRotation.y, targetRotation.z);
+  scene.add(symbiote);
 
   function pauseAutoTour(duration = 6200) {
     if (!autoTour.length) {
@@ -332,6 +420,7 @@ function createPolyhedronScene({
     pauseAutoTour();
     targetRotation.x = rotation.x;
     targetRotation.y = rotation.y;
+    targetRotation.z = rotation.z || 0;
   }
 
   function focus(name) {
@@ -339,7 +428,9 @@ function createPolyhedronScene({
     materials.forEach((material, index) => {
       const facetName = facetByMaterial[index];
       const baseOpacity =
-        getBaseOpacity(facetName) + (dominantFacets.includes(facetName) ? 0.05 : 0);
+        getBaseOpacity(facetName)
+        + (facetName === "agent" ? 0.12 : 0)
+        + (dominantFacets.includes(facetName) ? 0.05 : 0);
       material.opacity = index === activeMaterial
         ? Math.min(0.98, baseOpacity + (weightedOpacity ? 0.1 : 0.25))
         : Math.min(0.96, baseOpacity);
@@ -351,39 +442,15 @@ function createPolyhedronScene({
     pointer.x = ((clientX - bounds.left) / bounds.width) * 2 - 1;
     pointer.y = -((clientY - bounds.top) / bounds.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
-    const intersection = raycaster.intersectObject(polyhedron, false)[0];
-    const materialIndex = Number.isInteger(intersection?.faceIndex)
-      ? Math.floor(intersection.faceIndex / 2)
-      : intersection?.face?.materialIndex;
-    const facetName = Number.isInteger(materialIndex)
-      ? facetByMaterial[materialIndex]
+    const intersection = raycaster.intersectObject(symbiote, false)[0];
+    const facetName = Number.isInteger(intersection?.faceIndex)
+      ? triangleFacets[intersection.faceIndex]
       : null;
     canvas.dataset.hitFacet = facetName || "";
     canvas.dataset.hitTriangle = Number.isInteger(intersection?.faceIndex)
       ? String(intersection.faceIndex)
       : "";
     return facetName;
-  }
-
-  function frontFacingFacet() {
-    const orientation = new THREE.Euler(
-      polyhedron.rotation.x,
-      polyhedron.rotation.y,
-      polyhedron.rotation.z,
-      "XYZ",
-    );
-    let selectedName = "knowledge";
-    let selectedDepth = -Infinity;
-
-    Object.entries(facetNormals).forEach(([name, normal]) => {
-      const depth = normal.clone().applyEuler(orientation).z;
-      if (depth > selectedDepth) {
-        selectedName = name;
-        selectedDepth = depth;
-      }
-    });
-
-    return selectedName;
   }
 
   canvas.addEventListener("pointerdown", (event) => {
@@ -405,8 +472,8 @@ function createPolyhedronScene({
       drag.distance += Math.abs(deltaX) + Math.abs(deltaY);
       targetRotation.y += deltaX * 0.009;
       targetRotation.x += deltaY * 0.009;
-      polyhedron.rotation.x = targetRotation.x;
-      polyhedron.rotation.y = targetRotation.y;
+      symbiote.rotation.x = targetRotation.x;
+      symbiote.rotation.y = targetRotation.y;
       return;
     }
 
@@ -418,9 +485,7 @@ function createPolyhedronScene({
       return;
     }
 
-    const selectedFacet = drag.distance > 6
-      ? frontFacingFacet()
-      : facetAt(event.clientX, event.clientY);
+    const selectedFacet = facetAt(event.clientX, event.clientY);
     if (selectedFacet) {
       canvas.dataset.selectedFacet = selectedFacet;
       focus(selectedFacet);
@@ -456,8 +521,8 @@ function createPolyhedronScene({
     const placement = layout(window.innerWidth < 760);
     restingPosition.set(...placement.position);
     restingScale = placement.scale;
-    polyhedron.position.copy(restingPosition);
-    polyhedron.scale.setScalar(restingScale);
+    symbiote.position.copy(restingPosition);
+    symbiote.scale.setScalar(restingScale);
   }
 
   function beginAutoTransition(now) {
@@ -466,8 +531,9 @@ function createPolyhedronScene({
     autoState.phase = "travel";
     autoState.phaseStartedAt = now;
     autoState.from = {
-      x: polyhedron.rotation.x,
-      y: polyhedron.rotation.y,
+      x: symbiote.rotation.x,
+      y: symbiote.rotation.y,
+      z: symbiote.rotation.z,
     };
     autoState.to = step.rotation;
     autoState.announced = false;
@@ -530,8 +596,13 @@ function createPolyhedronScene({
       Math.sin(autoState.to.y - autoState.from.y),
       Math.cos(autoState.to.y - autoState.from.y),
     );
-    polyhedron.rotation.x = autoState.from.x + deltaX * easedProgress;
-    polyhedron.rotation.y = autoState.from.y + deltaY * easedProgress;
+    const deltaZ = Math.atan2(
+      Math.sin((autoState.to.z || 0) - autoState.from.z),
+      Math.cos((autoState.to.z || 0) - autoState.from.z),
+    );
+    symbiote.rotation.x = autoState.from.x + deltaX * easedProgress;
+    symbiote.rotation.y = autoState.from.y + deltaY * easedProgress;
+    symbiote.rotation.z = autoState.from.z + deltaZ * easedProgress;
 
     if (!autoState.announced && progress >= 0.68) {
       autoState.announced = true;
@@ -541,6 +612,7 @@ function createPolyhedronScene({
     if (progress >= 1) {
       targetRotation.x = autoState.to.x;
       targetRotation.y = autoState.to.y;
+      targetRotation.z = autoState.to.z || 0;
       autoState.phase = "hold";
       autoState.phaseStartedAt = now;
       canvas.dataset.autoPhase = "hold";
@@ -558,19 +630,18 @@ function createPolyhedronScene({
     const elapsed = (now - animationStart) / 1000;
     const autoDriving = updateAutoTour(now);
     if (!autoDriving) {
-      polyhedron.rotation.x += (targetRotation.x - polyhedron.rotation.x) * 0.08;
-      polyhedron.rotation.y += (targetRotation.y - polyhedron.rotation.y) * 0.08;
+      symbiote.rotation.x += (targetRotation.x - symbiote.rotation.x) * 0.08;
+      symbiote.rotation.y += (targetRotation.y - symbiote.rotation.y) * 0.08;
+      symbiote.rotation.z += (targetRotation.z - symbiote.rotation.z) * 0.08;
     }
     if (!prefersReducedMotion) {
-      polyhedron.rotation.z +=
-        autoTour.length && autoState.phase === "hold" ? 0.00018 : 0.0012;
       if (morphStrength) {
         updateGeometry(elapsed, morphStrength);
       }
       if (ambientMotion) {
-        polyhedron.position.x = restingPosition.x + Math.sin(elapsed * 0.24) * 0.16;
-        polyhedron.position.y = restingPosition.y + Math.cos(elapsed * 0.2) * 0.12;
-        polyhedron.scale.setScalar(
+        symbiote.position.x = restingPosition.x + Math.sin(elapsed * 0.24) * 0.16;
+        symbiote.position.y = restingPosition.y + Math.cos(elapsed * 0.2) * 0.12;
+        symbiote.scale.setScalar(
           restingScale * (1 + Math.sin(elapsed * 0.31) * 0.025),
         );
       }
@@ -587,13 +658,13 @@ function createPolyhedronScene({
   return { focus, orient };
 }
 
-const atlasScene = createPolyhedronScene({
+const atlasScene = createSymbioteScene({
   canvas: atlasCanvas,
   weights: atlasWeights,
-  initialRotation: { x: -0.32, y: -0.56 },
+  initialRotation: { x: -0.18, y: 0.12, z: -0.3 },
   layout: (mobile) => ({
-    position: mobile ? [0.88, 0.46, 0] : [2.08, 0.38, 0],
-    scale: mobile ? 1.34 : 1.62,
+    position: mobile ? [0.55, 0.35, 0] : [1.65, 0.25, 0],
+    scale: mobile ? 0.9 : 1.18,
   }),
   morphStrength: 0.12,
   ambientMotion: true,
@@ -620,8 +691,8 @@ const atlasScene = createPolyhedronScene({
       easing: "sine",
     },
     {
-      name: "exhibition",
-      rotation: facets.exhibition.rotation,
+      name: "experience",
+      rotation: facets.experience.rotation,
       travel: 480,
       hold: 1260,
       easing: "snap",
@@ -651,13 +722,13 @@ if (atlasScene) {
   focusAtlas(activeFacet);
 }
 
-createPolyhedronScene({
+createSymbioteScene({
   canvas: vaultCanvas,
   weights: vaultWeights,
-  initialRotation: { x: -0.28, y: -0.52 },
+  initialRotation: { x: -0.18, y: 0.1, z: -0.3 },
   layout: (mobile) => ({
-    position: mobile ? [0, 0.12, 0] : [0, 0.05, 0],
-    scale: mobile ? 0.64 : 0.72,
+    position: mobile ? [0, 0.08, 0] : [0, 0.05, 0],
+    scale: mobile ? 0.7 : 0.82,
   }),
   weightedOpacity: true,
   dominantFacets: ["knowledge", "agent"],

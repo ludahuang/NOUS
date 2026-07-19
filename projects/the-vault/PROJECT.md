@@ -3,11 +3,13 @@
 Status: history imported, runtime validation in progress
 
 The Vault is a graph-native knowledge-base and intelligent-agent case within
-the NOUS six-facet system. It is the first active Agent-era project being
+the NOUS Symbiote. It is the first active Agent-era project being
 integrated into the NOUS mother repository.
 
-Its primary system faces are `knowledge-base` and `intelligent-agent`; data
-curation is a supporting face. It is not a public identity parallel to NOUS.
+Its primary functions are `knowledge-base` and `intelligent-agent`; data
+curation is a supporting function. The intelligent agent occupies the center
+of the structure, while the knowledge-base outer facet carries the strongest
+case-specific emphasis. It is not a public identity parallel to NOUS.
 
 ## Protected Product Ideas
 

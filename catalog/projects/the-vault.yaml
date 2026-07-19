@@ -25,7 +25,7 @@ system_emphasis:
     - network
 shape_weights:
   space: 0.46
-  exhibition: 0.42
+  experience: 0.42
   network: 0.66
   data-curation: 0.90
   knowledge-base: 1.58

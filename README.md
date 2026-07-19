@@ -27,7 +27,7 @@ NOUS 不是某一个网站或单一应用。它是一套持续生成空间、展
   aesthetic position, authority boundary, memory policy, and auditable
   capabilities.
 - **The Vault**: a graph-native knowledge-base and intelligent-agent case,
-  with data curation as a supporting system face. It is the first active
+  with data curation as a supporting function. It is the first active
   Agent-era project migrated into the NOUS project structure.
 - **NOUS Archive**: the recovery and description of container spaces,
   exhibitions, distributed installations, research, media, and born-digital
@@ -77,5 +77,5 @@ The migration decision is documented in
 [`docs/rfcs/0002-the-vault-history-migration.md`](docs/rfcs/0002-the-vault-history-migration.md);
 the public URL structure is documented in
 [`docs/rfcs/0003-publication-structure.md`](docs/rfcs/0003-publication-structure.md);
-the six-facet system is documented in
-[`docs/rfcs/0004-six-facet-system.md`](docs/rfcs/0004-six-facet-system.md).
+the NOUS Symbiote system is documented in
+[`docs/rfcs/0004-nous-symbiote-system.md`](docs/rfcs/0004-nous-symbiote-system.md).

@@ -2,37 +2,43 @@ const facets = {
   space: {
     index: "01 / SPACE",
     title: "空间",
-    description: "让策展获得可移动、可制造、可进入的物质接口。",
+    mechanism: "把问题转化为可进入的现场",
+    description: "通过尺度、动线、材料和停留方式组织参与，让问题成为可以共同进入的现场。",
     rotation: { x: 0, y: Math.PI },
   },
   exhibition: {
     index: "02 / EXHIBITION",
     title: "展览",
-    description: "让作品、参与者、条件与发生过程共同构成一次可被经历的关系。",
+    mechanism: "把关系组织为共同经历",
+    description: "将作品、参与者与发生条件编排在一起，使关系能够被经历、讨论并继续变化。",
     rotation: { x: 0, y: Math.PI / 2 },
   },
   network: {
     index: "03 / NETWORK",
     title: "网络",
-    description: "让不同城市、现场与主体通过媒介、协作和传输协议彼此连接。",
+    mechanism: "让协作跨越地点持续",
+    description: "连接不同城市、主体与现场，使协作、信息和行动能够跨越一次事件持续传递。",
     rotation: { x: Math.PI / 2, y: 0 },
   },
   data: {
     index: "04 / DATA CURATION",
     title: "数据策展",
-    description: "将事件、来源、关系与过程转化为可追溯、可传送、可复用的结构。",
+    mechanism: "让过程成为可追溯记录",
+    description: "记录事件、来源、关系与过程，使策展判断可被核查，也能被后续项目重新调用。",
     rotation: { x: -Math.PI / 2, y: 0 },
   },
   knowledge: {
     index: "05 / KNOWLEDGE BASE",
     title: "知识库",
-    description: "将材料、笔记、来源与关系保存为可检索、可导航、可再次激活的共同记忆。",
+    mechanism: "组织可继续工作的共同记忆",
+    description: "将分散材料组织为可检索、可导航的共同记忆，支持持续研究与再次激活。",
     rotation: { x: 0, y: 0 },
   },
   agent: {
     index: "06 / INTELLIGENT AGENT",
     title: "智能体",
-    description: "让策展机制获得能够提出关系、协助生成并保留行动记录的主体。",
+    mechanism: "让行动主体参与策展",
+    description: "参与发现关系、提出问题和生成行动，同时保留来源、不确定性与过程记录。",
     rotation: { x: 0, y: -Math.PI / 2 },
   },
 };
@@ -74,6 +80,9 @@ const controls = [...document.querySelectorAll("[data-facet]")];
 const facetIndex = document.querySelector("#facet-index");
 const facetTitle = document.querySelector("#facet-title");
 const facetDescription = document.querySelector("#facet-description");
+const systemFacetIndex = document.querySelector("#system-facet-index");
+const systemFacetMechanism = document.querySelector("#system-facet-mechanism");
+const systemFacetDescription = document.querySelector("#system-facet-description");
 const atlasCanvas = document.querySelector("#polyhedron-canvas");
 const vaultCanvas = document.querySelector("#vault-polyhedron-canvas");
 const vaultShapeView = document.querySelector("#vault-shape-view");
@@ -97,6 +106,9 @@ function selectFacet(name, { orient = true } = {}) {
   facetIndex.textContent = facet.index;
   facetTitle.textContent = facet.title;
   facetDescription.textContent = facet.description;
+  systemFacetIndex.textContent = facet.index;
+  systemFacetMechanism.textContent = facet.mechanism;
+  systemFacetDescription.textContent = facet.description;
 
   controls.forEach((control) => {
     const isActive = control.dataset.facet === name;

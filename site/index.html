@@ -41,7 +41,7 @@
           <h1 id="hero-title">NOUS</h1>
           <p class="hero-definition">策展孵化器 / Curator Incubator</p>
           <p class="hero-intro">
-            NOUS 由六个相互作用的结构象限构成。每个项目对六个象限极点的侧重不同，因此形成各自的不规则六面体。
+            NOUS 从问题出发，组织空间、展览、网络、数据、知识与智能体，让策展在共同参与、持续记录和再次激活中生成。
           </p>
           <div class="hero-actions">
             <a class="primary-action" href="#system">进入六面体</a>
@@ -60,39 +60,53 @@
 
       <section class="system-section" id="system" aria-labelledby="system-title">
         <div class="section-heading">
-          <p>THE SIX-FACET SYSTEM</p>
-          <h2 id="system-title">不是线性进化，<br />而是同时作用的六个面。</h2>
+          <p>HOW NOUS OPERATES</p>
+          <h2 id="system-title">NOUS 让关系持续生成</h2>
         </div>
         <div class="system-copy">
           <p>
-            空间、展览、网络、数据策展、知识库与智能体并不互相取代。象限极点的强弱改变六面体的伸展方向，也构成每项实践的异形特征。
+            NOUS 从一个问题开始，建立可进入的界面，邀请不同主体共同参与，并把发生过程转化为可以继续工作的记录与关系。
           </p>
           <p lang="en">
-            A NOUS project is not a separate product line. It is a situated
-            expression of six interacting systems, with a particular balance
-            of emphasis in each case.
+            NOUS begins with a question, builds an interface for participation,
+            and carries what happens forward as traceable relationships that
+            can be activated again.
           </p>
         </div>
 
         <div class="facet-controls" role="group" aria-label="选择六面体系统面">
-          <button class="facet-control face-space" type="button" data-facet="space" aria-pressed="false">
+          <button class="facet-control face-space" type="button" data-facet="space" aria-pressed="false" aria-controls="system-facet-explanation">
             <span>01</span><strong>空间</strong><em>Space</em>
           </button>
-          <button class="facet-control face-exhibition" type="button" data-facet="exhibition" aria-pressed="false">
+          <button class="facet-control face-exhibition" type="button" data-facet="exhibition" aria-pressed="false" aria-controls="system-facet-explanation">
             <span>02</span><strong>展览</strong><em>Exhibition</em>
           </button>
-          <button class="facet-control face-network" type="button" data-facet="network" aria-pressed="false">
+          <button class="facet-control face-network" type="button" data-facet="network" aria-pressed="false" aria-controls="system-facet-explanation">
             <span>03</span><strong>网络</strong><em>Network</em>
           </button>
-          <button class="facet-control face-data" type="button" data-facet="data" aria-pressed="false">
+          <button class="facet-control face-data" type="button" data-facet="data" aria-pressed="false" aria-controls="system-facet-explanation">
             <span>04</span><strong>数据策展</strong><em>Data curation</em>
           </button>
-          <button class="facet-control face-knowledge is-active" type="button" data-facet="knowledge" aria-pressed="true">
+          <button class="facet-control face-knowledge is-active" type="button" data-facet="knowledge" aria-pressed="true" aria-controls="system-facet-explanation">
             <span>05</span><strong>知识库</strong><em>Knowledge base</em>
           </button>
-          <button class="facet-control face-agent" type="button" data-facet="agent" aria-pressed="false">
+          <button class="facet-control face-agent" type="button" data-facet="agent" aria-pressed="false" aria-controls="system-facet-explanation">
             <span>06</span><strong>智能体</strong><em>Intelligent agent</em>
           </button>
+        </div>
+
+        <div
+          class="system-facet-explanation"
+          id="system-facet-explanation"
+          aria-live="polite"
+        >
+          <span id="system-facet-index">05 / KNOWLEDGE BASE</span>
+          <div>
+            <strong id="system-facet-mechanism">组织可继续工作的共同记忆</strong>
+            <p id="system-facet-description">
+              将分散材料组织为可检索、可导航的共同记忆，支持持续研究与再次激活。
+            </p>
+          </div>
         </div>
       </section>
 

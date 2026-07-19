@@ -279,6 +279,10 @@ button {
   grid-column: 1 / -1;
 }
 
+.system-section > * {
+  min-width: 0;
+}
+
 .section-heading p,
 .case-heading > p:first-child,
 .archive-heading > p,
@@ -301,8 +305,7 @@ button {
 
 .system-section .section-heading h2 {
   max-width: none;
-  font-size: 82px;
-  white-space: nowrap;
+  font-size: 64px;
 }
 
 #protocol-title,
@@ -864,7 +867,8 @@ button {
   }
 
   .system-section .section-heading h2 {
-    font-size: 64px;
+    font-size: 60px;
+    white-space: normal;
   }
 
   .system-copy {
@@ -1024,6 +1028,7 @@ button {
 
   #system-title {
     font-size: 28px;
+    line-height: 1.2;
   }
 
   .system-copy {
@@ -1036,15 +1041,15 @@ button {
   }
 
   .facet-controls {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     margin-top: 62px;
   }
 
   .facet-control,
   .facet-control + .facet-control,
   .facet-control:nth-child(4) {
-    min-height: 132px;
-    padding: 16px;
+    min-height: 112px;
+    padding: 16px 0;
     border: 0;
     border-bottom: 1px solid var(--line);
   }

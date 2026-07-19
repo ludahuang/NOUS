@@ -1035,6 +1035,10 @@ button {
     font-size: 32px;
   }
 
+  #system-title {
+    font-size: 28px;
+  }
+
   .system-copy {
     gap: 18px;
     margin-top: 40px;

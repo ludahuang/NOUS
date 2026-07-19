@@ -1525,6 +1525,11 @@ button:disabled {
     right: 1.5rem;
     bottom: 1.5rem;
   }
+
+  .assistant-shell:not([data-open="true"]) {
+    left: auto;
+    width: 3.2rem;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1541,7 +1546,7 @@ button:disabled {
     max-height: 60vh;
   }
 
-  .assistant-shell {
+  .assistant-shell[data-open="true"] {
     width: min(100vw - 2rem, 100%);
   }
 

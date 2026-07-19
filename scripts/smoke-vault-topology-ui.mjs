@@ -378,6 +378,9 @@ async function main() {
     const mobileImmersiveState = await mobilePage.evaluate(() => {
       const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
       const toggle = document.getElementById("mobile-panel-toggle");
+      const assistant = document.querySelector(".assistant-shell");
+      const toggleRect = toggle.getBoundingClientRect();
+      const assistantRect = assistant.getBoundingClientRect();
       return {
         viewport: {
           left: viewport.left,
@@ -396,8 +399,10 @@ async function main() {
           document.querySelector(".stage-header"),
         ).visibility,
         assistantVisibility: getComputedStyle(
-          document.querySelector(".assistant-shell"),
+          assistant,
         ).visibility,
+        assistantWidth: assistantRect.width,
+        controlsSeparated: toggleRect.right + 12 < assistantRect.left,
         menuVisibility: getComputedStyle(toggle).visibility,
         menuExpanded: toggle.getAttribute("aria-expanded"),
       };
@@ -412,6 +417,8 @@ async function main() {
       mobileImmersiveState.notePaneDisplay !== "none" ||
       mobileImmersiveState.headerVisibility !== "hidden" ||
       mobileImmersiveState.assistantVisibility !== "visible" ||
+      mobileImmersiveState.assistantWidth > 64 ||
+      !mobileImmersiveState.controlsSeparated ||
       mobileImmersiveState.menuVisibility !== "visible" ||
       mobileImmersiveState.menuExpanded !== "false"
     ) {

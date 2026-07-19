@@ -342,6 +342,9 @@ button {
 
 .facet-control {
   display: grid;
+  grid-template-rows: 1fr auto auto;
+  row-gap: 4px;
+  align-items: start;
   min-height: 176px;
   padding: 18px 18px 18px 0;
   border: 0;
@@ -350,9 +353,7 @@ button {
   color: var(--ink);
   cursor: pointer;
   text-align: left;
-  transition:
-    background 160ms ease,
-    padding 160ms ease;
+  transition: background 160ms ease;
 }
 
 .facet-control + .facet-control {
@@ -372,14 +373,12 @@ button {
 }
 
 .facet-control strong {
-  align-self: center;
   font-size: 20px;
 }
 
 .facet-control:hover,
 .facet-control:focus-visible,
 .facet-control.is-active {
-  padding-top: 26px;
   background: var(--yellow);
 }
 

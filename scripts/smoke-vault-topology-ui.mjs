@@ -197,6 +197,9 @@ async function main() {
       );
     }
 
+    await page.locator("#toggle-motion").click({ force: true });
+    await page.waitForTimeout(320);
+
     const labelTarget = await page.evaluate(() => {
       const targets = window.__THE_VAULT_E2E__.getTagClickTargets();
       const canvas = document.querySelector("#graph-viewport canvas");

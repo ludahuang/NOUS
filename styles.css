@@ -80,9 +80,7 @@ body::before {
 .note-pane,
 .stage-header,
 .stage-overlay {
-  transition:
-    opacity 160ms ease,
-    visibility 160ms ease;
+  transition: opacity 160ms ease;
 }
 
 .vault-sidebar {

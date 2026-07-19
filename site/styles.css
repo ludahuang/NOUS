@@ -339,7 +339,6 @@ button {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   margin-top: clamp(70px, 10vw, 140px);
-  border-top: 1px solid var(--ink);
 }
 
 .facet-control {
@@ -350,7 +349,7 @@ button {
   min-height: 176px;
   padding: 18px 18px 18px 0;
   border: 0;
-  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   background: transparent;
   color: var(--ink);
   cursor: pointer;
@@ -360,10 +359,6 @@ button {
 
 .facet-control + .facet-control {
   padding-left: 18px;
-}
-
-.facet-control:last-child {
-  border-right: 0;
 }
 
 .facet-control span,
@@ -885,14 +880,6 @@ button {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .facet-control:nth-child(3) {
-    border-right: 0;
-  }
-
-  .facet-control:nth-child(n + 4) {
-    border-top: 1px solid var(--line);
-  }
-
   .facet-control:nth-child(4) {
     padding-left: 0;
   }
@@ -1058,17 +1045,8 @@ button {
   .facet-control:nth-child(4) {
     min-height: 132px;
     padding: 16px;
-    border-top: 1px solid var(--line);
-    border-right: 1px solid var(--line);
-  }
-
-  .facet-control:nth-child(2n) {
-    border-right: 0;
-  }
-
-  .facet-control:first-child,
-  .facet-control:nth-child(2) {
-    border-top: 0;
+    border: 0;
+    border-bottom: 1px solid var(--line);
   }
 
   .facet-control strong {

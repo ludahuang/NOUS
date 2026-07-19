@@ -219,10 +219,13 @@ const CRC32_TABLE = (() => {
 
 const stage = document.getElementById("graph-viewport");
 const labelLayer = document.getElementById("label-layer");
+const workspaceShell = document.querySelector(".workspace-shell");
 const stageShell = document.querySelector(".stage-shell");
 const stageHeader = document.querySelector(".stage-header");
 const vaultSidebar = document.querySelector(".vault-sidebar");
 const notePane = document.querySelector(".note-pane");
+const stageOverlays = [...document.querySelectorAll(".stage-overlay")];
+const mobilePanelToggle = document.getElementById("mobile-panel-toggle");
 const searchInput = document.getElementById("search-input");
 const searchSuggestions = document.getElementById("search-suggestions");
 const regionFilter = document.getElementById("region-filter");
@@ -450,6 +453,7 @@ const state = {
   agentDraftIndex: -1,
   graphMode: "default",
   graphViewMode: "fusion",
+  connectomeImmersive: false,
   motionEnabled: true,
   loading: true,
   editorOpen: false,
@@ -4392,6 +4396,66 @@ function getOverviewCameraDistance(
   }, 0);
 }
 
+function updateGraphOverview({ immediate = false } = {}) {
+  if (!state.pages.length) {
+    return;
+  }
+
+  const graphCenter = state.pages
+    .reduce(
+      (center, page) => center.add(page.home),
+      new THREE.Vector3(),
+    )
+    .multiplyScalar(1 / state.pages.length);
+  const graphRadius = Math.max(
+    28,
+    state.pages.reduce(
+      (radius, page) => Math.max(radius, page.home.distanceTo(graphCenter)),
+      0,
+    ),
+  );
+  const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
+  const limitingHalfFov = Math.max(
+    Math.min(verticalHalfFov, horizontalHalfFov),
+    THREE.MathUtils.degToRad(12),
+  );
+  const overviewDirection = new THREE.Vector3(0.22, 0.14, 1.46).normalize();
+  const overviewDistance = Math.max(
+    graphRadius * 1.15,
+    getOverviewCameraDistance(
+      state.pages.map((page) => page.home),
+      graphCenter,
+      overviewDirection,
+      Math.max(horizontalHalfFov, limitingHalfFov),
+      Math.max(verticalHalfFov, limitingHalfFov),
+    ) * 1.04,
+  );
+
+  state.graphRadius = graphRadius;
+  state.defaultTarget = graphCenter;
+  state.defaultCameraPosition = graphCenter
+    .clone()
+    .add(overviewDirection.multiplyScalar(overviewDistance));
+  controls.minDistance = clamp(graphRadius * 0.36, 18, 56);
+  controls.maxDistance = clamp(overviewDistance * 2.4, 150, 480);
+  state.trackedCameraOffset = state.defaultCameraPosition
+    .clone()
+    .sub(state.defaultTarget);
+
+  if (immediate) {
+    camera.position.copy(state.defaultCameraPosition);
+    controls.target.copy(state.defaultTarget);
+    state.cameraGoal = null;
+    state.targetGoal = null;
+    state.trackedPageId = null;
+    controls.update();
+    return;
+  }
+
+  resetCameraGoals();
+}
+
 function buildGraph(records, options = {}) {
   clearThreeObjects();
 
@@ -4583,52 +4647,7 @@ function buildGraph(records, options = {}) {
   state.trackedCameraOffset = state.defaultCameraPosition.clone().sub(state.defaultTarget);
   state.loading = false;
 
-  const graphCenter = pages
-    .reduce(
-      (center, page) => center.add(page.home),
-      new THREE.Vector3(),
-    )
-    .multiplyScalar(1 / Math.max(pages.length, 1));
-  const graphRadius = Math.max(
-    28,
-    pages.reduce(
-      (radius, page) => Math.max(radius, page.home.distanceTo(graphCenter)),
-      0,
-    ),
-  );
-  const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
-  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
-  const limitingHalfFov = Math.max(
-    Math.min(verticalHalfFov, horizontalHalfFov),
-    THREE.MathUtils.degToRad(12),
-  );
-  const overviewDirection = new THREE.Vector3(0.22, 0.14, 1.46).normalize();
-  const overviewDistance = Math.max(
-    graphRadius * 1.15,
-    getOverviewCameraDistance(
-      pages.map((page) => page.home),
-      graphCenter,
-      overviewDirection,
-      Math.max(horizontalHalfFov, limitingHalfFov),
-      Math.max(verticalHalfFov, limitingHalfFov),
-    ) * 1.04,
-  );
-  state.graphRadius = graphRadius;
-  state.defaultTarget = graphCenter;
-  state.defaultCameraPosition = graphCenter
-    .clone()
-    .add(overviewDirection.multiplyScalar(overviewDistance));
-  camera.position.copy(state.defaultCameraPosition);
-  controls.target.copy(state.defaultTarget);
-  controls.minDistance = clamp(graphRadius * 0.36, 18, 56);
-  controls.maxDistance = clamp(overviewDistance * 2.4, 150, 480);
-  state.cameraGoal = null;
-  state.targetGoal = null;
-  state.trackedPageId = null;
-  state.trackedCameraOffset = state.defaultCameraPosition
-    .clone()
-    .sub(state.defaultTarget);
-  controls.update();
+  updateGraphOverview({ immediate: true });
 
   statPages.textContent = String(pages.length);
   statLinks.textContent = formatNumber(edges.length);
@@ -4928,6 +4947,7 @@ function getCameraAlignmentSnapshot() {
     selectedTag: projectPoint(selectedPage?.tagSprite?.position || null),
     selectedTagVisible: Boolean(selectedPage?.tagSprite?.visible),
     selectedTagRenderOrder: selectedPage?.tagSprite?.renderOrder || 0,
+    connectomeImmersive: state.connectomeImmersive,
     graphCenter: projectPoint(state.defaultTarget),
     maxGraphX: projectedHomes.reduce(
       (maximum, point) => Math.max(maximum, Math.abs(point.x)),
@@ -5068,16 +5088,20 @@ function resizeRenderer() {
     : null;
   const notePaneRect = desktopLayout ? notePane.getBoundingClientRect() : null;
   const insetGap = 12;
-  const topInset = Math.max(
-    0,
-    Math.ceil(headerRect.bottom - shellRect.top + insetGap),
-  );
-  const leftInset = sidebarRect
-    ? Math.max(0, Math.ceil(sidebarRect.right - shellRect.left + insetGap))
-    : 0;
-  const rightInset = notePaneRect
-    ? Math.max(0, Math.ceil(shellRect.right - notePaneRect.left + insetGap))
-    : 0;
+  const topInset = state.connectomeImmersive
+    ? 0
+    : Math.max(
+      0,
+      Math.ceil(headerRect.bottom - shellRect.top + insetGap),
+    );
+  const leftInset =
+    state.connectomeImmersive || !sidebarRect
+      ? 0
+      : Math.max(0, Math.ceil(sidebarRect.right - shellRect.left + insetGap));
+  const rightInset =
+    state.connectomeImmersive || !notePaneRect
+      ? 0
+      : Math.max(0, Math.ceil(shellRect.right - notePaneRect.left + insetGap));
 
   stageShell.style.setProperty("--graph-top-inset", `${topInset}px`);
   stageShell.style.setProperty("--graph-left-inset", `${leftInset}px`);
@@ -5092,6 +5116,41 @@ function resizeRenderer() {
   renderer.setSize(width, height);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
+}
+
+function setConnectomeImmersive(enabled) {
+  const nextImmersive = Boolean(enabled);
+  if (state.connectomeImmersive === nextImmersive) {
+    return;
+  }
+
+  state.connectomeImmersive = nextImmersive;
+  workspaceShell.classList.toggle("connectome-immersive", nextImmersive);
+  workspaceShell.setAttribute(
+    "data-connectome-immersive",
+    nextImmersive ? "true" : "false",
+  );
+  mobilePanelToggle.setAttribute(
+    "aria-expanded",
+    nextImmersive ? "false" : "true",
+  );
+  mobilePanelToggle.setAttribute(
+    "aria-label",
+    nextImmersive ? "Show interface panels" : "Hide interface panels",
+  );
+  mobilePanelToggle.title = nextImmersive
+    ? "Show interface panels"
+    : "Hide interface panels";
+  [vaultSidebar, notePane, stageHeader, ...stageOverlays].forEach((panel) => {
+    panel.inert = nextImmersive;
+  });
+
+  if (nextImmersive) {
+    setAgentOpen(false);
+  }
+
+  resizeRenderer();
+  updateGraphOverview();
 }
 
 function updatePointerFromClient(clientX, clientY) {
@@ -5181,7 +5240,13 @@ function handleStagePointerDown(event) {
 
   const pageId = pickPageIdFromClient(event.clientX, event.clientY);
   if (!pageId) {
-    state.stagePointerPress = null;
+    state.stagePointerPress = {
+      pageId: "",
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      moved: false,
+    };
     return;
   }
 
@@ -5250,7 +5315,11 @@ function handlePointerUp(event) {
     press.pointerId === event.pointerId &&
     !press.moved
   ) {
-    focusPage(press.pageId);
+    if (press.pageId) {
+      focusPage(press.pageId);
+    } else {
+      setConnectomeImmersive(!state.connectomeImmersive);
+    }
   }
 }
 
@@ -5801,6 +5870,10 @@ function bindEvents() {
     }
   });
 
+  mobilePanelToggle.addEventListener("click", () => {
+    setConnectomeImmersive(!state.connectomeImmersive);
+  });
+
   agentCloseButton.addEventListener("click", () => {
     setAgentOpen(false);
   });
@@ -5887,8 +5960,17 @@ function bindEvents() {
   });
 
   window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.agentOpen) {
+    if (event.key !== "Escape") {
+      return;
+    }
+
+    if (state.agentOpen) {
       setAgentOpen(false);
+      return;
+    }
+
+    if (state.connectomeImmersive) {
+      setConnectomeImmersive(false);
     }
   });
 

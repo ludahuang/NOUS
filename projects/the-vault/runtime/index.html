@@ -15,10 +15,21 @@
       href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Ccircle cx="32" cy="32" r="28" fill="%23090b10"/%3E%3Ccircle cx="32" cy="32" r="16" fill="%237f8fff"/%3E%3C/svg%3E'
     />
     <title>The Vault v2-agentic</title>
-    <link rel="stylesheet" href="styles.css?v=v2-agentic-centered-connectome-8" />
+    <link rel="stylesheet" href="styles.css?v=v2-agentic-immersive-connectome-2" />
   </head>
   <body>
-    <div class="workspace-shell">
+    <div class="workspace-shell" data-connectome-immersive="false">
+      <button
+        id="mobile-panel-toggle"
+        type="button"
+        class="mobile-panel-toggle"
+        aria-label="Hide interface panels"
+        aria-expanded="true"
+        title="Hide interface panels"
+      >
+        <span aria-hidden="true">☰</span>
+      </button>
+
       <aside class="vault-sidebar">
         <div class="sidebar-head">
           <div class="headline-row">
@@ -519,6 +530,6 @@
     </script>
     <script src="vendor/three.min.js"></script>
     <script src="vendor/OrbitControls.js"></script>
-    <script src="script.js?v=v2-agentic-centered-connectome-8"></script>
+    <script src="script.js?v=v2-agentic-immersive-connectome-2"></script>
   </body>
 </html>

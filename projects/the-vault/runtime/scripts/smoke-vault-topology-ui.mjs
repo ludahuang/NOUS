@@ -101,6 +101,105 @@ async function main() {
       );
     }
 
+    const standardViewport = await page.evaluate(() => {
+      const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
+      return {
+        left: viewport.left,
+        top: viewport.top,
+        width: viewport.width,
+        height: viewport.height,
+      };
+    });
+    await page.mouse.click(
+      standardViewport.left + 18,
+      standardViewport.top + 18,
+    );
+    await page.waitForFunction(
+      () =>
+        document.querySelector(".workspace-shell")?.dataset
+          .connectomeImmersive === "true",
+    );
+    await page.waitForFunction(
+      () =>
+        !window.__THE_VAULT_E2E__
+          .getCameraAlignmentSnapshot().cameraAnimating,
+    );
+    const immersiveState = await page.evaluate(() => {
+      const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
+      const sidebar = getComputedStyle(document.querySelector(".vault-sidebar"));
+      const notePane = getComputedStyle(document.querySelector(".note-pane"));
+      const header = getComputedStyle(document.querySelector(".stage-header"));
+      const overlays = [...document.querySelectorAll(".stage-overlay")].map(
+        (overlay) => getComputedStyle(overlay).visibility,
+      );
+      const assistant = getComputedStyle(document.querySelector(".assistant-shell"));
+      return {
+        viewport: {
+          left: viewport.left,
+          top: viewport.top,
+          width: viewport.width,
+          height: viewport.height,
+        },
+        sidebarVisibility: sidebar.visibility,
+        notePaneVisibility: notePane.visibility,
+        headerVisibility: header.visibility,
+        overlayVisibilities: overlays,
+        assistantVisibility: assistant.visibility,
+        alignment: window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+      };
+    });
+    if (
+      immersiveState.viewport.left !== 0 ||
+      immersiveState.viewport.top !== 0 ||
+      immersiveState.viewport.width !== 1440 ||
+      immersiveState.viewport.height !== 980 ||
+      immersiveState.sidebarVisibility !== "hidden" ||
+      immersiveState.notePaneVisibility !== "hidden" ||
+      immersiveState.headerVisibility !== "hidden" ||
+      immersiveState.overlayVisibilities.some(
+        (visibility) => visibility !== "hidden",
+      ) ||
+      immersiveState.assistantVisibility !== "visible" ||
+      Math.abs(immersiveState.alignment.graphCenter?.x || 0) > 0.015 ||
+      Math.abs(immersiveState.alignment.graphCenter?.y || 0) > 0.015
+    ) {
+      throw new Error(
+        `Immersive connectome state was invalid: ${JSON.stringify(immersiveState)}`,
+      );
+    }
+
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(
+      () =>
+        document.querySelector(".workspace-shell")?.dataset
+          .connectomeImmersive === "false",
+    );
+    const restoredViewport = await page.evaluate(() => {
+      const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
+      return {
+        left: viewport.left,
+        top: viewport.top,
+        width: viewport.width,
+        height: viewport.height,
+      };
+    });
+    if (
+      Math.abs(restoredViewport.left - standardViewport.left) > 1 ||
+      Math.abs(restoredViewport.top - standardViewport.top) > 1 ||
+      Math.abs(restoredViewport.width - standardViewport.width) > 1 ||
+      Math.abs(restoredViewport.height - standardViewport.height) > 1
+    ) {
+      throw new Error(
+        `Connectome viewport did not restore: ${JSON.stringify({
+          standardViewport,
+          restoredViewport,
+        })}`,
+      );
+    }
+
+    await page.locator("#toggle-motion").click({ force: true });
+    await page.waitForTimeout(320);
+
     const labelTarget = await page.evaluate(() => {
       const targets = window.__THE_VAULT_E2E__.getTagClickTargets();
       const canvas = document.querySelector("#graph-viewport canvas");
@@ -254,6 +353,113 @@ async function main() {
       fusionState.pages,
     );
 
+    const mobilePage = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+    });
+    const mobileConsoleErrors = [];
+    mobilePage.on("console", (message) => {
+      if (message.type() === "error") {
+        mobileConsoleErrors.push(message.text());
+      }
+    });
+    await installWikipediaMock(mobilePage);
+    await mobilePage.goto(url, { waitUntil: "domcontentloaded" });
+    await mobilePage.waitForFunction(
+      () => document.querySelectorAll("#note-tree .tree-item").length >= 12,
+    );
+    await mobilePage.locator("#mobile-panel-toggle").click();
+    await mobilePage.waitForFunction(
+      () =>
+        document.querySelector(".workspace-shell")?.dataset
+          .connectomeImmersive === "true",
+    );
+    await mobilePage.waitForTimeout(220);
+    const mobileImmersiveState = await mobilePage.evaluate(() => {
+      const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
+      const toggle = document.getElementById("mobile-panel-toggle");
+      return {
+        viewport: {
+          left: viewport.left,
+          top: viewport.top,
+          width: viewport.width,
+          height: viewport.height,
+        },
+        documentHeight: document.documentElement.scrollHeight,
+        sidebarDisplay: getComputedStyle(
+          document.querySelector(".vault-sidebar"),
+        ).display,
+        notePaneDisplay: getComputedStyle(
+          document.querySelector(".note-pane"),
+        ).display,
+        headerVisibility: getComputedStyle(
+          document.querySelector(".stage-header"),
+        ).visibility,
+        assistantVisibility: getComputedStyle(
+          document.querySelector(".assistant-shell"),
+        ).visibility,
+        menuVisibility: getComputedStyle(toggle).visibility,
+        menuExpanded: toggle.getAttribute("aria-expanded"),
+      };
+    });
+    if (
+      mobileImmersiveState.viewport.left !== 0 ||
+      mobileImmersiveState.viewport.top !== 0 ||
+      mobileImmersiveState.viewport.width !== 390 ||
+      mobileImmersiveState.viewport.height !== 844 ||
+      mobileImmersiveState.documentHeight !== 844 ||
+      mobileImmersiveState.sidebarDisplay !== "none" ||
+      mobileImmersiveState.notePaneDisplay !== "none" ||
+      mobileImmersiveState.headerVisibility !== "hidden" ||
+      mobileImmersiveState.assistantVisibility !== "visible" ||
+      mobileImmersiveState.menuVisibility !== "visible" ||
+      mobileImmersiveState.menuExpanded !== "false"
+    ) {
+      throw new Error(
+        `Mobile menu did not enter immersive mode: ${JSON.stringify(
+          mobileImmersiveState,
+        )}`,
+      );
+    }
+
+    await mobilePage.locator("#mobile-panel-toggle").click();
+    await mobilePage.waitForFunction(
+      () =>
+        document.querySelector(".workspace-shell")?.dataset
+          .connectomeImmersive === "false",
+    );
+    await mobilePage.waitForTimeout(220);
+    const mobileRestoredState = await mobilePage.evaluate(() => {
+      const toggle = document.getElementById("mobile-panel-toggle");
+      return {
+        sidebarDisplay: getComputedStyle(
+          document.querySelector(".vault-sidebar"),
+        ).display,
+        notePaneDisplay: getComputedStyle(
+          document.querySelector(".note-pane"),
+        ).display,
+        headerVisibility: getComputedStyle(
+          document.querySelector(".stage-header"),
+        ).visibility,
+        menuExpanded: toggle.getAttribute("aria-expanded"),
+      };
+    });
+    await mobilePage.close();
+    if (
+      mobileRestoredState.sidebarDisplay === "none" ||
+      mobileRestoredState.notePaneDisplay === "none" ||
+      mobileRestoredState.headerVisibility !== "visible" ||
+      mobileRestoredState.menuExpanded !== "true" ||
+      mobileConsoleErrors.length
+    ) {
+      throw new Error(
+        `Mobile menu did not restore panels: ${JSON.stringify({
+          mobileRestoredState,
+          mobileConsoleErrors,
+        })}`,
+      );
+    }
+
     if (consoleMessages.length) {
       throw new Error(`Unexpected browser console output:\n${consoleMessages.join("\n")}`);
     }
@@ -265,11 +471,15 @@ async function main() {
           url,
           rendererSizing,
           overviewAlignment,
+          immersiveState,
+          restoredViewport,
           labelTarget,
           clickedAlignment,
           focusedAlignment,
           vaultState,
           fusionState,
+          mobileImmersiveState,
+          mobileRestoredState,
         },
         null,
         2,

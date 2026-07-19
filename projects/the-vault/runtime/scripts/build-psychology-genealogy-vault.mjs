@@ -4,6 +4,26 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = path.join(repoRoot, "vaults", "Psychology_Genealogy_Atlas");
+const sourcePath = path.join(
+  repoRoot,
+  "resources",
+  "source-materials",
+  "Psychology_Genealogy_Atlas_Obsidian.md",
+);
+const wikipediaManifestPath = path.join(outputRoot, "the-vault.wikipedia.json");
+
+async function readJsonIfPresent(file) {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+const existingWikipediaManifest = await readJsonIfPresent(wikipediaManifestPath);
 
 const clusters = [
   {
@@ -584,9 +604,398 @@ const clusters = [
   },
 ];
 
-const allNotes = clusters.flatMap((cluster) =>
+const curatedNotes = clusters.flatMap((cluster) =>
   cluster.notes.map((note) => ({ ...note, folder: cluster.folder, clusterTitle: cluster.title })),
 );
+const curatedAliasMap = new Map();
+
+function normalizeTitleKey(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[()[\]{}'"“”‘’.,，。:：;；/\\|_—–-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+for (const note of curatedNotes) {
+  [note.title, ...(note.aliases || [])].forEach((alias) => {
+    curatedAliasMap.set(normalizeTitleKey(alias), note.title);
+  });
+}
+
+const wikipediaTitleOverrides = new Map(
+  Object.entries({
+    "心理学 Psychology": "Psychology",
+    "经验 Experience": "Experience",
+    "行为 Behavior": "Behavior",
+    "认知 Cognition": "Cognition",
+    "情绪 Emotion": "Emotion",
+    "自我 Self": "Self",
+    "关系 Relationship": "Interpersonal relationship",
+    "身体 Body": "Human body",
+    "大脑 Brain": "Human brain",
+    "意识 Consciousness": "Consciousness",
+    "文化 Culture": "Culture",
+    "人工心智 Artificial Mind": "Artificial consciousness",
+    "认知行为疗法 CBT": "Cognitive behavioral therapy",
+    "理性情绪行为疗法 REBT": "Rational emotive behavior therapy",
+    "接纳与承诺疗法 ACT": "Acceptance and commitment therapy",
+    "辩证行为疗法 DBT": "Dialectical behavior therapy",
+    "人本主义心理学": "Humanistic psychology",
+    "存在主义心理治疗": "Existential therapy",
+    "积极心理学": "Positive psychology",
+    "自我决定理论 SDT": "Self-determination theory",
+    "正念与心理治疗": "Mindfulness-based cognitive therapy",
+    "认知心理学": "Cognitive psychology",
+    "发展心理学": "Developmental psychology",
+    "社会心理学": "Social psychology",
+    "人格心理学": "Personality psychology",
+    "情绪科学": "Affective science",
+    "学习科学": "Learning sciences",
+    "心理测量学": "Psychometrics",
+    "临床科学": "Clinical psychology",
+    "文化心理学": "Cultural psychology",
+    "孔子": "Confucius",
+    "庄子": "Zhuang Zhou",
+    "荀子": "Xunzi",
+    "王阳明": "Wang Yangming",
+    "结构主义 Structuralism": "Structuralism (psychology)",
+    "功能主义 Functionalism": "Functional psychology",
+    "精神分析 Psychoanalysis": "Psychoanalysis",
+    "行为主义 Behaviorism": "Behaviorism",
+    "格式塔心理学 Gestalt": "Gestalt psychology",
+    "目的行为主义": "Purposive behaviorism",
+    "WEIRD样本问题": "WEIRD",
+    "Neurophenomenology 神经现象学": "Neurophenomenology",
+    "全球工作空间理论 GWT": "Global workspace theory",
+    "Global Neuronal Workspace Theory GNWT": "Global workspace theory",
+    "整合信息理论 IIT": "Integrated information theory",
+    "高阶理论 HOT": "Higher-order theories of consciousness",
+    "循环处理理论 RPT": "Recurrent processing theory",
+    "预测加工 Predictive Processing": "Predictive coding",
+    "注意图式理论 AST": "Attention schema theory",
+    "感觉运动理论 Sensorimotor Theory": "Sensorimotor theory",
+    "情感与内感受理论": "Interoception",
+    "幻觉论 Illusionism": "Illusionism (philosophy)",
+    "泛心论与中性一元论": "Panpsychism",
+    "生物自然主义": "Biological naturalism",
+    "自组织与生命过程路线": "Self-organization",
+    "人工心智": "Artificial consciousness",
+    "AI意识伦理": "Artificial consciousness",
+  }),
+);
+
+function inferWikipediaTitle(title) {
+  if (wikipediaTitleOverrides.has(title)) {
+    return wikipediaTitleOverrides.get(title);
+  }
+
+  if (/ - /.test(title)) {
+    return "";
+  }
+
+  if (/^[\x20-\x7EÀ-ž’]+$/u.test(title) && /[A-Za-z]{3}/.test(title)) {
+    return title;
+  }
+
+  const englishSegments = title.match(/[A-Za-z][A-Za-z0-9 .,'’&-]{2,}/g) || [];
+  const candidate = englishSegments
+    .map((segment) => segment.trim())
+    .filter((segment) => !/^(AI|ACT|AST|CBT|DBT|GNWT|GWT|HOT|IIT|REBT|RPT|SDT)$/i.test(segment))
+    .sort((left, right) => right.length - left.length)[0];
+
+  return candidate || "";
+}
+
+function canonicalizeSourceTitle(rawTitle) {
+  const normalized = normalizeTitleKey(rawTitle);
+  const direct = curatedAliasMap.get(normalized);
+  if (direct) {
+    return direct;
+  }
+
+  const candidates = [...curatedAliasMap.entries()]
+    .filter(([alias]) => alias.length >= 5 && normalized.includes(alias))
+    .sort((left, right) => right[0].length - left[0].length);
+
+  return candidates[0]?.[1] || rawTitle;
+}
+
+function getSourceSection(line) {
+  if (line < 93) return "0";
+  if (line < 309) return "1";
+  if (line < 645) return "2";
+  if (line < 709) return "3";
+  if (line < 773) return "4";
+  if (line < 955) return "5";
+  if (line < 1020) return "6";
+  if (line < 1117) return "7";
+  if (line < 1186) return "8";
+  if (line < 1312) return "9";
+  if (line < 1351) return "10";
+  if (line < 1394) return "11";
+  if (line < 1432) return "12";
+  return "13";
+}
+
+const sectionSpecs = {
+  0: { folder: "06_胼胝体桥接区", hub: "心理学谱系总图", label: "总入口" },
+  1: { folder: "02_心智行为与改变", hub: "How Why What", label: "问题深度" },
+  2: { folder: "01_起源与学派", hub: "心理学思想史", label: "历史谱系" },
+  3: { folder: "03_脑身体与环境", hub: "跨尺度解释", label: "解释尺度" },
+  4: { folder: "05_文化方法与可信度", hub: "第一第二第三人称方法", label: "方法与主体位置" },
+  5: { folder: "04_意识与自我", hub: "意识与自我", label: "意识理论" },
+  6: { folder: "04_意识与自我", hub: "自我模型谱系", label: "自我谱系" },
+  7: { folder: "06_胼胝体桥接区", hub: "智能意识与机器伦理", label: "AI与机器意识" },
+  8: { folder: "06_胼胝体桥接区", hub: "心理学谱系总图", label: "桥接节点" },
+  9: { folder: "01_起源与学派", hub: "心理学思想史", label: "经典出版物" },
+  10: { folder: "06_胼胝体桥接区", hub: "心理学谱系总图", label: "阅读路径" },
+  11: { folder: "06_胼胝体桥接区", hub: "How Why What", label: "研究问题生成" },
+  12: { folder: "06_胼胝体桥接区", hub: "心理学谱系总图", label: "连接图" },
+  13: { folder: "06_胼胝体桥接区", hub: "心理学谱系总图", label: "最终框架" },
+};
+
+const structuralTitleReplacements = new Map(
+  Object.entries({
+    "受体": "分子受体",
+    "内分泌": "内分泌调节",
+    "认知": "个体认知",
+    "动机": "个体动机",
+    "人格": "人格结构",
+    "对话": "关系对话",
+    "规范": "群体规范",
+    "权力": "组织权力",
+    "领导": "组织领导",
+    "制度": "社会制度",
+    "媒介": "文化媒介",
+    "技术": "文化技术",
+    "历史": "历史情境",
+    "接近体验结构": "第一人称方法：接近体验结构",
+    "捕捉互动生成": "第二人称方法：捕捉互动生成",
+    "难以标准化": "第二人称资料的标准化难题",
+    "可重复": "第三人称方法：可重复性",
+    "可量化": "第三人称方法：可量化",
+    "可能丢失体验意义": "第三人称方法的体验意义损失",
+    "行为": "多模态行为数据",
+    "生理": "多模态生理数据",
+    "神经": "多模态神经数据",
+    "环境": "多模态环境数据",
+    "实验室": "实验室情境",
+  }),
+);
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function truncateUtf8(value, maxBytes) {
+  let result = value;
+  while (Buffer.byteLength(result, "utf8") > maxBytes) {
+    result = result.slice(0, -1).trimEnd();
+  }
+  return result;
+}
+
+function createSemanticFileStem(title) {
+  let stem = String(title || "")
+    .normalize("NFKC")
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[. ]+$/g, "")
+    .trim();
+
+  stem = truncateUtf8(stem, 180);
+  if (!stem) {
+    throw new Error(`Cannot create a semantic filename for title: ${title}`);
+  }
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(stem)) {
+    stem = `知识节点 ${stem}`;
+  }
+  return stem;
+}
+
+function assignSemanticFileNames(notes) {
+  const usedNames = new Set();
+
+  notes.forEach((note) => {
+    const baseStem = createSemanticFileStem(note.title);
+    let stem = baseStem;
+    let sequence = 2;
+    let key = `${note.folder}/${stem}`.normalize("NFKC").toLowerCase();
+
+    while (usedNames.has(key)) {
+      stem = truncateUtf8(`${baseStem} (${sequence})`, 180);
+      key = `${note.folder}/${stem}`.normalize("NFKC").toLowerCase();
+      sequence += 1;
+    }
+
+    usedNames.add(key);
+    note.file = `${stem}.md`;
+    note.fileStem = stem;
+    if (stem !== note.title) {
+      note.aliases = unique([...(note.aliases || []), note.title]);
+    }
+  });
+}
+
+async function buildExpandedNotes() {
+  const source = await fs.readFile(sourcePath, "utf8");
+  const lines = source.split(/\r?\n/);
+  const explicitSourceTitles = new Set(
+    [...source.matchAll(/\[\[([^\]|#]+)(?:\|[^\]]+)?\]\]/g)]
+      .map((match) => match[1].trim())
+      .filter(Boolean),
+  );
+  const relations = new Map();
+  const metadata = new Map();
+  const stack = [];
+
+  function register(rawTitle, lineNumber, parentTitles = [], sourceKind = "explicit") {
+    const title = canonicalizeSourceTitle(rawTitle);
+    const section = getSourceSection(lineNumber);
+    const sectionSpec = sectionSpecs[section];
+    const parents = unique(
+      parentTitles
+        .map((parent) => canonicalizeSourceTitle(parent))
+        .filter((parent) => parent !== title),
+    );
+
+    if (!relations.has(title)) {
+      relations.set(title, new Set());
+    }
+    parents.forEach((parent) => relations.get(title).add(parent));
+
+    if (!metadata.has(title) || sourceKind === "explicit") {
+      metadata.set(title, {
+        rawTitle,
+        title,
+        section,
+        folder: sectionSpec.folder,
+        sectionLabel: sectionSpec.label,
+        hub: sectionSpec.hub,
+        wikipediaTitle: inferWikipediaTitle(rawTitle),
+        sourceKind,
+      });
+    }
+  }
+
+  lines.forEach((line, index) => {
+    const bullet = line.match(/^(\s*)-\s+(.+)$/);
+    if (!bullet) {
+      return;
+    }
+
+    const indent = bullet[1].replace(/\t/g, "  ").length;
+    const rawLinks = [...bullet[2].matchAll(/\[\[([^\]|#]+)(?:\|[^\]]+)?\]\]/g)]
+      .map((match) => match[1].trim())
+      .filter(Boolean);
+
+    while (stack.length && stack.at(-1).indent >= indent) {
+      stack.pop();
+    }
+
+    if (!rawLinks.length) {
+      const section = getSourceSection(index + 1);
+      if (!["3", "4"].includes(section)) {
+        return;
+      }
+
+      const rawStructuralTitle = bullet[2]
+        .replace(/[*_`]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      const structuralTitle =
+        structuralTitleReplacements.get(rawStructuralTitle) || rawStructuralTitle;
+      if (
+        !structuralTitle ||
+        structuralTitle.length > 36 ||
+        /[？?。；;]$/.test(structuralTitle) ||
+        /^(优势|局限|↓)$/.test(structuralTitle)
+      ) {
+        return;
+      }
+
+      const parentLinks = [...stack]
+        .reverse()
+        .find((entry) => entry.links.length)?.links || [];
+      register(
+        structuralTitle,
+        index + 1,
+        parentLinks,
+        explicitSourceTitles.has(structuralTitle) ? "explicit" : "structural",
+      );
+      stack.push({ indent, links: [structuralTitle] });
+      return;
+    }
+
+    const parentLinks = [...stack]
+      .reverse()
+      .find((entry) => entry.links.length)?.links || [];
+
+    rawLinks.forEach((rawTitle) => register(rawTitle, index + 1, parentLinks, "explicit"));
+    for (let left = 0; left < rawLinks.length; left += 1) {
+      for (let right = left + 1; right < rawLinks.length; right += 1) {
+        register(rawLinks[left], index + 1, [rawLinks[right]], "explicit");
+        register(rawLinks[right], index + 1, [rawLinks[left]], "explicit");
+      }
+    }
+    stack.push({ indent, links: rawLinks });
+  });
+
+  const curatedTitles = new Set(curatedNotes.map((note) => note.title));
+
+  return [...metadata.values()]
+    .filter((entry) => !curatedTitles.has(entry.title))
+    .map((entry) => {
+      const directLinks = [...(relations.get(entry.title) || [])];
+      const links = unique([
+        ...directLinks,
+        entry.hub !== entry.title ? entry.hub : "",
+      ]).filter((link) => link !== entry.title);
+      const aliases =
+        entry.rawTitle !== entry.title ? [entry.rawTitle] : [];
+
+      return {
+        title: entry.title,
+        aliases,
+        description:
+          entry.sourceKind === "structural"
+            ? `${entry.sectionLabel}中的语义分支节点，由原始蓝本的层级关系恢复并重新标注。`
+            : `${entry.sectionLabel}中的谱系节点，依据原始蓝本的显式 wikilink 展开。`,
+        tags: [
+          `cluster/${entry.folder.slice(3)}`,
+          entry.sourceKind === "structural" ? "node/branch" : "node/expanded",
+          `branch/section-${entry.section}`,
+        ],
+        summary:
+          entry.sourceKind === "structural"
+            ? `“${entry.title}”来自《心理学思想与意识研究完整谱系》的“${entry.sectionLabel}”分支。它不是匿名占位符，而是用于连接${links.length ? `“${links.join("”“")}”` : "上下位概念"}的语义节点。`
+            : `这是从《心理学思想与意识研究完整谱系》展开的原子节点。它在原始文档中属于“${entry.sectionLabel}”，并通过父子层级连接回策展主干。`,
+        claims: [
+          entry.sourceKind === "structural"
+            ? "节点来自原始蓝本的分支标题或关键词层级。"
+            : "节点来自原始蓝本中的显式 wikilink，而非自动生成的随机关键词。",
+          "父子缩进关系被转换为可视化突触。",
+        ],
+        tensions: [
+          "该节点保留为研究入口，后续可继续补充一手文献、争议与本地注释。",
+        ],
+        links,
+        wikipediaTitle: entry.wikipediaTitle,
+        status: "source-indexed",
+        folder: entry.folder,
+        branchFolder: entry.sectionLabel,
+        clusterTitle: clusters.find((cluster) => cluster.folder === entry.folder)?.title || "",
+        expanded: true,
+        sourceKind: entry.sourceKind,
+      };
+    });
+}
+
+const expandedNotes = await buildExpandedNotes();
+const allNotes = [...curatedNotes, ...expandedNotes];
+assignSemanticFileNames(allNotes);
 const titleSet = new Set(allNotes.map((note) => note.title));
 const duplicateTitles = allNotes
   .map((note) => note.title)
@@ -607,7 +1016,11 @@ if (duplicateTitles.length || missingLinks.length || selfLinks.length) {
 }
 
 function yamlList(values) {
-  return values.map((value) => `  - ${value}`).join("\n");
+  return values.map((value) => `  - ${JSON.stringify(String(value))}`).join("\n");
+}
+
+function yamlScalar(value) {
+  return JSON.stringify(String(value || ""));
 }
 
 function renderNote(note) {
@@ -616,15 +1029,17 @@ function renderNote(note) {
   const tensions = note.tensions.map((tension) => `- ${tension}`).join("\n");
 
   return `---
-title: ${note.title}
+title: ${yamlScalar(note.title)}
 aliases:
 ${yamlList(note.aliases)}
-description: ${note.description}
+description: ${yamlScalar(note.description)}
 tags:
 ${yamlList(note.tags)}
-source: Psychology_Genealogy_Atlas_Obsidian.md
-status: curated
-updated: 2026-07-17
+source: "Psychology_Genealogy_Atlas_Obsidian.md"
+source_type: "obsidian"
+node_kind: "${note.expanded ? note.sourceKind || "expanded" : "curated"}"
+${note.wikipediaTitle ? `wikipedia: ${yamlScalar(note.wikipediaTitle)}\n` : ""}status: "${note.status || "curated"}"
+updated: "2026-07-19"
 ---
 
 # ${note.title}
@@ -645,15 +1060,53 @@ ${tensions}
 `;
 }
 
+await fs.rm(outputRoot, { recursive: true, force: true });
 await fs.mkdir(outputRoot, { recursive: true });
 await fs.mkdir(path.join(outputRoot, ".obsidian"), { recursive: true });
 
 for (const cluster of clusters) {
   const clusterPath = path.join(outputRoot, cluster.folder);
   await fs.mkdir(clusterPath, { recursive: true });
-  for (const note of cluster.notes) {
+  for (const note of curatedNotes.filter((entry) => entry.folder === cluster.folder)) {
     await fs.writeFile(path.join(clusterPath, note.file), renderNote(note), "utf8");
   }
+}
+
+for (const note of expandedNotes) {
+  const clusterPath = path.join(outputRoot, note.folder, note.branchFolder);
+  await fs.mkdir(clusterPath, { recursive: true });
+  await fs.writeFile(path.join(clusterPath, note.file), renderNote(note), "utf8");
+}
+
+if (existingWikipediaManifest?.schema === "the-vault.wikipedia-graph/v1") {
+  const notePathByTitle = new Map(
+    allNotes.map((note) => [
+      note.title,
+      path.posix.join(
+        note.folder,
+        note.expanded ? note.branchFolder : "",
+        note.file,
+      ),
+    ]),
+  );
+  const rebasedWikipediaManifest = {
+    ...existingWikipediaManifest,
+    provenance: {
+      ...(existingWikipediaManifest.provenance || {}),
+      localAnchorPathsRebuiltAt: "2026-07-19",
+    },
+    records: existingWikipediaManifest.records.map((record) => ({
+      ...record,
+      anchorPaths: (record.anchorTitles || [])
+        .map((title) => notePathByTitle.get(title))
+        .filter(Boolean),
+    })),
+  };
+  await fs.writeFile(
+    wikipediaManifestPath,
+    `${JSON.stringify(rebasedWikipediaManifest, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 await fs.writeFile(
@@ -718,7 +1171,7 @@ const reciprocalEdges = undirectedEdges.filter((edge) => edge.directions.size > 
 
 const manifest = {
   name: "Psychology Genealogy Atlas",
-  generatedAt: "2026-07-17",
+  generatedAt: "2026-07-19",
   source: "resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md",
   design: {
     principle: "Topology first: folders are modules, notes are neurons, wikilinks are synapses.",
@@ -735,12 +1188,31 @@ const manifest = {
     isolatedNotes: allNotes
       .filter((note) => adjacency.get(note.title).size === 0)
       .map((note) => note.title),
+    semanticFilenames: {
+      exactTitleMatches: allNotes.filter((note) => note.fileStem === note.title).length,
+      aliasResolvedTitles: allNotes.filter((note) => note.fileStem !== note.title).length,
+      anonymousHashFiles: allNotes.filter((note) => /^node-[0-9a-f]+$/i.test(note.fileStem))
+        .length,
+    },
   },
   clusterSummary: clusters.map((cluster) => ({
     folder: cluster.folder,
     title: cluster.title,
-    notes: cluster.notes.length,
+    curatedNotes: cluster.notes.length,
+    expandedNotes: expandedNotes.filter((note) => note.folder === cluster.folder).length,
+    notes:
+      cluster.notes.length +
+      expandedNotes.filter((note) => note.folder === cluster.folder).length,
   })),
+  expansion: {
+    curatedNotes: curatedNotes.length,
+    sourceWikilinks: 222,
+    expandedNotes: expandedNotes.length,
+    structuralBranchNotes: expandedNotes.filter(
+      (note) => note.sourceKind === "structural",
+    ).length,
+    wikipediaSeeds: expandedNotes.filter((note) => note.wikipediaTitle).length,
+  },
   hubs: [...inboundCounts.entries()]
     .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
     .slice(0, 12)

@@ -1,0 +1,33 @@
+---
+title: "理性情绪行为疗法 REBT"
+aliases:
+
+description: "问题深度中的谱系节点，依据原始蓝本的显式 wikilink 展开。"
+tags:
+  - "cluster/心智行为与改变"
+  - "node/expanded"
+  - "branch/section-1"
+source: "Psychology_Genealogy_Atlas_Obsidian.md"
+source_type: "obsidian"
+node_kind: "explicit"
+wikipedia: "Rational emotive behavior therapy"
+status: "source-indexed"
+updated: "2026-07-19"
+---
+
+# 理性情绪行为疗法 REBT
+
+这是从《心理学思想与意识研究完整谱系》展开的原子节点。它在原始文档中属于“问题深度”，并通过父子层级连接回策展主干。
+
+## 核心命题
+
+- 节点来自原始蓝本中的显式 wikilink，而非自动生成的随机关键词。
+- 父子缩进关系被转换为可视化突触。
+
+## 神经连接
+
+- [[How Why What]]
+
+## 张力与开放问题
+
+- 该节点保留为研究入口，后续可继续补充一手文献、争议与本地注释。

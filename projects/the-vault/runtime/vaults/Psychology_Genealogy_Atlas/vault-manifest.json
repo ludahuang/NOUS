@@ -1,99 +1,123 @@
 {
   "name": "Psychology Genealogy Atlas",
-  "generatedAt": "2026-07-17",
+  "generatedAt": "2026-07-19",
   "source": "resources/source-materials/Psychology_Genealogy_Atlas_Obsidian.md",
   "design": {
     "principle": "Topology first: folders are modules, notes are neurons, wikilinks are synapses.",
     "clusters": 6,
-    "notes": 36,
-    "directedLinks": 188,
-    "undirectedEdges": 111,
+    "notes": 344,
+    "directedLinks": 649,
+    "undirectedEdges": 572,
     "reciprocalEdges": 77,
-    "crossClusterEdges": 63,
-    "averageDegree": 6.17,
+    "crossClusterEdges": 106,
+    "averageDegree": 3.33,
     "connectedComponents": 1,
-    "isolatedNotes": []
+    "isolatedNotes": [],
+    "semanticFilenames": {
+      "exactTitleMatches": 337,
+      "aliasResolvedTitles": 7,
+      "anonymousHashFiles": 0
+    }
   },
   "clusterSummary": [
     {
       "folder": "01_起源与学派",
       "title": "起源与学派",
-      "notes": 6
+      "curatedNotes": 6,
+      "expandedNotes": 102,
+      "notes": 108
     },
     {
       "folder": "02_心智行为与改变",
       "title": "心智、行为与改变",
-      "notes": 6
+      "curatedNotes": 6,
+      "expandedNotes": 29,
+      "notes": 35
     },
     {
       "folder": "03_脑身体与环境",
       "title": "脑、身体与环境",
-      "notes": 6
+      "curatedNotes": 6,
+      "expandedNotes": 56,
+      "notes": 62
     },
     {
       "folder": "04_意识与自我",
       "title": "意识与自我",
-      "notes": 6
+      "curatedNotes": 6,
+      "expandedNotes": 37,
+      "notes": 43
     },
     {
       "folder": "05_文化方法与可信度",
       "title": "文化、方法与可信度",
-      "notes": 6
+      "curatedNotes": 6,
+      "expandedNotes": 45,
+      "notes": 51
     },
     {
       "folder": "06_胼胝体桥接区",
       "title": "胼胝体桥接区",
-      "notes": 6
+      "curatedNotes": 6,
+      "expandedNotes": 39,
+      "notes": 45
     }
   ],
+  "expansion": {
+    "curatedNotes": 36,
+    "sourceWikilinks": 222,
+    "expandedNotes": 308,
+    "structuralBranchNotes": 101,
+    "wikipediaSeeds": 188
+  },
   "hubs": [
     {
-      "title": "意识与自我",
-      "inbound": 11
+      "title": "心理学思想史",
+      "inbound": 109
     },
     {
-      "title": "发展依恋与治疗",
-      "inbound": 8
-    },
-    {
-      "title": "智能意识与机器伦理",
-      "inbound": 8
+      "title": "跨尺度解释",
+      "inbound": 61
     },
     {
       "title": "第一第二第三人称方法",
-      "inbound": 8
+      "inbound": 53
     },
     {
-      "title": "学习与强化",
-      "inbound": 7
-    },
-    {
-      "title": "心理学思想史",
-      "inbound": 7
-    },
-    {
-      "title": "心理机制地图",
-      "inbound": 7
-    },
-    {
-      "title": "脑身体与环境",
-      "inbound": 7
-    },
-    {
-      "title": "认知与信息加工",
-      "inbound": 7
-    },
-    {
-      "title": "身体心智社会桥",
-      "inbound": 7
+      "title": "意识与自我",
+      "inbound": 39
     },
     {
       "title": "心理学谱系总图",
-      "inbound": 6
+      "inbound": 35
     },
     {
-      "title": "文化方法与科学可信度",
-      "inbound": 6
+      "title": "How Why What",
+      "inbound": 32
+    },
+    {
+      "title": "智能意识与机器伦理",
+      "inbound": 18
+    },
+    {
+      "title": "自我模型谱系",
+      "inbound": 15
+    },
+    {
+      "title": "第一人称｜体验者",
+      "inbound": 10
+    },
+    {
+      "title": "全球工作空间理论",
+      "inbound": 9
+    },
+    {
+      "title": "第三人称｜观察者",
+      "inbound": 9
+    },
+    {
+      "title": "第二人称｜关系中的主体",
+      "inbound": 9
     }
   ]
 }

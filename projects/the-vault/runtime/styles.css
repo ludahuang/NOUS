@@ -54,6 +54,18 @@ body::before {
   overflow: hidden;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .workspace-shell.connectome-immersive .vault-sidebar,
 .workspace-shell.connectome-immersive .note-pane,
 .workspace-shell.connectome-immersive .stage-header,
@@ -232,8 +244,7 @@ body::before {
 
 .stage-copy,
 .lede,
-.article-summary,
-.graph-note {
+.article-summary {
   color: var(--ink-soft);
   line-height: 1.55;
 }
@@ -756,15 +767,6 @@ button:disabled {
   backdrop-filter: blur(14px);
   color: var(--ink);
   font-size: 0.8rem;
-}
-
-.graph-note {
-  padding: 0.64rem 0.78rem;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  max-width: 280px;
 }
 
 .controls-stack {

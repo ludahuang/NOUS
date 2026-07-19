@@ -43,6 +43,8 @@ async function main() {
       const header = document.querySelector(".stage-header")?.getBoundingClientRect();
       const sidebar = document.querySelector(".vault-sidebar")?.getBoundingClientRect();
       const notePane = document.querySelector(".note-pane")?.getBoundingClientRect();
+      const status = document.getElementById("graph-status");
+      const statusRect = status?.getBoundingClientRect();
       return {
         viewportLeft: viewport?.left || 0,
         viewportTop: viewport?.top || 0,
@@ -54,6 +56,9 @@ async function main() {
         headerBottom: header?.bottom || 0,
         sidebarRight: sidebar?.right || 0,
         notePaneLeft: notePane?.left || 0,
+        statusPanelRemoved: !document.querySelector(".stage-overlay.top-right"),
+        statusWidth: statusRect?.width || 0,
+        statusHeight: statusRect?.height || 0,
       };
     });
     if (
@@ -62,6 +67,15 @@ async function main() {
     ) {
       throw new Error(
         `Renderer CSS size drifted from its viewport: ${JSON.stringify(rendererSizing)}`,
+      );
+    }
+    if (
+      !rendererSizing.statusPanelRemoved ||
+      rendererSizing.statusWidth > 1 ||
+      rendererSizing.statusHeight > 1
+    ) {
+      throw new Error(
+        `Graph status panel remained visible: ${JSON.stringify(rendererSizing)}`,
       );
     }
     if (

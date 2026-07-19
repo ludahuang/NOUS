@@ -15,7 +15,7 @@
       href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Ccircle cx="32" cy="32" r="28" fill="%23090b10"/%3E%3Ccircle cx="32" cy="32" r="16" fill="%237f8fff"/%3E%3C/svg%3E'
     />
     <title>The Vault v2-agentic</title>
-    <link rel="stylesheet" href="styles.css?v=v2-agentic-immersive-connectome-3" />
+    <link rel="stylesheet" href="styles.css?v=v2-agentic-immersive-connectome-4" />
   </head>
   <body>
     <div class="workspace-shell" data-connectome-immersive="false">
@@ -212,10 +212,14 @@
           <div id="graph-viewport" class="graph-viewport" aria-label="3D neural network"></div>
           <div id="label-layer" class="label-layer"></div>
 
-          <div class="stage-overlay top-right">
-            <div id="graph-status" class="graph-note">
-              Connecting to English Wikipedia and building the note graph…
-            </div>
+          <div
+            id="graph-status"
+            class="visually-hidden"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            Connecting to English Wikipedia and building the note graph…
           </div>
 
           <div class="stage-overlay bottom-right controls-stack">
@@ -530,6 +534,6 @@
     </script>
     <script src="vendor/three.min.js"></script>
     <script src="vendor/OrbitControls.js"></script>
-    <script src="script.js?v=v2-agentic-immersive-connectome-3"></script>
+    <script src="script.js?v=v2-agentic-immersive-connectome-4"></script>
   </body>
 </html>

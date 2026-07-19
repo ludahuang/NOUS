@@ -219,6 +219,10 @@ const CRC32_TABLE = (() => {
 
 const stage = document.getElementById("graph-viewport");
 const labelLayer = document.getElementById("label-layer");
+const stageShell = document.querySelector(".stage-shell");
+const stageHeader = document.querySelector(".stage-header");
+const vaultSidebar = document.querySelector(".vault-sidebar");
+const notePane = document.querySelector(".note-pane");
 const searchInput = document.getElementById("search-input");
 const searchSuggestions = document.getElementById("search-suggestions");
 const regionFilter = document.getElementById("region-filter");
@@ -4355,6 +4359,39 @@ function buildVaultTopologyHomes(pages, edges, pageMap, neighborMap) {
   return positions;
 }
 
+function getOverviewCameraDistance(
+  points,
+  center,
+  direction,
+  horizontalHalfFov,
+  verticalHalfFov,
+) {
+  const forward = direction.clone().negate();
+  const right = new THREE.Vector3()
+    .crossVectors(forward, camera.up)
+    .normalize();
+  const viewUp = new THREE.Vector3()
+    .crossVectors(right, forward)
+    .normalize();
+  const horizontalFrame = Math.tan(horizontalHalfFov) * 0.78;
+  const verticalFrame = Math.tan(verticalHalfFov) * 0.72;
+
+  return points.reduce((requiredDistance, point) => {
+    const delta = point.clone().sub(center);
+    const depthTowardCamera = delta.dot(direction);
+    const horizontalDistance =
+      depthTowardCamera + Math.abs(delta.dot(right)) / horizontalFrame;
+    const verticalDistance =
+      depthTowardCamera + Math.abs(delta.dot(viewUp)) / verticalFrame;
+
+    return Math.max(
+      requiredDistance,
+      horizontalDistance,
+      verticalDistance,
+    );
+  }, 0);
+}
+
 function buildGraph(records, options = {}) {
   clearThreeObjects();
 
@@ -4546,19 +4583,51 @@ function buildGraph(records, options = {}) {
   state.trackedCameraOffset = state.defaultCameraPosition.clone().sub(state.defaultTarget);
   state.loading = false;
 
-  const graphBounds = new THREE.Box3().setFromPoints(pages.map((page) => page.home));
-  const graphCenter = graphBounds.getCenter(new THREE.Vector3());
-  const graphExtent = graphBounds.getSize(new THREE.Vector3()).length();
-  const graphRadius = Math.max(28, graphExtent * 0.5);
+  const graphCenter = pages
+    .reduce(
+      (center, page) => center.add(page.home),
+      new THREE.Vector3(),
+    )
+    .multiplyScalar(1 / Math.max(pages.length, 1));
+  const graphRadius = Math.max(
+    28,
+    pages.reduce(
+      (radius, page) => Math.max(radius, page.home.distanceTo(graphCenter)),
+      0,
+    ),
+  );
+  const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
+  const limitingHalfFov = Math.max(
+    Math.min(verticalHalfFov, horizontalHalfFov),
+    THREE.MathUtils.degToRad(12),
+  );
+  const overviewDirection = new THREE.Vector3(0.22, 0.14, 1.46).normalize();
+  const overviewDistance = Math.max(
+    graphRadius * 1.15,
+    getOverviewCameraDistance(
+      pages.map((page) => page.home),
+      graphCenter,
+      overviewDirection,
+      Math.max(horizontalHalfFov, limitingHalfFov),
+      Math.max(verticalHalfFov, limitingHalfFov),
+    ) * 1.04,
+  );
   state.graphRadius = graphRadius;
   state.defaultTarget = graphCenter;
   state.defaultCameraPosition = graphCenter
     .clone()
-    .add(new THREE.Vector3(graphRadius * 0.22, graphRadius * 0.14, graphRadius * 1.46));
+    .add(overviewDirection.multiplyScalar(overviewDistance));
   camera.position.copy(state.defaultCameraPosition);
   controls.target.copy(state.defaultTarget);
-  controls.minDistance = clamp(graphRadius * 0.44, 20, 46);
-  controls.maxDistance = clamp(graphRadius * 4.2, 110, 220);
+  controls.minDistance = clamp(graphRadius * 0.36, 18, 56);
+  controls.maxDistance = clamp(overviewDistance * 2.4, 150, 480);
+  state.cameraGoal = null;
+  state.targetGoal = null;
+  state.trackedPageId = null;
+  state.trackedCameraOffset = state.defaultCameraPosition
+    .clone()
+    .sub(state.defaultTarget);
   controls.update();
 
   statPages.textContent = String(pages.length);
@@ -4571,7 +4640,6 @@ function buildGraph(records, options = {}) {
   createTagSprites();
   renderNoteTree();
   updateInspector(getSelectedPage());
-  focusOnPage(getSelectedPage());
 }
 
 function createClusterClouds() {
@@ -4792,7 +4860,7 @@ function getPageAnchor(page) {
     return state.defaultTarget.clone();
   }
 
-  return (page.position || page.home || state.defaultTarget).clone();
+  return (page.home || page.position || state.defaultTarget).clone();
 }
 
 function focusOnPage(page) {
@@ -4807,9 +4875,9 @@ function focusOnPage(page) {
       ? currentOffset.normalize()
       : new THREE.Vector3(0.22, 0.12, 1).normalize();
   const distance = clamp(
-    state.graphRadius * 1.2,
-    controls.minDistance * 1.08,
-    Math.min(controls.maxDistance * 0.72, state.graphRadius * 1.24),
+    state.graphRadius * 1.65,
+    controls.minDistance * 1.15,
+    Math.min(controls.maxDistance * 0.72, state.graphRadius * 1.72),
   );
   state.trackedCameraOffset = focusDirection.multiplyScalar(distance);
   state.targetGoal = anchor.clone();
@@ -4832,6 +4900,82 @@ function focusPage(pageId) {
   focusOnPage(page);
 }
 
+function getCameraAlignmentSnapshot() {
+  camera.updateMatrixWorld();
+  camera.updateProjectionMatrix();
+
+  const projectPoint = (point) => {
+    if (!point) {
+      return null;
+    }
+
+    const projected = point.clone().project(camera);
+    return {
+      x: projected.x,
+      y: projected.y,
+      z: projected.z,
+    };
+  };
+  const projectedHomes = state.pages
+    .map((page) => projectPoint(page.home))
+    .filter(Boolean);
+  const selectedPage = getSelectedPage();
+
+  return {
+    selectedPageId: selectedPage?.id || "",
+    selectedTitle: selectedPage?.title || "",
+    selected: projectPoint(selectedPage ? getPageAnchor(selectedPage) : null),
+    selectedTag: projectPoint(selectedPage?.tagSprite?.position || null),
+    selectedTagVisible: Boolean(selectedPage?.tagSprite?.visible),
+    selectedTagRenderOrder: selectedPage?.tagSprite?.renderOrder || 0,
+    graphCenter: projectPoint(state.defaultTarget),
+    maxGraphX: projectedHomes.reduce(
+      (maximum, point) => Math.max(maximum, Math.abs(point.x)),
+      0,
+    ),
+    maxGraphY: projectedHomes.reduce(
+      (maximum, point) => Math.max(maximum, Math.abs(point.y)),
+      0,
+    ),
+    cameraAnimating: Boolean(state.cameraGoal && state.targetGoal),
+    trackedPageId: state.trackedPageId || "",
+  };
+}
+
+function getTagClickTargets() {
+  camera.updateMatrixWorld();
+  camera.updateProjectionMatrix();
+
+  return state.pages
+    .filter((page) => page.tagSprite?.visible)
+    .map((page) => {
+      const projected = page.tagSprite.position.clone().project(camera);
+      return {
+        id: page.id,
+        title: page.title,
+        x: projected.x,
+        y: projected.y,
+        z: projected.z,
+      };
+    })
+    .filter(
+      (target) =>
+        target.z > -1 &&
+        target.z < 1 &&
+        Math.abs(target.x) < 0.86 &&
+        Math.abs(target.y) < 0.82,
+    );
+}
+
+const e2eCameraDebugEnabled = new URLSearchParams(window.location.search).has("e2e");
+
+if (e2eCameraDebugEnabled) {
+  window.__THE_VAULT_E2E__ = {
+    getCameraAlignmentSnapshot,
+    getTagClickTargets,
+  };
+}
+
 function shouldShowTag(page) {
   return getVisibleScore(page) > 0.3;
 }
@@ -4852,6 +4996,12 @@ function stabilizeControlsTarget() {
 }
 
 function updateTags() {
+  const selectedPage = getSelectedPage();
+  const selectedVector =
+    state.trackedPageId && selectedPage
+      ? selectedPage.position.clone().project(camera)
+      : null;
+
   state.pages.forEach((page) => {
     const tag = page.tagSprite;
     if (!tag) {
@@ -4880,14 +5030,25 @@ function updateTags() {
 
     const isSelected = page.id === state.selectedPageId;
     const isHovered = page.id === state.hoveredPageId;
+    const overlapsTrackedLabel =
+      selectedVector &&
+      !isSelected &&
+      Math.abs(vector.x - selectedVector.x) < 0.16 &&
+      Math.abs(vector.y - selectedVector.y) < 0.085;
+    if (overlapsTrackedLabel) {
+      tag.visible = false;
+      return;
+    }
+
     const distanceToCamera = camera.position.distanceTo(anchor);
     const distanceFade = clamp(1 - (distanceToCamera - controls.minDistance) / 220, 0.42, 1);
     const cameraLift = camera.position.clone().sub(anchor).normalize().multiplyScalar(
       isSelected ? 1.45 : isHovered ? 1.08 : 0.92,
     );
     const baseScale = tag.userData.baseScale;
-    const scaleFactor = (isSelected ? 1.08 : isHovered ? 1.01 : 0.9) * distanceFade;
+    const scaleFactor = (isSelected ? 1.24 : isHovered ? 1.01 : 0.9) * distanceFade;
     tag.visible = true;
+    tag.renderOrder = isSelected ? 80 : isHovered ? 48 : 24;
     tag.position.copy(anchor).add(cameraLift);
     tag.scale.set(
       baseScale.x * scaleFactor,
@@ -4899,9 +5060,36 @@ function updateTags() {
 }
 
 function resizeRenderer() {
+  const shellRect = stageShell.getBoundingClientRect();
+  const headerRect = stageHeader.getBoundingClientRect();
+  const desktopLayout = window.matchMedia("(min-width: 1041px)").matches;
+  const sidebarRect = desktopLayout
+    ? vaultSidebar.getBoundingClientRect()
+    : null;
+  const notePaneRect = desktopLayout ? notePane.getBoundingClientRect() : null;
+  const insetGap = 12;
+  const topInset = Math.max(
+    0,
+    Math.ceil(headerRect.bottom - shellRect.top + insetGap),
+  );
+  const leftInset = sidebarRect
+    ? Math.max(0, Math.ceil(sidebarRect.right - shellRect.left + insetGap))
+    : 0;
+  const rightInset = notePaneRect
+    ? Math.max(0, Math.ceil(shellRect.right - notePaneRect.left + insetGap))
+    : 0;
+
+  stageShell.style.setProperty("--graph-top-inset", `${topInset}px`);
+  stageShell.style.setProperty("--graph-left-inset", `${leftInset}px`);
+  stageShell.style.setProperty("--graph-right-inset", `${rightInset}px`);
+
   const width = stage.clientWidth;
   const height = stage.clientHeight;
-  renderer.setSize(width, height, false);
+  if (!width || !height) {
+    return;
+  }
+
+  renderer.setSize(width, height);
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
 }
@@ -5014,6 +5202,8 @@ function handleStagePointerDown(event) {
     clientY: event.clientY,
     moved: false,
   };
+  event.preventDefault();
+  event.stopImmediatePropagation();
 }
 
 function handleStagePointerMove(event) {
@@ -5305,8 +5495,9 @@ function animate() {
   stepSimulation(delta, elapsedTime);
 
   if (state.cameraGoal && state.targetGoal) {
-    camera.position.lerp(state.cameraGoal, 0.08);
-    controls.target.lerp(state.targetGoal, 0.08);
+    const cameraEase = 1 - Math.exp(-delta * 6.8);
+    camera.position.lerp(state.cameraGoal, cameraEase);
+    controls.target.lerp(state.targetGoal, cameraEase);
 
     if (
       camera.position.distanceTo(state.cameraGoal) < 0.06 &&
@@ -5322,6 +5513,11 @@ function animate() {
   camera.updateMatrixWorld();
   updateEdgeVisuals(elapsedTime);
   updateTags();
+  if (e2eCameraDebugEnabled) {
+    stage.dataset.cameraAlignment = JSON.stringify(
+      getCameraAlignmentSnapshot(),
+    );
+  }
   renderer.render(scene, camera);
   window.requestAnimationFrame(animate);
 }
@@ -5741,6 +5937,10 @@ function bindEvents() {
 
     updateDiagnostics(getSelectedPage());
   });
+
+  const viewportResizeObserver = new ResizeObserver(resizeRenderer);
+  viewportResizeObserver.observe(stageHeader);
+  viewportResizeObserver.observe(stageShell);
 
   window.addEventListener("resize", resizeRenderer);
 }

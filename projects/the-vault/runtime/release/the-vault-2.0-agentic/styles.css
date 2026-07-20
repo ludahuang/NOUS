@@ -286,9 +286,23 @@ body::before {
   gap: 0.42rem;
 }
 
-.control-group span {
+.control-group > label,
+.control-group > span,
+.wikipedia-language-control span {
   font-size: 0.82rem;
   color: var(--ink-soft);
+}
+
+.wikipedia-language-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7.5rem, auto);
+  gap: 0.65rem;
+  align-items: center;
+  margin-top: 0.15rem;
+}
+
+.wikipedia-language-control select {
+  padding-block: 0.58rem;
 }
 
 .source-accordion {

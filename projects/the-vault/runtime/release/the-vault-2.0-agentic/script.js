@@ -124,6 +124,108 @@ const MAX_WIKIPEDIA_SEARCH_RESULTS = 6;
 const SEARCH_DEBOUNCE_MS = 260;
 const MAX_DYNAMIC_CLUSTERS = 6;
 const MAX_VAULT_CLUSTERS = 8;
+const WIKIPEDIA_LANGUAGES = {
+  en: {
+    code: "en",
+    optionLabel: "English",
+    sourceLabel: "English Wikipedia",
+  },
+  zh: {
+    code: "zh",
+    optionLabel: "中文",
+    sourceLabel: "中文维基百科",
+  },
+  fr: {
+    code: "fr",
+    optionLabel: "Français",
+    sourceLabel: "Wikipédia en français",
+  },
+  de: {
+    code: "de",
+    optionLabel: "Deutsch",
+    sourceLabel: "Deutschsprachige Wikipedia",
+  },
+  es: {
+    code: "es",
+    optionLabel: "Español",
+    sourceLabel: "Wikipedia en español",
+  },
+};
+const WIKIPEDIA_LANGUAGE_WORDS = {
+  en: new Set([
+    "an",
+    "and",
+    "are",
+    "as",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "of",
+    "on",
+    "that",
+    "the",
+    "this",
+    "to",
+    "with",
+  ]),
+  fr: new Set([
+    "au",
+    "aux",
+    "avec",
+    "ce",
+    "cette",
+    "dans",
+    "des",
+    "du",
+    "elle",
+    "est",
+    "et",
+    "la",
+    "le",
+    "les",
+    "pour",
+    "que",
+    "qui",
+    "une",
+  ]),
+  de: new Set([
+    "auf",
+    "das",
+    "dem",
+    "den",
+    "der",
+    "des",
+    "die",
+    "ein",
+    "eine",
+    "für",
+    "ist",
+    "mit",
+    "nicht",
+    "und",
+    "von",
+    "zu",
+  ]),
+  es: new Set([
+    "con",
+    "del",
+    "el",
+    "en",
+    "es",
+    "la",
+    "las",
+    "los",
+    "para",
+    "por",
+    "que",
+    "se",
+    "un",
+    "una",
+    "y",
+  ]),
+};
 const DYNAMIC_CLUSTER_COLORS = [
   "#7ba2ff",
   "#7ee4ff",
@@ -230,6 +332,8 @@ const mobilePanelToggle = document.getElementById("mobile-panel-toggle");
 const mobileLayoutQuery = window.matchMedia("(max-width: 1040px)");
 const searchInput = document.getElementById("search-input");
 const searchSuggestions = document.getElementById("search-suggestions");
+const wikipediaLanguageSelect = document.getElementById("wikipedia-language");
+const wikipediaLanguageMeta = document.getElementById("wikipedia-language-meta");
 const regionFilter = document.getElementById("region-filter");
 const randomFocusButton = document.getElementById("random-focus");
 const resetViewButton = document.getElementById("reset-view");
@@ -441,9 +545,13 @@ const state = {
   filterCluster: "all",
   searchSuggestions: [],
   pendingSearchQuery: "",
+  pendingSearchLanguage: "",
   searchDebounceId: null,
   searchRequestId: 0,
   graphRequestId: 0,
+  wikipediaLanguageMode: "auto",
+  activeWikipediaLanguage: "en",
+  activeVaultLanguage: "",
   activeSeedTitle: "",
   activeSeedPageId: "",
   activeVaultName: "",
@@ -787,6 +895,10 @@ function parseObsidianDraft(file, markdown, index, vaultRootName) {
     tags,
     nodeKind: frontmatter.node_kind || "note",
     wikipediaTitle: frontmatter.wikipedia || "",
+    language:
+      normalizeWikipediaLanguage(frontmatter.language || frontmatter.lang) ||
+      detectWikipediaLanguage(`${title}\n${frontmatter.description || ""}\n${body}`) ||
+      "",
   };
 }
 
@@ -857,38 +969,45 @@ function findObsidianDuplicate(record, ignoreId = "") {
 }
 
 function prepareWikipediaRecords(records) {
-  const normalizedRecords = records.map((record) => ({
-    ...record,
-    id: record.id || `page-${slugify(record.title)}`,
-    sourceType: "wikipedia",
-    sourceLabel:
+  const normalizedRecords = records.map((record) => {
+    const language = getWikipediaRecordLanguage(record);
+    const publicSourceLabel = getWikipediaSourceLabel(language);
+    const sourceLabel =
       record.sourceLabel ||
       ((record.sourceAnnotations || []).length
-        ? "Wikipedia + Obsidian Import"
-        : "Wikipedia"),
-    aliases: record.aliases || [],
-    tags: record.tags || [],
-    sourceAnnotations: (record.sourceAnnotations || []).map((annotation) => ({
-      ...annotation,
-      previewBlocks: [...(annotation.previewBlocks || [])],
-      tags: [...(annotation.tags || [])],
-    })),
-    mergedSources: uniqueValues(
-      record.mergedSources || [
-        record.sourceLabel || "Wikipedia",
-        ...(record.sourceAnnotations || []).map(
-          (annotation) => annotation.sourceLabel || "Obsidian Import",
-        ),
-      ],
-    ),
-    anchorTitles: uniqueValues(record.anchorTitles || []),
-    anchorPaths: uniqueValues(record.anchorPaths || []),
-    expansionDepth: Number(record.expansionDepth || 0),
-    folderName:
-      record.folderName ||
-      record.anchorPaths?.[0]?.split("/").filter(Boolean)[0] ||
-      "",
-  }));
+        ? `${publicSourceLabel} + Obsidian Import`
+        : publicSourceLabel);
+
+    return {
+      ...record,
+      id: record.id || `page-${language}-${stableSlug(record.title)}`,
+      language,
+      sourceType: "wikipedia",
+      sourceLabel,
+      aliases: record.aliases || [],
+      tags: record.tags || [],
+      sourceAnnotations: (record.sourceAnnotations || []).map((annotation) => ({
+        ...annotation,
+        previewBlocks: [...(annotation.previewBlocks || [])],
+        tags: [...(annotation.tags || [])],
+      })),
+      mergedSources: uniqueValues(
+        record.mergedSources || [
+          sourceLabel,
+          ...(record.sourceAnnotations || []).map(
+            (annotation) => annotation.sourceLabel || "Obsidian Import",
+          ),
+        ],
+      ),
+      anchorTitles: uniqueValues(record.anchorTitles || []),
+      anchorPaths: uniqueValues(record.anchorPaths || []),
+      expansionDepth: Number(record.expansionDepth || 0),
+      folderName:
+        record.folderName ||
+        record.anchorPaths?.[0]?.split("/").filter(Boolean)[0] ||
+        "",
+    };
+  });
   const titleToId = new Map(normalizedRecords.map((record) => [record.title, record.id]));
 
   return normalizedRecords.map((record) => ({
@@ -903,11 +1022,11 @@ function prepareWikipediaRecords(records) {
 
 function mergeWikipediaRecordSets(existingRecords, incomingRecords) {
   const mergedByTitle = new Map(
-    existingRecords.map((record) => [normalizeSearchTitle(record.title), { ...record }]),
+    existingRecords.map((record) => [getWikipediaRecordKey(record), { ...record }]),
   );
 
   incomingRecords.forEach((record) => {
-    const key = normalizeSearchTitle(record.title);
+    const key = getWikipediaRecordKey(record);
     const existing = mergedByTitle.get(key);
 
     if (!existing) {
@@ -924,8 +1043,8 @@ function mergeWikipediaRecordSets(existingRecords, incomingRecords) {
         existing.sourceLabel ||
         record.sourceLabel ||
         ((existing.sourceAnnotations || record.sourceAnnotations || []).length
-          ? "English Wikipedia + Obsidian Import"
-          : "English Wikipedia"),
+          ? `${getWikipediaSourceLabel(getWikipediaRecordLanguage(record))} + Obsidian Import`
+          : getWikipediaSourceLabel(getWikipediaRecordLanguage(record))),
       aliases: uniqueValues([...(existing.aliases || []), ...(record.aliases || [])]),
       tags: uniqueValues([...(existing.tags || []), ...(record.tags || [])]),
       links: uniqueValues([...(existing.links || []), ...(record.links || [])]),
@@ -955,11 +1074,14 @@ function mergeWikipediaRecordSets(existingRecords, incomingRecords) {
   return prepareWikipediaRecords([...mergedByTitle.values()]);
 }
 
-function findWikipediaRecordByTitle(title) {
+function findWikipediaRecordByTitle(title, language = "") {
   const normalizedTitle = normalizeSearchTitle(title);
+  const normalizedLanguage = normalizeWikipediaLanguage(language);
 
   return state.wikipediaRecords.find(
-    (record) => normalizeSearchTitle(record.title) === normalizedTitle,
+    (record) =>
+      normalizeSearchTitle(record.title) === normalizedTitle &&
+      (!normalizedLanguage || getWikipediaRecordLanguage(record) === normalizedLanguage),
   ) || null;
 }
 
@@ -1368,7 +1490,10 @@ function getVaultGraphRecords() {
           record.extract ||
           "",
         sourceType: "obsidian",
-        sourceLabel: record.sourceLabel || "English Wikipedia + Obsidian Import",
+        sourceLabel:
+          record.sourceLabel ||
+          `${getWikipediaSourceLabel(getWikipediaRecordLanguage(record))} + Obsidian Import`,
+        language: annotation.language || record.language || "",
         markdown: annotation.markdown || record.markdown || "",
         previewBlocks: annotation.previewBlocks || record.previewBlocks || [],
         relativePath,
@@ -1494,6 +1619,12 @@ function buildLocalNoteRecord({ id = "", title = "", folderName = "Scratchpad", 
     folderPath: normalizedFolder,
     folderName: normalizedFolder,
     tags,
+    language:
+      detectWikipediaLanguage(
+        `${normalizedTitle}\n${frontmatter.description || ""}\n${effectiveMarkdown}`,
+      ) ||
+      normalizeWikipediaLanguage(state.activeVaultLanguage) ||
+      "",
   };
 }
 
@@ -1514,13 +1645,14 @@ function setSidebarTab(tab) {
   obsidianMenuPanel.setAttribute("aria-hidden", isWikipedia ? "true" : "false");
   wikipediaMenuPanel.inert = !isWikipedia;
   obsidianMenuPanel.inert = isWikipedia;
-  searchInput.placeholder = "Search page title or topic";
+  searchInput.placeholder = "Search Wikipedia";
   searchModeMeta.textContent =
     "Press Enter to clear the current canvas and build a new neural network from the most relevant Wikipedia entry. If none fits, use Obsidian > New from a blank canvas.";
   sourceMeta.textContent =
     state.obsidianRecords.length > 0
       ? `Imported and local notes are layered into the current neural network. ${state.obsidianRecords.length} local note${state.obsidianRecords.length === 1 ? "" : "s"} active.`
       : "Import adds markdown notes into the current neural network. New opens a clean canvas for local note drafting.";
+  updateWikipediaLanguageMeta(searchInput.value);
 }
 
 function stripHtml(value) {
@@ -1529,13 +1661,185 @@ function stripHtml(value) {
   return temp.textContent || temp.innerText || "";
 }
 
+function normalizeWikipediaLanguage(value) {
+  const code = String(value || "")
+    .trim()
+    .toLowerCase()
+    .split(".")[0]
+    .split(/[-_]/)[0];
+  return WIKIPEDIA_LANGUAGES[code] ? code : "";
+}
+
+function getWikipediaLanguageConfig(language = "en") {
+  return WIKIPEDIA_LANGUAGES[normalizeWikipediaLanguage(language) || "en"];
+}
+
+function getWikipediaSourceLabel(language = "en") {
+  return getWikipediaLanguageConfig(language).sourceLabel;
+}
+
+function getWikipediaOrigin(language = "en") {
+  return `https://${getWikipediaLanguageConfig(language).code}.wikipedia.org`;
+}
+
+function getWikipediaRecordLanguage(record) {
+  const explicitLanguage = normalizeWikipediaLanguage(record?.language);
+  if (explicitLanguage) {
+    return explicitLanguage;
+  }
+
+  try {
+    const hostnameLanguage = normalizeWikipediaLanguage(new URL(record?.url || "").hostname);
+    if (hostnameLanguage) {
+      return hostnameLanguage;
+    }
+  } catch {
+    // Fall through to source-label inference.
+  }
+
+  const sourceLabel = String(record?.sourceLabel || "").toLowerCase();
+  if (sourceLabel.includes("中文")) {
+    return "zh";
+  }
+  if (sourceLabel.includes("français")) {
+    return "fr";
+  }
+  if (sourceLabel.includes("deutsch")) {
+    return "de";
+  }
+  if (sourceLabel.includes("español")) {
+    return "es";
+  }
+  return "en";
+}
+
+function getWikipediaRecordKey(recordOrTitle, language = "") {
+  if (typeof recordOrTitle === "string") {
+    return `${normalizeWikipediaLanguage(language) || "en"}:${normalizeSearchTitle(recordOrTitle)}`;
+  }
+
+  return `${getWikipediaRecordLanguage(recordOrTitle)}:${normalizeSearchTitle(recordOrTitle?.title)}`;
+}
+
+function countMatches(value, pattern) {
+  return (String(value || "").match(pattern) || []).length;
+}
+
+function detectWikipediaLanguage(value) {
+  const text = String(value || "").normalize("NFKC").toLowerCase();
+  if (!text.trim()) {
+    return "";
+  }
+
+  const hanCount = countMatches(text, /\p{Script=Han}/gu);
+  const latinCount = countMatches(text, /\p{Script=Latin}/gu);
+  if (hanCount >= 2 && hanCount >= latinCount * 0.2) {
+    return "zh";
+  }
+
+  const tokens = text.match(/\p{Script=Latin}+/gu) || [];
+  const scores = {
+    en: 0,
+    fr:
+      countMatches(text, /[àâæçèêëîïôœùûÿ]/gu) * 3 +
+      countMatches(text, /é/gu),
+    de:
+      countMatches(text, /[äöü]/gu) * 2 +
+      countMatches(text, /ß/gu) * 4,
+    es:
+      countMatches(text, /[áíñóú¿¡]/gu) * 3 +
+      countMatches(text, /é/gu),
+  };
+
+  tokens.forEach((token) => {
+    Object.entries(WIKIPEDIA_LANGUAGE_WORDS).forEach(([language, words]) => {
+      if (words.has(token)) {
+        scores[language] += 1;
+      }
+    });
+  });
+
+  const ranked = Object.entries(scores).sort(
+    (left, right) => right[1] - left[1] || left[0].localeCompare(right[0]),
+  );
+  const [bestLanguage, bestScore] = ranked[0] || [];
+  const nextScore = ranked[1]?.[1] || 0;
+  return bestScore >= 2 && bestScore >= nextScore + 1 ? bestLanguage : "";
+}
+
+function getBrowserWikipediaLanguage() {
+  const browserLanguages = uniqueValues([
+    ...(navigator.languages || []),
+    navigator.language || "",
+  ]);
+
+  for (const language of browserLanguages) {
+    const normalized = normalizeWikipediaLanguage(language);
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return "en";
+}
+
+function inferObsidianVaultLanguage(records) {
+  const sample = records
+    .slice(0, 160)
+    .map(
+      (record) =>
+        `${record.title || ""}\n${record.description || ""}\n${record.extract || ""}\n${String(
+          record.markdown || "",
+        ).slice(0, 1600)}`,
+    )
+    .join("\n");
+
+  return detectWikipediaLanguage(sample) || getBrowserWikipediaLanguage();
+}
+
+function resolveWikipediaLanguage(query = "", preferredLanguage = "") {
+  const explicitMode = normalizeWikipediaLanguage(state.wikipediaLanguageMode);
+  if (explicitMode) {
+    return explicitMode;
+  }
+
+  return (
+    detectWikipediaLanguage(query) ||
+    normalizeWikipediaLanguage(preferredLanguage) ||
+    normalizeWikipediaLanguage(state.activeVaultLanguage) ||
+    getBrowserWikipediaLanguage()
+  );
+}
+
+function updateWikipediaLanguageMeta(query = "") {
+  const resolvedLanguage = resolveWikipediaLanguage(query);
+  const config = getWikipediaLanguageConfig(resolvedLanguage);
+  const isAuto = state.wikipediaLanguageMode === "auto";
+  wikipediaLanguageMeta.textContent = isAuto
+    ? `Auto currently uses ${config.sourceLabel}.`
+    : `Searches and graph expansion use ${config.sourceLabel}.`;
+  wikipediaLanguageSelect.title = wikipediaLanguageMeta.textContent;
+}
+
 function tokenizeText(value) {
   return new Set(
     value
       .toLowerCase()
-      .replace(/[^a-z0-9 ]+/g, " ")
+      .replace(/[^\p{L}\p{N} ]+/gu, " ")
       .split(/\s+/)
-      .filter((token) => token.length > 2 && !STOP_WORDS.has(token)),
+      .flatMap((token) => {
+        if (/^\p{Script=Han}+$/u.test(token)) {
+          return token.length > 1
+            ? [token, ...Array.from(token).map((character) => `han:${character}`)]
+            : [`han:${token}`];
+        }
+        return token;
+      })
+      .filter(
+        (token) =>
+          (token.startsWith("han:") || token.length > 2) &&
+          !STOP_WORDS.has(token),
+      ),
   );
 }
 
@@ -2295,9 +2599,11 @@ function clearGraphCanvas(title = "Blank canvas", summary = "Discovering a new n
   closeNoteEditor(false);
 }
 
-function readCachedRecord(title) {
+function readCachedRecord(title, language = "en") {
   try {
-    const raw = window.localStorage.getItem(`${CACHE_PREFIX}${slugify(title)}`);
+    const raw = window.localStorage.getItem(
+      `${CACHE_PREFIX}${normalizeWikipediaLanguage(language) || "en"}:${stableSlug(title)}`,
+    );
     if (!raw) {
       return null;
     }
@@ -2313,10 +2619,10 @@ function readCachedRecord(title) {
   }
 }
 
-function writeCachedRecord(title, data) {
+function writeCachedRecord(title, language, data) {
   try {
     window.localStorage.setItem(
-      `${CACHE_PREFIX}${slugify(title)}`,
+      `${CACHE_PREFIX}${normalizeWikipediaLanguage(language) || "en"}:${stableSlug(title)}`,
       JSON.stringify({ timestamp: Date.now(), data }),
     );
   } catch {
@@ -2485,8 +2791,10 @@ async function fetchJson(url, retries = 3) {
   throw lastError;
 }
 
-async function fetchSummary(title) {
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+async function fetchSummary(title, language = "en") {
+  const normalizedLanguage = normalizeWikipediaLanguage(language) || "en";
+  const origin = getWikipediaOrigin(normalizedLanguage);
+  const url = `${origin}/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
   const data = await fetchJson(url);
 
   return {
@@ -2495,12 +2803,12 @@ async function fetchSummary(title) {
     extract: data.extract || "",
     url:
       data.content_urls?.desktop?.page ||
-      `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
+      `${origin}/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
   };
 }
 
-async function fetchLinks(title) {
-  const url = new URL("https://en.wikipedia.org/w/api.php");
+async function fetchLinks(title, language = "en") {
+  const url = new URL(`${getWikipediaOrigin(language)}/w/api.php`);
   url.searchParams.set("action", "query");
   url.searchParams.set("format", "json");
   url.searchParams.set("formatversion", "2");
@@ -2516,8 +2824,9 @@ async function fetchLinks(title) {
   return page?.links ? page.links.map((entry) => entry.title) : [];
 }
 
-async function fetchWikipediaSearchResults(query) {
-  const url = new URL("https://en.wikipedia.org/w/api.php");
+async function fetchWikipediaSearchResults(query, language = "en") {
+  const normalizedLanguage = normalizeWikipediaLanguage(language) || "en";
+  const url = new URL(`${getWikipediaOrigin(normalizedLanguage)}/w/api.php`);
   url.searchParams.set("action", "query");
   url.searchParams.set("format", "json");
   url.searchParams.set("formatversion", "2");
@@ -2531,40 +2840,53 @@ async function fetchWikipediaSearchResults(query) {
   return (data.query?.search || []).map((result) => ({
     title: result.title,
     snippet: stripHtml(result.snippet || ""),
+    language: normalizedLanguage,
   }));
 }
 
-async function fetchPageRecord(title, clusterId) {
-  const cached = readCachedRecord(title);
+async function fetchPageRecord(title, clusterId, language = "en") {
+  const normalizedLanguage = normalizeWikipediaLanguage(language) || "en";
+  const cached = readCachedRecord(title, normalizedLanguage);
   if (cached) {
     return { ...cached, clusterId };
   }
 
-  const [summary, links] = await Promise.all([fetchSummary(title), fetchLinks(title)]);
+  const [summary, links] = await Promise.all([
+    fetchSummary(title, normalizedLanguage),
+    fetchLinks(title, normalizedLanguage),
+  ]);
   const record = {
     title: summary.title,
     description: summary.description,
     extract: summary.extract,
     url: summary.url,
     links,
+    language: normalizedLanguage,
+    sourceLabel: getWikipediaSourceLabel(normalizedLanguage),
   };
-  writeCachedRecord(title, record);
+  writeCachedRecord(title, normalizedLanguage, record);
   return { ...record, clusterId };
 }
 
-async function discoverWikipediaTopicGraph(query, preferredTitle = "", requestId = state.graphRequestId) {
+async function discoverWikipediaTopicGraph(
+  query,
+  preferredTitle = "",
+  requestId = state.graphRequestId,
+  preferredLanguage = "",
+) {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return { status: "empty" };
   }
+  const language = resolveWikipediaLanguage(trimmedQuery, preferredLanguage);
 
   let searchResults = [];
   let chosenResult = null;
 
   if (preferredTitle.trim()) {
-    chosenResult = { title: preferredTitle.trim(), snippet: "" };
+    chosenResult = { title: preferredTitle.trim(), snippet: "", language };
   } else {
-    searchResults = await fetchWikipediaSearchResults(trimmedQuery);
+    searchResults = await fetchWikipediaSearchResults(trimmedQuery, language);
     if (requestId !== state.graphRequestId) {
       return { status: "stale" };
     }
@@ -2576,7 +2898,7 @@ async function discoverWikipediaTopicGraph(query, preferredTitle = "", requestId
     return { status: "missing", searchResults };
   }
 
-  const seedRecord = await fetchPageRecord(chosenResult.title);
+  const seedRecord = await fetchPageRecord(chosenResult.title, undefined, language);
   if (requestId !== state.graphRequestId) {
     return { status: "stale" };
   }
@@ -2608,7 +2930,7 @@ async function discoverWikipediaTopicGraph(query, preferredTitle = "", requestId
     5,
     async ({ title }) => {
       try {
-        return await fetchPageRecord(title);
+        return await fetchPageRecord(title, undefined, language);
       } catch (error) {
         return { error, title };
       } finally {
@@ -2648,7 +2970,7 @@ async function discoverWikipediaTopicGraph(query, preferredTitle = "", requestId
     4,
     async (title) => {
       try {
-        return await fetchPageRecord(title);
+        return await fetchPageRecord(title, undefined, language);
       } catch (error) {
         return { error, title };
       } finally {
@@ -2677,6 +2999,7 @@ async function discoverWikipediaTopicGraph(query, preferredTitle = "", requestId
     seedRecord,
     mergedRecords,
     searchResults,
+    language,
   };
 }
 
@@ -3303,7 +3626,8 @@ function openAgentBridgeDraft(index) {
 
 async function commitLocalNoteRecord(record, { isNewNote }) {
   if (isNewNote) {
-    const existingWikipediaRecord = findWikipediaRecordByTitle(record.title);
+    const recordLanguage = resolveWikipediaLanguage(record.title, record.language);
+    const existingWikipediaRecord = findWikipediaRecordByTitle(record.title, recordLanguage);
     if (existingWikipediaRecord) {
       state.pendingNewTitle = "";
       return {
@@ -3318,7 +3642,12 @@ async function commitLocalNoteRecord(record, { isNewNote }) {
     let topicResult;
 
     try {
-      topicResult = await discoverWikipediaTopicGraph(record.title, "", lookupRequestId);
+      topicResult = await discoverWikipediaTopicGraph(
+        record.title,
+        "",
+        lookupRequestId,
+        recordLanguage,
+      );
     } catch {
       return {
         status: "lookup-failed",
@@ -3355,6 +3684,8 @@ async function commitLocalNoteRecord(record, { isNewNote }) {
     left.title.localeCompare(right.title),
   );
   state.activeVaultName = state.activeVaultName || "Scratchpad";
+  state.activeVaultLanguage = inferObsidianVaultLanguage(state.obsidianRecords);
+  updateWikipediaLanguageMeta();
   state.pendingNewTitle = "";
   rebuildActiveGraph(record.id);
 
@@ -3472,12 +3803,11 @@ function updateInspector(page) {
   articleTitle.textContent = page.title;
   articleSummary.textContent = buildArticleSummary(page);
   clearArticleBody();
-  const sourceBadgeLabel = String(page.sourceLabel || "").includes("中文")
-    ? "中文维基百科"
-    : String(page.sourceLabel || "").includes("English")
-      ? "English Wikipedia"
-      : "Wikipedia";
-  sourceLink.href = page.url || "https://en.wikipedia.org/";
+  const sourceBadgeLabel =
+    page.sourceType === "wikipedia"
+      ? getWikipediaSourceLabel(page.language)
+      : page.sourceLabel || "Source";
+  sourceLink.href = page.url || getWikipediaOrigin(page.language);
   sourceLink.textContent = sourceBadgeLabel;
   sourceLink.setAttribute("aria-label", `Open on ${sourceBadgeLabel}`);
   sourceLink.hidden = !page.url;
@@ -3715,6 +4045,7 @@ function clearSearchSuggestions() {
   window.clearTimeout(state.searchDebounceId);
   state.searchDebounceId = null;
   state.pendingSearchQuery = "";
+  state.pendingSearchLanguage = "";
   state.searchRequestId += 1;
   state.searchSuggestions = [];
   searchSuggestions.hidden = true;
@@ -3735,6 +4066,7 @@ function renderSearchSuggestions() {
           class="search-suggestion ${index === 0 ? "active" : ""}"
           type="button"
           data-search-title="${escapeHtml(result.title)}"
+          data-search-language="${escapeHtml(result.language || state.activeWikipediaLanguage)}"
         >
           <span class="search-suggestion-title">${escapeHtml(result.title)}</span>
           <span class="search-suggestion-snippet">${escapeHtml(result.snippet || "Open this note as a live Wikipedia graph.")}</span>
@@ -3747,6 +4079,7 @@ function renderSearchSuggestions() {
 function scheduleSearchSuggestions(query) {
   const trimmed = query.trim();
   window.clearTimeout(state.searchDebounceId);
+  updateWikipediaLanguageMeta(trimmed);
 
   if (trimmed.length < 2) {
     clearSearchSuggestions();
@@ -3754,12 +4087,18 @@ function scheduleSearchSuggestions(query) {
   }
 
   state.pendingSearchQuery = trimmed;
+  const language = resolveWikipediaLanguage(trimmed);
+  state.pendingSearchLanguage = language;
   state.searchDebounceId = window.setTimeout(async () => {
     const requestId = ++state.searchRequestId;
 
     try {
-      const results = await fetchWikipediaSearchResults(trimmed);
-      if (requestId !== state.searchRequestId || state.pendingSearchQuery !== trimmed) {
+      const results = await fetchWikipediaSearchResults(trimmed, language);
+      if (
+        requestId !== state.searchRequestId ||
+        state.pendingSearchQuery !== trimmed ||
+        state.pendingSearchLanguage !== language
+      ) {
         return;
       }
 
@@ -3807,6 +4146,7 @@ function applyDiscoveredWikipediaTopic(topicResult, successMessage = "") {
   searchInput.value = "";
   regionFilter.value = "all";
   state.graphMode = "topic";
+  state.activeWikipediaLanguage = topicResult.language || topicResult.seedRecord.language || "en";
   state.activeSeedTitle = topicResult.seedRecord.title;
   state.wikipediaRecords = mergeWikipediaRecordSets(state.wikipediaRecords, topicResult.mergedRecords);
   state.activeSeedPageId =
@@ -3821,7 +4161,7 @@ function applyDiscoveredWikipediaTopic(topicResult, successMessage = "") {
   }
 }
 
-async function loadTopicGraphFromQuery(query, preferredTitle = "") {
+async function loadTopicGraphFromQuery(query, preferredTitle = "", preferredLanguage = "") {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return;
@@ -3836,15 +4176,21 @@ async function loadTopicGraphFromQuery(query, preferredTitle = "") {
   state.activeSeedTitle = "";
   state.activeSeedPageId = "";
   state.pendingNewTitle = "";
+  const language = resolveWikipediaLanguage(trimmedQuery, preferredLanguage);
   clearGraphCanvas(
     `Discovering "${trimmedQuery}"…`,
     "Cleared the current canvas. Fetching live Wikipedia notes and links for a fresh neural network.",
   );
-  setGraphStatus(`Searching Wikipedia for "${trimmedQuery}"…`);
+  setGraphStatus(`Searching ${getWikipediaSourceLabel(language)} for "${trimmedQuery}"…`);
   let topicResult;
 
   try {
-    topicResult = await discoverWikipediaTopicGraph(trimmedQuery, preferredTitle, requestId);
+    topicResult = await discoverWikipediaTopicGraph(
+      trimmedQuery,
+      preferredTitle,
+      requestId,
+      language,
+    );
   } catch {
     state.loading = false;
     articleTitle.textContent = "Wikipedia lookup failed";
@@ -3912,6 +4258,12 @@ async function loadObsidianVaultFromFiles(fileList) {
   if (requestId !== state.graphRequestId) {
     return;
   }
+  const vaultLanguage = inferObsidianVaultLanguage(drafts);
+  state.activeVaultLanguage = vaultLanguage;
+  drafts.forEach((draft) => {
+    draft.language = normalizeWikipediaLanguage(draft.language) || vaultLanguage;
+  });
+  updateWikipediaLanguageMeta();
 
   const wikipediaManifest = await wikipediaManifestPromise;
   if (requestId !== state.graphRequestId) {
@@ -3942,12 +4294,13 @@ async function loadObsidianVaultFromFiles(fileList) {
   let preferredPageId = "";
 
   resolvedDrafts.forEach((draft) => {
-    const wikipediaOverlap = nextWikipediaRecords.get(normalizeSearchTitle(draft.title));
+    const wikipediaKey = normalizeSearchTitle(draft.title);
+    const wikipediaOverlap = nextWikipediaRecords.get(wikipediaKey);
     const duplicateKey = getObsidianDuplicateKey(draft);
 
     if (wikipediaOverlap) {
       nextWikipediaRecords.set(
-        normalizeSearchTitle(draft.title),
+        wikipediaKey,
         mergeImportedRecordIntoWikipediaRecord(wikipediaOverlap, draft),
       );
 
@@ -4079,7 +4432,7 @@ function createDynamicClusterDefinitions(leaders, seedPage) {
   return leaders.map((leader, index) => {
     if (index === 0) {
       return {
-        id: `cluster-${slugify(leader.title)}`,
+        id: `cluster-${stableSlug(leader.title)}`,
         name: `${condenseTopicLabel(seedPage.title)} Core`,
         theme: leader.description || `Pages branching directly from ${seedPage.title}.`,
         center: [0, 0, 0],
@@ -4091,7 +4444,7 @@ function createDynamicClusterDefinitions(leaders, seedPage) {
     const angle = ((index - 1) / ringCount) * Math.PI * 2;
     const radius = 34 + ringCount * 2.5;
     return {
-      id: `cluster-${slugify(leader.title)}`,
+      id: `cluster-${stableSlug(leader.title)}`,
       name: condenseTopicLabel(leader.title),
       theme: leader.description || `Related pages around ${leader.title}.`,
       center: [
@@ -4476,13 +4829,21 @@ function buildGraph(records, options = {}) {
 
   records.forEach((record) => {
     const page = {
-      id: record.id || `page-${slugify(record.title)}`,
+      id:
+        record.id ||
+        `page-${getWikipediaRecordLanguage(record)}-${stableSlug(record.title)}`,
       title: record.title,
       description: record.description,
       extract: record.extract,
       url: record.url,
       sourceType: record.sourceType || "wikipedia",
-      sourceLabel: record.sourceLabel || "English Wikipedia",
+      sourceLabel:
+        record.sourceLabel ||
+        getWikipediaSourceLabel(getWikipediaRecordLanguage(record)),
+      language:
+        record.sourceType === "obsidian"
+          ? normalizeWikipediaLanguage(record.language) || ""
+          : getWikipediaRecordLanguage(record),
       markdown: record.markdown || "",
       previewBlocks: record.previewBlocks || [],
       relativePath: record.relativePath || "",
@@ -4496,7 +4857,11 @@ function buildGraph(records, options = {}) {
         previewBlocks: [...(annotation.previewBlocks || [])],
         tags: [...(annotation.tags || [])],
       })),
-      mergedSources: record.mergedSources || [record.sourceLabel || "English Wikipedia"],
+      mergedSources:
+        record.mergedSources || [
+          record.sourceLabel ||
+            getWikipediaSourceLabel(getWikipediaRecordLanguage(record)),
+        ],
       anchorTitles: record.anchorTitles || [],
       anchorPaths: record.anchorPaths || [],
       expansionDepth: Number(record.expansionDepth || 0),
@@ -4634,7 +4999,7 @@ function buildGraph(records, options = {}) {
       : uniqueValues([
         cluster.name,
         page.description,
-        "English Wikipedia",
+        getWikipediaSourceLabel(page.language),
         ...page.links.slice(0, 3),
       ]).slice(0, MAX_TAGS);
   });
@@ -4649,7 +5014,6 @@ function buildGraph(records, options = {}) {
   state.selectedPageId =
     (options.seedPageId && pageMap.has(options.seedPageId) ? options.seedPageId : "") ||
     [...pageMap.values()].find((page) => page.title === options.seedTitle)?.id ||
-    pageMap.get(`page-${slugify(options.seedTitle || "")}`)?.id ||
     state.connectedness[0]?.id ||
     pages[0]?.id ||
     null;
@@ -5744,6 +6108,7 @@ async function loadWikipediaGraph() {
   const requestId = ++state.graphRequestId;
   setSidebarTab("wikipedia");
   state.pendingNewTitle = "";
+  state.activeWikipediaLanguage = "en";
   const titles = clusterSpecs.flatMap((cluster) =>
     cluster.titles.map((title) => ({ title, clusterId: cluster.id })),
   );
@@ -5753,7 +6118,7 @@ async function loadWikipediaGraph() {
 
   const results = await mapWithConcurrency(titles, 5, async ({ title, clusterId }) => {
     try {
-      return await fetchPageRecord(title, clusterId);
+      return await fetchPageRecord(title, clusterId, "en");
     } catch (error) {
       return { error, title, clusterId };
     } finally {
@@ -5772,7 +6137,7 @@ async function loadWikipediaGraph() {
     state.loading = false;
     articleTitle.textContent = "Wikipedia loading failed";
     articleSummary.textContent =
-      "The app could not retrieve live data from English Wikipedia in this browser session.";
+      "The app could not retrieve live data from Wikipedia in this browser session.";
     setGraphStatus("Wikipedia requests failed. Reload to retry.", "error");
     return;
   }
@@ -5788,7 +6153,7 @@ async function loadWikipediaGraph() {
     4,
     async ({ title, clusterId }) => {
       try {
-        return await fetchPageRecord(title, clusterId);
+        return await fetchPageRecord(title, clusterId, "en");
       } catch (error) {
         return { error, title, clusterId };
       } finally {
@@ -5843,11 +6208,13 @@ async function resetToDefaultVault() {
   state.filterCluster = "all";
   state.pendingNewTitle = "";
   state.activeVaultName = "";
+  state.activeVaultLanguage = "";
   state.obsidianRecords = [];
   state.wikipediaRecords = [];
   state.graphViewMode = "fusion";
   state.activeSeedTitle = "";
   state.activeSeedPageId = "";
+  state.activeWikipediaLanguage = "en";
   state.agentMessages = [];
   state.agentSuggestions = [];
   state.agentHasRevealed = false;
@@ -5904,6 +6271,18 @@ function bindEvents() {
     vaultInput.value = "";
   });
 
+  wikipediaLanguageSelect.addEventListener("change", (event) => {
+    state.wikipediaLanguageMode =
+      event.target.value === "auto"
+        ? "auto"
+        : normalizeWikipediaLanguage(event.target.value) || "auto";
+    clearSearchSuggestions();
+    updateWikipediaLanguageMeta(searchInput.value);
+    if (searchInput.value.trim().length >= 2) {
+      scheduleSearchSuggestions(searchInput.value);
+    }
+  });
+
   searchInput.addEventListener("input", (event) => {
     state.searchText = event.target.value;
     renderNoteTree();
@@ -5937,7 +6316,11 @@ function bindEvents() {
       return;
     }
 
-    await loadTopicGraphFromQuery(button.dataset.searchTitle, button.dataset.searchTitle);
+    await loadTopicGraphFromQuery(
+      button.dataset.searchTitle,
+      button.dataset.searchTitle,
+      button.dataset.searchLanguage,
+    );
   });
 
   regionFilter.addEventListener("change", (event) => {

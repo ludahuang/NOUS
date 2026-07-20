@@ -87,7 +87,70 @@ const clusterSpecs = [
 ];
 
 const allTitles = clusterSpecs.flatMap((cluster) => cluster.titles);
-const lowerTitleMap = new Map(allTitles.map((title) => [title.toLowerCase(), title]));
+const multilingualTopics = {
+  zh: {
+    clusterName: "心理学",
+    titles: [
+      "心理学",
+      "认知心理学",
+      "社会心理学",
+      "发展心理学",
+      "行为主义",
+      "精神分析",
+      "神经科学",
+      "CBT",
+    ],
+  },
+  fr: {
+    clusterName: "Psychologie",
+    titles: [
+      "Psychologie",
+      "Psychologie cognitive",
+      "Psychologie sociale",
+      "Psychologie du développement",
+      "Béhaviorisme",
+      "Psychanalyse",
+      "Neurosciences",
+    ],
+  },
+  de: {
+    clusterName: "Psychologie",
+    titles: [
+      "Psychologie",
+      "Kognitionspsychologie",
+      "Sozialpsychologie",
+      "Entwicklungspsychologie",
+      "Behaviorismus",
+      "Psychoanalyse",
+      "Neurowissenschaften",
+    ],
+  },
+  es: {
+    clusterName: "Psicología",
+    titles: [
+      "Psicología",
+      "Psicología cognitiva",
+      "Psicología social",
+      "Psicología del desarrollo",
+      "Conductismo",
+      "Psicoanálisis",
+      "Neurociencia",
+    ],
+  },
+};
+const titlesByLanguage = new Map([
+  ["en", allTitles],
+  ...Object.entries(multilingualTopics).map(([language, topic]) => [
+    language,
+    topic.titles,
+  ]),
+]);
+const titleMapsByLanguage = new Map(
+  [...titlesByLanguage.entries()].map(([language, titles]) => [
+    language,
+    new Map(titles.map((title) => [title.toLocaleLowerCase(language), title])),
+  ]),
+);
 const clusterByTitle = new Map();
 clusterSpecs.forEach((cluster) => {
   cluster.titles.forEach((title) => {
@@ -95,16 +158,25 @@ clusterSpecs.forEach((cluster) => {
   });
 });
 
-function resolveTitle(rawTitle = "") {
+function getRequestLanguage(url) {
+  return url.hostname.split(".")[0] || "en";
+}
+
+function resolveTitle(rawTitle = "", language = "en") {
   const decoded = decodeURIComponent(rawTitle).replace(/_/g, " ").trim();
-  return lowerTitleMap.get(decoded.toLowerCase()) || decoded;
+  const titleMap = titleMapsByLanguage.get(language) || titleMapsByLanguage.get("en");
+  return titleMap.get(decoded.toLocaleLowerCase(language)) || decoded;
 }
 
-function uniqueTitles(titles) {
-  return [...new Set(titles.filter(Boolean).map(resolveTitle))];
+function uniqueTitles(titles, language = "en") {
+  return [...new Set(titles.filter(Boolean).map((title) => resolveTitle(title, language)))];
 }
 
-function getClusterPeers(title) {
+function getClusterPeers(title, language = "en") {
+  if (language !== "en") {
+    return (titlesByLanguage.get(language) || []).filter((entry) => entry !== title);
+  }
+
   const cluster = clusterByTitle.get(title);
   if (!cluster) {
     return [];
@@ -112,8 +184,19 @@ function getClusterPeers(title) {
   return cluster.titles.filter((entry) => entry !== title);
 }
 
-function buildLinks(title) {
-  const peers = getClusterPeers(title);
+function buildLinks(title, language = "en") {
+  const peers = getClusterPeers(title, language);
+  if (language !== "en") {
+    const seedTitle = multilingualTopics[language]?.titles[0] || "";
+    return uniqueTitles(
+      [
+        ...peers.slice(0, 5),
+        ...(title === seedTitle ? peers.slice(5) : [seedTitle]),
+      ],
+      language,
+    ).filter((entry) => entry !== title);
+  }
+
   const cluster = clusterByTitle.get(title);
   const links = new Set();
 
@@ -183,28 +266,32 @@ function buildLinks(title) {
     ["Amygdala", "Memory", "Entorhinal cortex", "Neural circuit"].forEach((entry) => links.add(entry));
   }
 
-  return uniqueTitles([...links]).filter((entry) => entry !== title);
+  return uniqueTitles([...links], language).filter((entry) => entry !== title);
 }
 
-function createSummary(title) {
+function createSummary(title, language = "en") {
   const cluster = clusterByTitle.get(title);
-  const links = buildLinks(title);
+  const links = buildLinks(title, language);
+  const clusterName =
+    language === "en"
+      ? cluster?.name || "Knowledge"
+      : multilingualTopics[language]?.clusterName || "Knowledge";
   return {
     title,
-    description: cluster ? `${cluster.name} topic` : "Knowledge topic",
+    description: `${clusterName} topic`,
     extract: `${title} is a mocked Wikipedia article used for deterministic The Vault agent verification. It is connected to ${links.slice(
       0,
       4,
     ).join(", ")} inside the fixture connectome.`,
     content_urls: {
       desktop: {
-        page: `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
+        page: `https://${language}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
       },
     },
   };
 }
 
-function createLinksPayload(title) {
+function createLinksPayload(title, language = "en") {
   return {
     batchcomplete: true,
     query: {
@@ -213,20 +300,20 @@ function createLinksPayload(title) {
           pageid: Math.abs(title.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)),
           ns: 0,
           title,
-          links: buildLinks(title).map((entry) => ({ ns: 0, title: entry })),
+          links: buildLinks(title, language).map((entry) => ({ ns: 0, title: entry })),
         },
       ],
     },
   };
 }
 
-function createSearchPayload(query) {
-  const normalized = query.trim().toLowerCase();
-  const titles = allTitles
-    .filter((title) => title.toLowerCase().includes(normalized))
+function createSearchPayload(query, language = "en") {
+  const normalized = query.trim().toLocaleLowerCase(language);
+  const titles = (titlesByLanguage.get(language) || allTitles)
+    .filter((title) => title.toLocaleLowerCase(language).includes(normalized))
     .sort((left, right) => {
-      const leftExact = left.toLowerCase() === normalized ? -1 : 0;
-      const rightExact = right.toLowerCase() === normalized ? -1 : 0;
+      const leftExact = left.toLocaleLowerCase(language) === normalized ? -1 : 0;
+      const rightExact = right.toLocaleLowerCase(language) === normalized ? -1 : 0;
       return leftExact - rightExact || left.localeCompare(right);
     })
     .slice(0, 6);
@@ -243,18 +330,20 @@ function createSearchPayload(query) {
 }
 
 export async function installWikipediaMock(page) {
-  await page.route("https://en.wikipedia.org/api/rest_v1/page/summary/**", async (route) => {
+  await page.route("https://*.wikipedia.org/api/rest_v1/page/summary/**", async (route) => {
     const url = new URL(route.request().url());
-    const title = resolveTitle(url.pathname.split("/").pop() || "");
+    const language = getRequestLanguage(url);
+    const title = resolveTitle(url.pathname.split("/").pop() || "", language);
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(createSummary(title)),
+      body: JSON.stringify(createSummary(title, language)),
     });
   });
 
-  await page.route("https://en.wikipedia.org/w/api.php**", async (route) => {
+  await page.route("https://*.wikipedia.org/w/api.php**", async (route) => {
     const url = new URL(route.request().url());
+    const language = getRequestLanguage(url);
     const searchType = url.searchParams.get("list");
     const propType = url.searchParams.get("prop");
 
@@ -263,17 +352,17 @@ export async function installWikipediaMock(page) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(createSearchPayload(query)),
+        body: JSON.stringify(createSearchPayload(query, language)),
       });
       return;
     }
 
     if (propType === "links") {
-      const title = resolveTitle(url.searchParams.get("titles") || "");
+      const title = resolveTitle(url.searchParams.get("titles") || "", language);
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(createLinksPayload(title)),
+        body: JSON.stringify(createLinksPayload(title, language)),
       });
       return;
     }

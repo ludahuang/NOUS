@@ -10,7 +10,8 @@ NOUS usage is documented in [docs/agent-use.md](docs/agent-use.md).
 
 ## Active Build
 
-- Live Wikipedia discovery from `Find note`
+- Live English, Chinese, French, German, and Spanish Wikipedia discovery from `Find note`
+- Automatic Wikipedia language matching for imported Obsidian vaults
 - Dense 3D connectome with orbit, pan, zoom, and focus
 - Obsidian markdown import merged into the current graph
 - Local note drafting with Wikipedia fallback for duplicate titles

@@ -2,6 +2,10 @@
 
 ## v2-agentic
 
+- Added English, Chinese, French, German, and Spanish live Wikipedia discovery
+- Added automatic Wikipedia language matching for imported Obsidian vaults
+- Isolated Wikipedia records and browser caches by language
+- Added multilingual discovery and Obsidian language-adaptation smoke coverage
 - Packaged the current build as `release/the-vault-2.0-agentic/`
 - Repointed GitHub Pages deployment to publish the packaged `release/the-vault-2.0-agentic/` snapshot
 - Renamed the Pages workflow to `deploy-v2-agentic.yml`

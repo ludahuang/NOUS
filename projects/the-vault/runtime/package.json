@@ -7,6 +7,7 @@
   "scripts": {
     "serve": "python3 -m http.server 8765",
     "smoke:agent": "node scripts/smoke-agent-ui.mjs",
+    "smoke:wikipedia-languages": "node scripts/smoke-wikipedia-languages.mjs",
     "smoke:stability": "node scripts/smoke-stability-ui.mjs",
     "smoke:topology": "node scripts/smoke-vault-topology-ui.mjs",
     "build:psychology-vault": "node scripts/build-psychology-genealogy-vault.mjs",

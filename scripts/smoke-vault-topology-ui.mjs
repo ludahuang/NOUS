@@ -3,6 +3,16 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { installWikipediaMock } from "./agent-wikipedia-mock.mjs";
 
+function quaternionAngularDistance(left, right) {
+  const dot = Math.abs(
+    left.x * right.x +
+    left.y * right.y +
+    left.z * right.z +
+    left.w * right.w,
+  );
+  return 2 * Math.acos(Math.min(1, Math.max(-1, dot)));
+}
+
 async function main() {
   const url =
     process.env.THE_VAULT_URL ||
@@ -105,13 +115,42 @@ async function main() {
       window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
     );
     if (
-      Math.abs(overviewAlignment.graphCenter?.x || 0) > 0.015 ||
-      Math.abs(overviewAlignment.graphCenter?.y || 0) > 0.015 ||
-      overviewAlignment.maxGraphX > 0.94 ||
-      overviewAlignment.maxGraphY > 0.94
+      Math.abs(overviewAlignment.selected?.x || 0) > 0.015 ||
+      Math.abs(overviewAlignment.selected?.y || 0) > 0.015 ||
+      Math.abs(overviewAlignment.selectedLabel?.x || 0) > 0.015 ||
+      Math.abs(overviewAlignment.selectedLabel?.y || 0) > 0.015 ||
+      !overviewAlignment.selectedTagVisible ||
+      Math.abs((overviewAlignment.selectedLabel?.fontSize || 0) - 16) > 0.2 ||
+      overviewAlignment.maxGraphX > 1 ||
+      overviewAlignment.maxGraphY > 1
     ) {
       throw new Error(
         `Imported graph was not centered and framed: ${JSON.stringify(overviewAlignment)}`,
+      );
+    }
+
+    await page.waitForTimeout(900);
+    const orbitAlignment = await page.evaluate(() =>
+      window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+    );
+    const orbitDistance = quaternionAngularDistance(
+      overviewAlignment.networkRotation,
+      orbitAlignment.networkRotation,
+    );
+    if (
+      orbitDistance < 0.012 ||
+      orbitDistance > 0.08 ||
+      Math.abs(orbitAlignment.selected?.x || 0) > 0.015 ||
+      Math.abs(orbitAlignment.selected?.y || 0) > 0.015 ||
+      Math.abs(orbitAlignment.selectedLabel?.x || 0) > 0.015 ||
+      Math.abs(orbitAlignment.selectedLabel?.y || 0) > 0.015
+    ) {
+      throw new Error(
+        `Network did not orbit steadily around the selected label: ${JSON.stringify({
+          orbitDistance,
+          overviewAlignment,
+          orbitAlignment,
+        })}`,
       );
     }
 
@@ -174,8 +213,11 @@ async function main() {
         (visibility) => visibility !== "hidden",
       ) ||
       immersiveState.assistantVisibility !== "visible" ||
-      Math.abs(immersiveState.alignment.graphCenter?.x || 0) > 0.015 ||
-      Math.abs(immersiveState.alignment.graphCenter?.y || 0) > 0.015
+      Math.abs(immersiveState.alignment.selected?.x || 0) > 0.015 ||
+      Math.abs(immersiveState.alignment.selected?.y || 0) > 0.015 ||
+      Math.abs(immersiveState.alignment.selectedLabel?.x || 0) > 0.015 ||
+      Math.abs(immersiveState.alignment.selectedLabel?.y || 0) > 0.015 ||
+      Math.abs((immersiveState.alignment.selectedLabel?.fontSize || 0) - 16) > 0.2
     ) {
       throw new Error(
         `Immersive connectome state was invalid: ${JSON.stringify(immersiveState)}`,
@@ -211,8 +253,35 @@ async function main() {
       );
     }
 
-    await page.locator("#toggle-motion").click({ force: true });
-    await page.waitForTimeout(320);
+    await page.waitForTimeout(220);
+    await page.evaluate(() => {
+      document.getElementById("toggle-motion")?.click();
+    });
+    await page.waitForFunction(
+      () =>
+        window.__THE_VAULT_E2E__?.getCameraAlignmentSnapshot()
+          .motionEnabled === false,
+    );
+    const pausedOrbitStart = await page.evaluate(() =>
+      window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+    );
+    await page.waitForTimeout(420);
+    const pausedOrbitEnd = await page.evaluate(() =>
+      window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
+    );
+    const pausedOrbitDistance = quaternionAngularDistance(
+      pausedOrbitStart.networkRotation,
+      pausedOrbitEnd.networkRotation,
+    );
+    if (pausedOrbitDistance > 0.002) {
+      throw new Error(
+        `Paused network continued orbiting: ${JSON.stringify({
+          pausedOrbitDistance,
+          pausedOrbitStart,
+          pausedOrbitEnd,
+        })}`,
+      );
+    }
 
     const labelTarget = await page.evaluate(() => {
       const targets = window.__THE_VAULT_E2E__.getTagClickTargets();
@@ -430,6 +499,7 @@ async function main() {
           assistantRect.right <= menuBarRect.right,
         menuVisibility: getComputedStyle(toggle).visibility,
         menuExpanded: toggle.getAttribute("aria-expanded"),
+        alignment: window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
       };
     });
     if (
@@ -450,7 +520,14 @@ async function main() {
       mobileDefaultCollapsedState.menuButtonWidth !== 390 ||
       !mobileDefaultCollapsedState.assistantInsideMenu ||
       mobileDefaultCollapsedState.menuVisibility !== "visible" ||
-      mobileDefaultCollapsedState.menuExpanded !== "false"
+      mobileDefaultCollapsedState.menuExpanded !== "false" ||
+      Math.abs(mobileDefaultCollapsedState.alignment.selected?.x || 0) > 0.015 ||
+      Math.abs(mobileDefaultCollapsedState.alignment.selected?.y || 0) > 0.015 ||
+      Math.abs(mobileDefaultCollapsedState.alignment.selectedLabel?.x || 0) > 0.015 ||
+      Math.abs(mobileDefaultCollapsedState.alignment.selectedLabel?.y || 0) > 0.015 ||
+      Math.abs(
+        (mobileDefaultCollapsedState.alignment.selectedLabel?.fontSize || 0) - 14.08,
+      ) > 0.2
     ) {
       throw new Error(
         `Mobile menu was not collapsed by default: ${JSON.stringify(
@@ -490,6 +567,7 @@ async function main() {
         controlsTop: controls.getBoundingClientRect().top,
         controlsBottom: controls.getBoundingClientRect().bottom,
         menuExpanded: toggle.getAttribute("aria-expanded"),
+        alignment: window.__THE_VAULT_E2E__.getCameraAlignmentSnapshot(),
       };
     });
     if (
@@ -505,7 +583,12 @@ async function main() {
       mobileExpandedState.headerVisibility !== "visible" ||
       mobileExpandedState.controlsTop < 0 ||
       mobileExpandedState.controlsBottom > 844 ||
-      mobileExpandedState.menuExpanded !== "true"
+      mobileExpandedState.menuExpanded !== "true" ||
+      Math.abs(mobileExpandedState.alignment.selectedLabel?.x || 0) > 0.015 ||
+      Math.abs(mobileExpandedState.alignment.selectedLabel?.y || 0) > 0.015 ||
+      Math.abs(
+        (mobileExpandedState.alignment.selectedLabel?.fontSize || 0) - 14.08,
+      ) > 0.2
     ) {
       throw new Error(
         `Mobile menu did not expand panels below the graph: ${JSON.stringify(

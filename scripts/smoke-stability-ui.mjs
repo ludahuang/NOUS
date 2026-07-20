@@ -44,8 +44,10 @@ async function main() {
     if (initialState.title !== "Connectome") {
       throw new Error(`Expected default note to be Connectome, got "${initialState.title}".`);
     }
-    if (initialState.sourceLabel !== "Wikipedia") {
-      throw new Error(`Expected source badge to read Wikipedia, got "${initialState.sourceLabel}".`);
+    if (initialState.sourceLabel !== "English Wikipedia") {
+      throw new Error(
+        `Expected source badge to read English Wikipedia, got "${initialState.sourceLabel}".`,
+      );
     }
     if (initialState.legendCount < 3) {
       throw new Error(`Legend did not render enough folders. Count=${initialState.legendCount}`);

@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "ff7da0c625595b0c",
+        "id": "485979008415b78a",
         "type": "tabs",
         "children": [
           {
-            "id": "982eb4b2ac24e6fb",
+            "id": "153e3e4e131c215c",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "关系图谱"
+              "type": "markdown",
+              "state": {
+                "file": "01_起源与学派/历史谱系/功能主义 Functionalism.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "功能主义 Functionalism"
             }
           }
         ]
@@ -90,6 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "01_起源与学派/历史谱系/功能主义 Functionalism.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -99,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "反向链接"
+              "title": "功能主义 Functionalism 的反向链接列表"
             }
           },
           {
@@ -108,11 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "01_起源与学派/历史谱系/功能主义 Functionalism.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "出链"
+              "title": "功能主义 Functionalism 的出链列表"
             }
           },
           {
@@ -150,12 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "01_起源与学派/历史谱系/功能主义 Functionalism.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "大纲"
+              "title": "功能主义 Functionalism 的大纲"
             }
           }
         ]
@@ -176,34 +183,35 @@
       "bases:新建数据库": false
     }
   },
-  "active": "982eb4b2ac24e6fb",
+  "active": "153e3e4e131c215c",
   "lastOpenFiles": [
-    "04_意识与自我/意识理论/幻觉论 Illusionism.md",
-    "01_起源与学派/历史谱系/Alan Baddeley.md",
-    "01_起源与学派/历史谱系/结构主义 Structuralism.md",
-    "01_起源与学派/历史谱系/孔子.md",
     "01_起源与学派/历史谱系/格式塔心理学 Gestalt.md",
-    "06_胼胝体桥接区/预测焦虑现实桥.md",
-    "01_起源与学派/精神分析.md",
-    "06_胼胝体桥接区/阅读路径/William James - The Principles of Psychology.md",
-    "06_胼胝体桥接区/阅读路径/William James - I and Me.md",
-    "06_胼胝体桥接区/阅读路径/Martin Seligman - Flourish.md",
-    "06_胼胝体桥接区/阅读路径/Ulric Neisser - Cognitive Psychology.md",
-    "06_胼胝体桥接区/阅读路径/Thomas Metzinger - Being No One.md",
-    "06_胼胝体桥接区/阅读路径/Stanislas Dehaene - Consciousness and the Brain.md",
-    "06_胼胝体桥接区/阅读路径/David Marr - Vision.md",
-    "06_胼胝体桥接区/阅读路径/David Chalmers - The Conscious Mind.md",
-    "06_胼胝体桥接区/阅读路径/David Hume - Bundle Theory.md",
-    "06_胼胝体桥接区/阅读路径/Daniel Kahneman - Thinking, Fast and Slow.md",
-    "06_胼胝体桥接区/阅读路径/Butlin et al - Consciousness in Artificial Intelligence.md",
-    "06_胼胝体桥接区/阅读路径/Andy Clark - Surfing Uncertainty.md",
-    "06_胼胝体桥接区/阅读路径/Anil Seth - Being You.md",
-    "06_胼胝体桥接区/阅读路径/AI意识伦理.md",
+    "06_胼胝体桥接区/桥接节点/情绪.md",
+    "02_心智行为与改变/问题深度/正念与心理治疗.md",
+    "02_心智行为与改变/问题深度/自我决定理论 SDT.md",
+    "02_心智行为与改变/问题深度/学习科学.md",
+    "02_心智行为与改变/问题深度/文化心理学.md",
+    "02_心智行为与改变/问题深度/人格心理学.md",
+    "02_心智行为与改变/问题深度/情绪科学.md",
+    "02_心智行为与改变/问题深度/接纳与承诺疗法 ACT.md",
+    "02_心智行为与改变/问题深度/存在主义心理治疗.md",
+    "02_心智行为与改变/问题深度/辩证行为疗法 DBT.md",
+    "02_心智行为与改变/心理机制地图.md",
+    "02_心智行为与改变/记忆.md",
+    "02_心智行为与改变/发展依恋与治疗.md",
+    "04_意识与自我/意识与自我.md",
+    "04_意识与自我/现象学与神经现象学.md",
+    "04_意识与自我/全球工作空间理论.md",
+    "04_意识与自我/高阶与循环处理理论.md",
+    "04_意识与自我/意识理论/感觉运动理论 Sensorimotor Theory.md",
+    "04_意识与自我/意识理论/泛心论与中性一元论.md",
+    "05_文化方法与可信度/开放科学与自我修正.md",
+    "05_文化方法与可信度/社会心理与权力.md",
+    "05_文化方法与可信度/方法与主体位置/整合路线.md",
+    "05_文化方法与可信度/方法与主体位置/真实世界.md",
+    "05_文化方法与可信度/方法与主体位置/双向约束.md",
+    "05_文化方法与可信度/方法与主体位置/生态有效性.md",
     "06_胼胝体桥接区/阅读路径",
-    "04_意识与自我/自我谱系/Shaun Gallagher.md",
-    "04_意识与自我/自我谱系/Thomas Metzinger.md",
-    "04_意识与自我/自我谱系/Erving Goffman.md",
-    "04_意识与自我/自我谱系/George Herbert Mead.md",
     "05_文化方法与可信度/方法与主体位置",
     "06_胼胝体桥接区/桥接节点",
     "03_脑身体与环境/解释尺度",

@@ -382,19 +382,20 @@ async function main() {
     await mobilePage.waitForFunction(
       () => document.querySelectorAll("#note-tree .tree-item").length >= 12,
     );
-    await mobilePage.locator("#mobile-panel-toggle").click();
     await mobilePage.waitForFunction(
       () =>
         document.querySelector(".workspace-shell")?.dataset
           .connectomeImmersive === "true",
     );
     await mobilePage.waitForTimeout(220);
-    const mobileImmersiveState = await mobilePage.evaluate(() => {
+    const mobileDefaultCollapsedState = await mobilePage.evaluate(() => {
       const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
       const toggle = document.getElementById("mobile-panel-toggle");
       const assistant = document.querySelector(".assistant-shell");
+      const menuBar = document.querySelector(".mobile-menu-bar");
       const toggleRect = toggle.getBoundingClientRect();
       const assistantRect = assistant.getBoundingClientRect();
+      const menuBarRect = menuBar.getBoundingClientRect();
       return {
         viewport: {
           left: viewport.left,
@@ -416,29 +417,44 @@ async function main() {
           assistant,
         ).visibility,
         assistantWidth: assistantRect.width,
-        controlsSeparated: toggleRect.right + 12 < assistantRect.left,
+        menuBar: {
+          left: menuBarRect.left,
+          right: menuBarRect.right,
+          bottom: menuBarRect.bottom,
+          width: menuBarRect.width,
+        },
+        menuButtonWidth: toggleRect.width,
+        assistantInsideMenu:
+          assistantRect.top >= menuBarRect.top &&
+          assistantRect.bottom <= menuBarRect.bottom + 1 &&
+          assistantRect.right <= menuBarRect.right,
         menuVisibility: getComputedStyle(toggle).visibility,
         menuExpanded: toggle.getAttribute("aria-expanded"),
       };
     });
     if (
-      mobileImmersiveState.viewport.left !== 0 ||
-      mobileImmersiveState.viewport.top !== 0 ||
-      mobileImmersiveState.viewport.width !== 390 ||
-      mobileImmersiveState.viewport.height !== 844 ||
-      mobileImmersiveState.documentHeight !== 844 ||
-      mobileImmersiveState.sidebarDisplay !== "none" ||
-      mobileImmersiveState.notePaneDisplay !== "none" ||
-      mobileImmersiveState.headerVisibility !== "hidden" ||
-      mobileImmersiveState.assistantVisibility !== "visible" ||
-      mobileImmersiveState.assistantWidth > 64 ||
-      !mobileImmersiveState.controlsSeparated ||
-      mobileImmersiveState.menuVisibility !== "visible" ||
-      mobileImmersiveState.menuExpanded !== "false"
+      mobileDefaultCollapsedState.viewport.left !== 0 ||
+      mobileDefaultCollapsedState.viewport.top !== 0 ||
+      mobileDefaultCollapsedState.viewport.width !== 390 ||
+      mobileDefaultCollapsedState.viewport.height !== 844 ||
+      mobileDefaultCollapsedState.documentHeight !== 844 ||
+      mobileDefaultCollapsedState.sidebarDisplay !== "none" ||
+      mobileDefaultCollapsedState.notePaneDisplay !== "none" ||
+      mobileDefaultCollapsedState.headerVisibility !== "hidden" ||
+      mobileDefaultCollapsedState.assistantVisibility !== "visible" ||
+      mobileDefaultCollapsedState.assistantWidth > 64 ||
+      mobileDefaultCollapsedState.menuBar.left !== 0 ||
+      mobileDefaultCollapsedState.menuBar.right !== 390 ||
+      mobileDefaultCollapsedState.menuBar.bottom !== 844 ||
+      mobileDefaultCollapsedState.menuBar.width !== 390 ||
+      mobileDefaultCollapsedState.menuButtonWidth !== 390 ||
+      !mobileDefaultCollapsedState.assistantInsideMenu ||
+      mobileDefaultCollapsedState.menuVisibility !== "visible" ||
+      mobileDefaultCollapsedState.menuExpanded !== "false"
     ) {
       throw new Error(
-        `Mobile menu did not enter immersive mode: ${JSON.stringify(
-          mobileImmersiveState,
+        `Mobile menu was not collapsed by default: ${JSON.stringify(
+          mobileDefaultCollapsedState,
         )}`,
       );
     }
@@ -450,32 +466,100 @@ async function main() {
           .connectomeImmersive === "false",
     );
     await mobilePage.waitForTimeout(220);
-    const mobileRestoredState = await mobilePage.evaluate(() => {
+    const mobileExpandedState = await mobilePage.evaluate(() => {
       const toggle = document.getElementById("mobile-panel-toggle");
+      const viewport = document.getElementById("graph-viewport").getBoundingClientRect();
+      const sidebar = document.querySelector(".vault-sidebar");
+      const notePane = document.querySelector(".note-pane");
+      const header = document.querySelector(".stage-header");
+      const controls = document.querySelector(".controls-stack");
       return {
-        sidebarDisplay: getComputedStyle(
-          document.querySelector(".vault-sidebar"),
-        ).display,
-        notePaneDisplay: getComputedStyle(
-          document.querySelector(".note-pane"),
-        ).display,
-        headerVisibility: getComputedStyle(
-          document.querySelector(".stage-header"),
-        ).visibility,
+        viewport: {
+          left: viewport.left,
+          top: viewport.top,
+          width: viewport.width,
+          height: viewport.height,
+        },
+        documentHeight: document.documentElement.scrollHeight,
+        sidebarDisplay: getComputedStyle(sidebar).display,
+        sidebarTop: sidebar.getBoundingClientRect().top,
+        notePaneDisplay: getComputedStyle(notePane).display,
+        headerVisibility: getComputedStyle(header).visibility,
+        headerTop: header.getBoundingClientRect().top,
+        headerBottom: header.getBoundingClientRect().bottom,
+        controlsTop: controls.getBoundingClientRect().top,
+        controlsBottom: controls.getBoundingClientRect().bottom,
         menuExpanded: toggle.getAttribute("aria-expanded"),
       };
     });
+    if (
+      mobileExpandedState.viewport.left !== 0 ||
+      mobileExpandedState.viewport.top !== 0 ||
+      mobileExpandedState.viewport.width !== 390 ||
+      mobileExpandedState.viewport.height !== 844 ||
+      mobileExpandedState.documentHeight <= 844 ||
+      mobileExpandedState.sidebarDisplay === "none" ||
+      mobileExpandedState.headerTop < 844 ||
+      mobileExpandedState.sidebarTop < mobileExpandedState.headerBottom ||
+      mobileExpandedState.notePaneDisplay === "none" ||
+      mobileExpandedState.headerVisibility !== "visible" ||
+      mobileExpandedState.controlsTop < 0 ||
+      mobileExpandedState.controlsBottom > 844 ||
+      mobileExpandedState.menuExpanded !== "true"
+    ) {
+      throw new Error(
+        `Mobile menu did not expand panels below the graph: ${JSON.stringify(
+          mobileExpandedState,
+        )}`,
+      );
+    }
+
+    await mobilePage.evaluate(() => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+    });
+    await mobilePage.waitForTimeout(180);
+    const mobileScrollState = await mobilePage.evaluate(() => ({
+      scrollY: window.scrollY,
+      notePaneTop: document.querySelector(".note-pane").getBoundingClientRect().top,
+    }));
+    if (mobileScrollState.scrollY <= 0) {
+      throw new Error(
+        `Expanded mobile panels were not scrollable: ${JSON.stringify(
+          mobileScrollState,
+        )}`,
+      );
+    }
+
+    await mobilePage.locator("#mobile-panel-toggle").click();
+    await mobilePage.waitForFunction(
+      () =>
+        document.querySelector(".workspace-shell")?.dataset
+          .connectomeImmersive === "true" &&
+        window.scrollY === 0,
+    );
+    const mobileCollapsedAgainState = await mobilePage.evaluate(() => ({
+      documentHeight: document.documentElement.scrollHeight,
+      sidebarDisplay: getComputedStyle(
+        document.querySelector(".vault-sidebar"),
+      ).display,
+      notePaneDisplay: getComputedStyle(
+        document.querySelector(".note-pane"),
+      ).display,
+      menuExpanded: document
+        .getElementById("mobile-panel-toggle")
+        .getAttribute("aria-expanded"),
+    }));
     await mobilePage.close();
     if (
-      mobileRestoredState.sidebarDisplay === "none" ||
-      mobileRestoredState.notePaneDisplay === "none" ||
-      mobileRestoredState.headerVisibility !== "visible" ||
-      mobileRestoredState.menuExpanded !== "true" ||
+      mobileCollapsedAgainState.documentHeight !== 844 ||
+      mobileCollapsedAgainState.sidebarDisplay !== "none" ||
+      mobileCollapsedAgainState.notePaneDisplay !== "none" ||
+      mobileCollapsedAgainState.menuExpanded !== "false" ||
       mobileConsoleErrors.length
     ) {
       throw new Error(
-        `Mobile menu did not restore panels: ${JSON.stringify({
-          mobileRestoredState,
+        `Mobile menu did not return to its collapsed state: ${JSON.stringify({
+          mobileCollapsedAgainState,
           mobileConsoleErrors,
         })}`,
       );
@@ -499,8 +583,10 @@ async function main() {
           focusedAlignment,
           vaultState,
           fusionState,
-          mobileImmersiveState,
-          mobileRestoredState,
+          mobileDefaultCollapsedState,
+          mobileExpandedState,
+          mobileScrollState,
+          mobileCollapsedAgainState,
         },
         null,
         2,

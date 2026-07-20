@@ -219,6 +219,7 @@ const CRC32_TABLE = (() => {
 
 const stage = document.getElementById("graph-viewport");
 const labelLayer = document.getElementById("label-layer");
+const selectedNodeLabel = document.getElementById("selected-node-label");
 const workspaceShell = document.querySelector(".workspace-shell");
 const stageShell = document.querySelector(".stage-shell");
 const stageHeader = document.querySelector(".stage-header");
@@ -420,6 +421,8 @@ const pointer = new THREE.Vector2();
 const dragPlane = new THREE.Plane();
 const dragIntersection = new THREE.Vector3();
 const dragNormal = new THREE.Vector3();
+const networkOrbitAxis = new THREE.Vector3(0.08, 1, 0.04).normalize();
+const networkOrbitQuaternion = new THREE.Quaternion();
 
 const state = {
   pages: [],
@@ -469,6 +472,7 @@ const state = {
   defaultCameraPosition: initialCameraPosition.clone(),
   defaultTarget: initialTarget.clone(),
   graphRadius: 64,
+  networkOrbitSpeed: 0.03,
   pulses: [],
 };
 
@@ -4050,6 +4054,11 @@ function clearThreeObjects() {
       object.material.dispose();
     }
   }
+  networkGroup.position.set(0, 0, 0);
+  networkGroup.quaternion.identity();
+  networkGroup.scale.set(1, 1, 1);
+  networkGroup.updateMatrixWorld(true);
+  selectedNodeLabel.hidden = true;
   state.pulses = [];
 }
 
@@ -4660,6 +4669,11 @@ function buildGraph(records, options = {}) {
   createTagSprites();
   renderNoteTree();
   updateInspector(getSelectedPage());
+  const selectedPage = getSelectedPage();
+  if (selectedPage) {
+    selectedPage.position.copy(selectedPage.home);
+  }
+  focusOnPage(selectedPage, { immediate: true });
 }
 
 function createClusterClouds() {
@@ -4868,22 +4882,46 @@ function createTagSprites() {
   });
 }
 
+function getNetworkWorldPoint(point) {
+  networkGroup.updateMatrixWorld(true);
+  return networkGroup.localToWorld(point.clone());
+}
+
+function getPageWorldPosition(page) {
+  if (!page) {
+    return getNetworkWorldPoint(state.defaultTarget);
+  }
+
+  return getNetworkWorldPoint(page.position || page.home || state.defaultTarget);
+}
+
 function resetCameraGoals() {
-  state.cameraGoal = state.defaultCameraPosition.clone();
-  state.targetGoal = state.defaultTarget.clone();
+  const selectedPage = getSelectedPage();
+  if (selectedPage) {
+    focusOnPage(selectedPage);
+    return;
+  }
+
+  const target = getNetworkWorldPoint(state.defaultTarget);
+  const offset = state.defaultCameraPosition
+    .clone()
+    .sub(state.defaultTarget)
+    .applyQuaternion(networkGroup.quaternion);
+  state.cameraGoal = target.clone().add(offset);
+  state.targetGoal = target;
   state.trackedPageId = null;
-  state.trackedCameraOffset = state.defaultCameraPosition.clone().sub(state.defaultTarget);
+  state.trackedCameraOffset = offset;
 }
 
 function getPageAnchor(page) {
   if (!page) {
-    return state.defaultTarget.clone();
+    return getNetworkWorldPoint(state.defaultTarget);
   }
 
-  return (page.home || page.position || state.defaultTarget).clone();
+  return getNetworkWorldPoint(page.home || page.position || state.defaultTarget);
 }
 
-function focusOnPage(page) {
+function focusOnPage(page, { immediate = false } = {}) {
   if (!page) {
     return;
   }
@@ -4894,15 +4932,34 @@ function focusOnPage(page) {
     currentOffset.lengthSq() > 0.0001
       ? currentOffset.normalize()
       : new THREE.Vector3(0.22, 0.12, 1).normalize();
+  const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
+  const framingDistance = getOverviewCameraDistance(
+    state.pages.map((candidate) => getPageAnchor(candidate)),
+    anchor,
+    focusDirection,
+    Math.max(horizontalHalfFov, THREE.MathUtils.degToRad(10)),
+    Math.max(verticalHalfFov, THREE.MathUtils.degToRad(10)),
+  );
   const distance = clamp(
-    state.graphRadius * 1.65,
+    Math.max(state.graphRadius * 1.18, framingDistance * 1.04),
     controls.minDistance * 1.15,
-    Math.min(controls.maxDistance * 0.72, state.graphRadius * 1.72),
+    controls.maxDistance * 0.92,
   );
   state.trackedCameraOffset = focusDirection.multiplyScalar(distance);
+  state.trackedPageId = page.id;
+
+  if (immediate) {
+    controls.target.copy(anchor);
+    camera.position.copy(anchor).add(state.trackedCameraOffset);
+    state.targetGoal = null;
+    state.cameraGoal = null;
+    controls.update();
+    return;
+  }
+
   state.targetGoal = anchor.clone();
   state.cameraGoal = anchor.clone().add(state.trackedCameraOffset);
-  state.trackedPageId = page.id;
 }
 
 function focusPage(pageId) {
@@ -4912,6 +4969,7 @@ function focusPage(pageId) {
   }
 
   state.selectedPageId = page.id;
+  page.position.copy(page.home);
   if (!page.tagSprite) {
     page.tagSprite = createTagSprite(page);
   }
@@ -4937,19 +4995,40 @@ function getCameraAlignmentSnapshot() {
     };
   };
   const projectedHomes = state.pages
-    .map((page) => projectPoint(page.home))
+    .map((page) => projectPoint(getPageAnchor(page)))
     .filter(Boolean);
   const selectedPage = getSelectedPage();
+  const selectedLabelRect = selectedNodeLabel.hidden
+    ? null
+    : selectedNodeLabel.getBoundingClientRect();
+  const viewportRect = stage.getBoundingClientRect();
 
   return {
     selectedPageId: selectedPage?.id || "",
     selectedTitle: selectedPage?.title || "",
     selected: projectPoint(selectedPage ? getPageAnchor(selectedPage) : null),
-    selectedTag: projectPoint(selectedPage?.tagSprite?.position || null),
-    selectedTagVisible: Boolean(selectedPage?.tagSprite?.visible),
-    selectedTagRenderOrder: selectedPage?.tagSprite?.renderOrder || 0,
+    selectedTag: projectPoint(selectedPage ? getPageWorldPosition(selectedPage) : null),
+    selectedTagVisible: Boolean(selectedLabelRect),
+    selectedTagRenderOrder: selectedLabelRect ? 100 : 0,
+    selectedLabel: selectedLabelRect
+      ? {
+        x:
+          ((selectedLabelRect.left + selectedLabelRect.width * 0.5 - viewportRect.left) /
+            Math.max(viewportRect.width, 1)) *
+            2 -
+          1,
+        y:
+          1 -
+          ((selectedLabelRect.top + selectedLabelRect.height * 0.5 - viewportRect.top) /
+            Math.max(viewportRect.height, 1)) *
+            2,
+        width: selectedLabelRect.width,
+        height: selectedLabelRect.height,
+        fontSize: Number.parseFloat(getComputedStyle(selectedNodeLabel).fontSize) || 0,
+      }
+      : null,
     connectomeImmersive: state.connectomeImmersive,
-    graphCenter: projectPoint(state.defaultTarget),
+    graphCenter: projectPoint(getNetworkWorldPoint(state.defaultTarget)),
     maxGraphX: projectedHomes.reduce(
       (maximum, point) => Math.max(maximum, Math.abs(point.x)),
       0,
@@ -4960,6 +5039,13 @@ function getCameraAlignmentSnapshot() {
     ),
     cameraAnimating: Boolean(state.cameraGoal && state.targetGoal),
     trackedPageId: state.trackedPageId || "",
+    networkRotation: {
+      x: networkGroup.quaternion.x,
+      y: networkGroup.quaternion.y,
+      z: networkGroup.quaternion.z,
+      w: networkGroup.quaternion.w,
+    },
+    motionEnabled: state.motionEnabled,
   };
 }
 
@@ -4970,7 +5056,7 @@ function getTagClickTargets() {
   return state.pages
     .filter((page) => page.tagSprite?.visible)
     .map((page) => {
-      const projected = page.tagSprite.position.clone().project(camera);
+      const projected = getNetworkWorldPoint(page.tagSprite.position).project(camera);
       return {
         id: page.id,
         title: page.title,
@@ -5002,13 +5088,14 @@ function shouldShowTag(page) {
 }
 
 function stabilizeControlsTarget() {
+  const graphCenter = getNetworkWorldPoint(state.defaultTarget);
   const maxOffset = Math.max(state.graphRadius * 1.08, 32);
-  const offset = controls.target.clone().sub(state.defaultTarget);
+  const offset = controls.target.clone().sub(graphCenter);
   if (offset.length() <= maxOffset) {
     return;
   }
 
-  const clampedTarget = state.defaultTarget
+  const clampedTarget = graphCenter
     .clone()
     .add(offset.setLength(maxOffset));
   const correction = clampedTarget.clone().sub(controls.target);
@@ -5016,16 +5103,48 @@ function stabilizeControlsTarget() {
   camera.position.add(correction);
 }
 
+function updateSelectedNodeLabel(selectedPage) {
+  if (!selectedPage) {
+    selectedNodeLabel.hidden = true;
+    return null;
+  }
+
+  const anchor = getPageWorldPosition(selectedPage);
+  const vector = anchor.clone().project(camera);
+  const onScreen =
+    vector.z < 1 &&
+    vector.z > -1 &&
+    vector.x >= -1.05 &&
+    vector.x <= 1.05 &&
+    vector.y >= -1.05 &&
+    vector.y <= 1.05;
+
+  if (!onScreen) {
+    selectedNodeLabel.hidden = true;
+    return vector;
+  }
+
+  selectedNodeLabel.textContent = selectedPage.title;
+  selectedNodeLabel.style.setProperty("--selected-accent", selectedPage.color);
+  selectedNodeLabel.style.left = `${(vector.x * 0.5 + 0.5) * 100}%`;
+  selectedNodeLabel.style.top = `${(-vector.y * 0.5 + 0.5) * 100}%`;
+  selectedNodeLabel.hidden = false;
+  return vector;
+}
+
 function updateTags() {
   const selectedPage = getSelectedPage();
-  const selectedVector =
-    state.trackedPageId && selectedPage
-      ? selectedPage.position.clone().project(camera)
-      : null;
+  const selectedVector = updateSelectedNodeLabel(selectedPage);
 
   state.pages.forEach((page) => {
     const tag = page.tagSprite;
     if (!tag) {
+      return;
+    }
+
+    const isSelected = page.id === state.selectedPageId;
+    if (isSelected) {
+      tag.visible = false;
       return;
     }
 
@@ -5034,7 +5153,7 @@ function updateTags() {
       return;
     }
 
-    const anchor = page.position;
+    const anchor = getPageWorldPosition(page);
     const vector = anchor.clone().project(camera);
     const onScreen =
       vector.z < 1 &&
@@ -5049,11 +5168,9 @@ function updateTags() {
       return;
     }
 
-    const isSelected = page.id === state.selectedPageId;
     const isHovered = page.id === state.hoveredPageId;
     const overlapsTrackedLabel =
       selectedVector &&
-      !isSelected &&
       Math.abs(vector.x - selectedVector.x) < 0.16 &&
       Math.abs(vector.y - selectedVector.y) < 0.085;
     if (overlapsTrackedLabel) {
@@ -5064,19 +5181,22 @@ function updateTags() {
     const distanceToCamera = camera.position.distanceTo(anchor);
     const distanceFade = clamp(1 - (distanceToCamera - controls.minDistance) / 220, 0.42, 1);
     const cameraLift = camera.position.clone().sub(anchor).normalize().multiplyScalar(
-      isSelected ? 1.45 : isHovered ? 1.08 : 0.92,
+      isHovered ? 1.08 : 0.92,
     );
+    const tagWorldPosition = anchor.clone().add(cameraLift);
     const baseScale = tag.userData.baseScale;
-    const scaleFactor = (isSelected ? 1.24 : isHovered ? 1.01 : 0.9) * distanceFade;
+    const scaleFactor = (isHovered ? 1.01 : 0.9) * distanceFade;
     tag.visible = true;
-    tag.renderOrder = isSelected ? 80 : isHovered ? 48 : 24;
-    tag.position.copy(anchor).add(cameraLift);
+    tag.renderOrder = isHovered ? 48 : 24;
+    tag.position.copy(networkGroup.worldToLocal(tagWorldPosition));
     tag.scale.set(
       baseScale.x * scaleFactor,
       baseScale.y * scaleFactor,
       baseScale.z,
     );
-    tag.material.opacity = isSelected ? 1 : isHovered ? 0.92 : clamp(0.5 + distanceFade * 0.32, 0.48, 0.82);
+    tag.material.opacity = isHovered
+      ? 0.92
+      : clamp(0.5 + distanceFade * 0.32, 0.48, 0.82);
   });
 }
 
@@ -5154,7 +5274,8 @@ function setConnectomeImmersive(enabled) {
   }
 
   resizeRenderer();
-  updateGraphOverview();
+  updateGraphOverview({ immediate: true });
+  focusOnPage(getSelectedPage(), { immediate: true });
 }
 
 function updatePointerFromClient(clientX, clientY) {
@@ -5190,7 +5311,8 @@ function moveDraggedPage(clientX, clientY) {
     return;
   }
 
-  const nextPosition = hit.clone().add(state.dragTag.offset);
+  const nextWorldPosition = hit.clone().add(state.dragTag.offset);
+  const nextPosition = networkGroup.worldToLocal(nextWorldPosition.clone());
   const delta = nextPosition.clone().sub(page.position);
   if (delta.lengthSq() < 0.00001) {
     return;
@@ -5209,16 +5331,19 @@ function startPageDrag(pageId, clientX, clientY) {
   }
 
   focusPage(pageId);
+  const pageWorldPosition = getPageWorldPosition(page);
   camera.getWorldDirection(dragNormal);
-  dragPlane.setFromNormalAndCoplanarPoint(dragNormal, page.position);
+  dragPlane.setFromNormalAndCoplanarPoint(dragNormal, pageWorldPosition);
   updatePointerFromClient(clientX, clientY);
   raycaster.setFromCamera(pointer, camera);
-  const hit = raycaster.ray.intersectPlane(dragPlane, dragIntersection.clone()) || page.position.clone();
+  const hit =
+    raycaster.ray.intersectPlane(dragPlane, dragIntersection.clone()) ||
+    pageWorldPosition.clone();
 
   state.dragTag = {
     pageId,
     plane: dragPlane.clone(),
-    offset: page.position.clone().sub(hit),
+    offset: pageWorldPosition.clone().sub(hit),
     moved: false,
   };
   controls.enabled = false;
@@ -5541,21 +5666,40 @@ function updateEdgeVisuals(time) {
   });
 }
 
-function stepSimulation(delta, elapsedTime) {
+function stepSimulation(delta) {
   if (!state.pages.length) {
     return;
   }
-  state.pages.forEach((page, index) => {
-    const isTracked = page.id === state.selectedPageId;
-    const drift = new THREE.Vector3(
-      Math.sin(elapsedTime * 0.48 + page.wobblePhase + index * 0.07) * 1.35,
-      Math.cos(elapsedTime * 0.35 + page.wobblePhase * 0.8) * 0.95,
-      Math.sin(elapsedTime * 0.28 + page.wobblePhase * 1.4) * 1.1,
-    );
-    const target = isTracked ? page.home.clone() : page.home.clone().add(drift);
+  state.pages.forEach((page) => {
     const lerpStrength = state.motionEnabled ? clamp(delta * 2.4, 0.02, 0.12) : 0.2;
-    page.position.lerp(target, lerpStrength);
+    page.position.lerp(page.home, lerpStrength);
   });
+}
+
+function updateNetworkOrbit(delta) {
+  const selectedPage = getSelectedPage();
+  if (
+    !state.motionEnabled ||
+    !selectedPage ||
+    state.dragTag ||
+    delta <= 0
+  ) {
+    return;
+  }
+
+  const pivot = getPageWorldPosition(selectedPage);
+  networkOrbitQuaternion.setFromAxisAngle(
+    networkOrbitAxis,
+    delta * state.networkOrbitSpeed,
+  );
+  networkGroup.position
+    .sub(pivot)
+    .applyQuaternion(networkOrbitQuaternion)
+    .add(pivot);
+  networkGroup.quaternion
+    .premultiply(networkOrbitQuaternion)
+    .normalize();
+  networkGroup.updateMatrixWorld(true);
 }
 
 function animate() {
@@ -5565,7 +5709,8 @@ function animate() {
   dust.rotation.y += delta * 0.01;
   dust.rotation.x += delta * 0.005;
 
-  stepSimulation(delta, elapsedTime);
+  stepSimulation(delta);
+  updateNetworkOrbit(delta);
 
   if (state.cameraGoal && state.targetGoal) {
     const cameraEase = 1 - Math.exp(-delta * 6.8);

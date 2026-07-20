@@ -226,6 +226,7 @@ const vaultSidebar = document.querySelector(".vault-sidebar");
 const notePane = document.querySelector(".note-pane");
 const stageOverlays = [...document.querySelectorAll(".stage-overlay")];
 const mobilePanelToggle = document.getElementById("mobile-panel-toggle");
+const mobileLayoutQuery = window.matchMedia("(max-width: 1040px)");
 const searchInput = document.getElementById("search-input");
 const searchSuggestions = document.getElementById("search-suggestions");
 const regionFilter = document.getElementById("region-filter");
@@ -5147,6 +5148,9 @@ function setConnectomeImmersive(enabled) {
 
   if (nextImmersive) {
     setAgentOpen(false);
+    if (mobileLayoutQuery.matches) {
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
   }
 
   resizeRenderer();
@@ -5317,7 +5321,7 @@ function handlePointerUp(event) {
   ) {
     if (press.pageId) {
       focusPage(press.pageId);
-    } else {
+    } else if (!mobileLayoutQuery.matches) {
       setConnectomeImmersive(!state.connectomeImmersive);
     }
   }
@@ -5874,6 +5878,10 @@ function bindEvents() {
     setConnectomeImmersive(!state.connectomeImmersive);
   });
 
+  mobileLayoutQuery.addEventListener("change", (event) => {
+    setConnectomeImmersive(event.matches);
+  });
+
   agentCloseButton.addEventListener("click", () => {
     setAgentOpen(false);
   });
@@ -6028,6 +6036,10 @@ function bindEvents() {
 }
 
 async function init() {
+  if (mobileLayoutQuery.matches) {
+    setConnectomeImmersive(true);
+  }
+
   setClusters(clusterSpecs);
   setSidebarTab("wikipedia");
   populateFilters();

@@ -20,11 +20,12 @@
       <a class="wordmark" href="./" aria-label="NOUS 首页">NOUS</a>
       <nav class="site-nav" aria-label="主要导航">
         <a href="#system">共生体</a>
+        <a href="#seed-composer">生成种子</a>
         <a href="#protocol">机制</a>
         <a href="#cases">案例</a>
-        <a href="#archive">档案</a>
+        <a href="#memory">记忆</a>
       </nav>
-      <span class="header-edition">ATLAS 2026.07</span>
+      <span class="header-edition">ATLAS 2026.08</span>
     </header>
 
     <main id="main">
@@ -41,11 +42,11 @@
           <h1 id="hero-title">NOUS</h1>
           <p class="hero-definition">策展孵化器 / Curator Incubator</p>
           <p class="hero-intro">
-            NOUS 从问题出发，组织空间、体验、网络、数据、知识与智能体，让策展在共同参与、持续记录和再次激活中生成。
+            带着一个尚未被解决的问题进入。NOUS 将它组织为空间、体验、网络、数据、知识与智能体共同作用的共生体。
           </p>
           <div class="hero-actions">
-            <a class="primary-action" href="#system">进入共生体</a>
-            <a class="text-action" href="#cases">查看案例</a>
+            <a class="primary-action" href="#seed-composer">生成一个共生体种子</a>
+            <button class="text-action text-button" type="button" data-open-vault-prelude>进入 The Vault</button>
           </div>
         </div>
 
@@ -58,6 +59,166 @@
         </div>
       </section>
 
+      <section class="entry-section" aria-labelledby="entry-title">
+        <div class="section-heading">
+          <p>ENTER THE INCUBATOR</p>
+          <h2 id="entry-title">一个问题如何进入 NOUS</h2>
+        </div>
+        <ol class="entry-prompts">
+          <li>
+            <span>01</span>
+            <strong>谁可以进入</strong>
+            <p>艺术家、研究者、投资者、组织者，以及正在面对真实问题的人。</p>
+          </li>
+          <li>
+            <span>02</span>
+            <strong>带来什么</strong>
+            <p>一个尚未封闭的问题、一组材料、一个现场或一段关系。</p>
+          </li>
+          <li>
+            <span>03</span>
+            <strong>NOUS 做什么</strong>
+            <p>建立界面，邀请主体，组织记录，并配置智能体参与发现与行动。</p>
+          </li>
+          <li>
+            <span>04</span>
+            <strong>生成什么</strong>
+            <p>一个可运行、可追溯、可修订、可再次激活的共生体种子。</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="seed-section" id="seed-composer" aria-labelledby="seed-title">
+        <div class="seed-heading">
+          <p>NOUS SEED COMPOSER</p>
+          <h2 id="seed-title">生成一个共生体种子</h2>
+          <p>
+            一个在当前浏览器本地运行的策展机制原型。它不会提交申请，不会发送材料，也不会代表 NOUS 接受项目。
+          </p>
+        </div>
+
+        <div class="seed-composer" data-seed-composer>
+          <div class="seed-progress" aria-label="种子生成进度">
+            <span class="is-active" data-seed-progress="1">01 问题</span>
+            <span data-seed-progress="2">02 界面</span>
+            <span data-seed-progress="3">03 主体</span>
+            <span data-seed-progress="4">04 作用面</span>
+          </div>
+
+          <form id="seed-form" novalidate>
+            <fieldset class="seed-step is-active" data-seed-step="1">
+              <legend><span>STEP 01</span>你希望共同进入什么未知？</legend>
+              <label class="field-label" for="seed-question">核心问题</label>
+              <textarea
+                id="seed-question"
+                name="question"
+                rows="6"
+                required
+                placeholder="一个尚未解决的问题、矛盾、现场或未来之问"
+              ></textarea>
+              <p class="field-note">不需要预设答案。先留下一个值得共同进入的未知。</p>
+            </fieldset>
+
+            <fieldset class="seed-step" data-seed-step="2" hidden>
+              <legend><span>STEP 02</span>项目可能发生在哪里？</legend>
+              <div class="choice-grid choice-grid-three">
+                <label><input type="checkbox" name="interfaces" value="物理空间" /><span>物理空间</span></label>
+                <label><input type="checkbox" name="interfaces" value="展览或公共事件" /><span>展览或公共事件</span></label>
+                <label><input type="checkbox" name="interfaces" value="野外现场" /><span>野外现场</span></label>
+                <label><input type="checkbox" name="interfaces" value="网站或数字界面" /><span>网站或数字界面</span></label>
+                <label><input type="checkbox" name="interfaces" value="知识图谱" /><span>知识图谱</span></label>
+                <label><input type="checkbox" name="interfaces" value="智能体运行环境" /><span>智能体运行环境</span></label>
+              </div>
+              <label class="field-label" for="seed-interface-custom">其他临时界面</label>
+              <input id="seed-interface-custom" name="interfaceCustom" type="text" placeholder="自行描述一个可能发生的界面" />
+            </fieldset>
+
+            <fieldset class="seed-step" data-seed-step="3" hidden>
+              <legend><span>STEP 03</span>哪些主体需要共同进入？</legend>
+              <div class="choice-grid choice-grid-three">
+                <label><input type="checkbox" name="participants" value="艺术家" /><span>艺术家</span></label>
+                <label><input type="checkbox" name="participants" value="研究者" /><span>研究者</span></label>
+                <label><input type="checkbox" name="participants" value="公众" /><span>公众</span></label>
+                <label><input type="checkbox" name="participants" value="社区或组织" /><span>社区或组织</span></label>
+                <label><input type="checkbox" name="participants" value="数据与历史材料" /><span>数据与历史材料</span></label>
+                <label><input type="checkbox" name="participants" value="智能体" /><span>智能体</span></label>
+              </div>
+              <label class="field-label" for="seed-participant-custom">其他参与主体</label>
+              <input id="seed-participant-custom" name="participantCustom" type="text" placeholder="自行补充一个主体或关系" />
+            </fieldset>
+
+            <fieldset class="seed-step seed-weights" data-seed-step="4" hidden>
+              <legend><span>STEP 04</span>六种作用如何共同运行？</legend>
+              <p class="field-note">调整权重时，首页的 NOUS共生体会同步改变形态。智能体始终处于行动结构的中心。</p>
+              <div class="weight-list">
+                <fieldset class="weight-row">
+                  <legend>空间</legend>
+                  <label><input type="radio" name="space" value="low" /><span>低</span></label>
+                  <label><input type="radio" name="space" value="medium" checked /><span>中</span></label>
+                  <label><input type="radio" name="space" value="high" /><span>高</span></label>
+                </fieldset>
+                <fieldset class="weight-row">
+                  <legend>体验</legend>
+                  <label><input type="radio" name="experience" value="low" /><span>低</span></label>
+                  <label><input type="radio" name="experience" value="medium" checked /><span>中</span></label>
+                  <label><input type="radio" name="experience" value="high" /><span>高</span></label>
+                </fieldset>
+                <fieldset class="weight-row">
+                  <legend>网络</legend>
+                  <label><input type="radio" name="network" value="low" /><span>低</span></label>
+                  <label><input type="radio" name="network" value="medium" checked /><span>中</span></label>
+                  <label><input type="radio" name="network" value="high" /><span>高</span></label>
+                </fieldset>
+                <fieldset class="weight-row">
+                  <legend>数据策展</legend>
+                  <label><input type="radio" name="data" value="low" /><span>低</span></label>
+                  <label><input type="radio" name="data" value="medium" checked /><span>中</span></label>
+                  <label><input type="radio" name="data" value="high" /><span>高</span></label>
+                </fieldset>
+                <fieldset class="weight-row">
+                  <legend>知识库</legend>
+                  <label><input type="radio" name="knowledge" value="low" /><span>低</span></label>
+                  <label><input type="radio" name="knowledge" value="medium" checked /><span>中</span></label>
+                  <label><input type="radio" name="knowledge" value="high" /><span>高</span></label>
+                </fieldset>
+                <fieldset class="weight-row">
+                  <legend>智能体</legend>
+                  <label><input type="radio" name="agent" value="low" /><span>低</span></label>
+                  <label><input type="radio" name="agent" value="medium" checked /><span>中</span></label>
+                  <label><input type="radio" name="agent" value="high" /><span>高</span></label>
+                </fieldset>
+              </div>
+            </fieldset>
+
+            <div class="seed-controls">
+              <button class="text-action text-button" type="button" data-seed-back hidden>上一步</button>
+              <button class="primary-action" type="button" data-seed-next>下一步</button>
+              <button class="primary-action" type="submit" data-seed-generate hidden>生成种子</button>
+              <button class="text-action text-button" type="button" data-seed-clear>清除本地草稿</button>
+            </div>
+            <p class="form-status" id="seed-form-status" aria-live="polite"></p>
+          </form>
+
+          <section class="seed-result" id="seed-result" aria-labelledby="seed-result-title" hidden>
+            <div class="seed-result-heading">
+              <p>GENERATED LOCALLY</p>
+              <h3 id="seed-result-title">一个可继续工作的种子</h3>
+              <p>由访客在本地生成，不属于 NOUS 历史档案或已注册项目。</p>
+            </div>
+            <label class="field-label" for="seed-working-title">工作标题</label>
+            <input id="seed-working-title" type="text" />
+            <dl class="seed-summary" id="seed-summary"></dl>
+            <div class="seed-result-actions">
+              <button class="primary-action" type="button" data-seed-copy>复制 Markdown</button>
+              <button class="text-action text-button" type="button" data-seed-download="md">下载 .md</button>
+              <button class="text-action text-button" type="button" data-seed-download="json">下载 .json</button>
+              <button class="text-action text-button" type="button" data-seed-edit>重新编辑</button>
+            </div>
+            <p class="form-status" id="seed-result-status" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+
       <section class="system-section" id="system" aria-labelledby="system-title">
         <div class="section-heading">
           <p>HOW NOUS OPERATES</p>
@@ -65,7 +226,7 @@
         </div>
         <div class="system-copy">
           <p>
-            空间建立现场，体验组织感知与参与，网络维持协作，数据策展保存过程，知识库形成共同记忆，智能体参与发现与行动。
+            NOUS 保存的不是对象本身，而是对象曾经改变过的关系场。空间建立现场，体验组织感知与参与，网络维持协作，数据策展保存过程，知识库形成共同记忆，智能体参与发现与行动。
           </p>
           <p lang="en">
             Space establishes the site; experience organizes perception and participation;
@@ -211,9 +372,9 @@
               它把材料转化为可查询的图谱，把图谱转化为可提出连接、缺口与桥接笔记的工作场。
               它是 NOUS共生体在数字知识与智能体方向上的一次具体呈现。
             </p>
-            <a class="primary-action dark-action" href="./the-vault/">进入案例运行时</a>
+            <button class="primary-action dark-action" type="button" data-open-vault-prelude>进入案例运行时</button>
           </div>
-          <a class="case-visual" href="./the-vault/" aria-label="打开 The Vault 案例运行时">
+          <button class="case-visual" type="button" data-open-vault-prelude aria-label="查看 The Vault 案例前奏">
             <img
               src="./the-vault/docs/images/agent-panel-open.png"
               alt="The Vault 三维知识图谱与智能体面板"
@@ -221,8 +382,8 @@
               height="980"
               fetchpriority="high"
             />
-            <span>CASE RUNTIME / THE VAULT</span>
-          </a>
+            <span>CASE STUDY / THE VAULT</span>
+          </button>
         </div>
       </section>
 
@@ -240,44 +401,66 @@
         </div>
       </section>
 
-      <section class="archive-section" id="archive" aria-labelledby="archive-title">
+      <section class="archive-section" id="memory" aria-labelledby="archive-title">
         <div class="archive-heading">
-          <p>HISTORICAL SOURCES</p>
-          <h2 id="archive-title">历史成为可调用材料</h2>
+          <p>COMMON MEMORY</p>
+          <h2 id="archive-title">历史成为共同记忆</h2>
+          <p class="archive-intro">
+            过去的项目不再作为彼此分离的品牌继续存在。它们被整理为问题、情境、关系、方法、结果与未完成部分，成为 WEME Creative Agent 可以再次调用的生成材料。
+          </p>
+          <a class="primary-action archive-action" href="./memory/">进入 WEME / NOUS Memory 2010–2026</a>
         </div>
-        <div class="source-list">
-          <a href="https://nous.we-media.net/" rel="noreferrer">
-            <span>01</span>
-            <strong>NOUS 2015–2025</strong>
-            <em>空间、展览与跨城市事件</em>
-            <b aria-hidden="true">↗</b>
-          </a>
-          <a href="https://we-media.net/" rel="noreferrer">
-            <span>02</span>
-            <strong>WEME Creative Agent</strong>
-            <em>组织历史、项目与智能体方向</em>
-            <b aria-hidden="true">↗</b>
-          </a>
-          <a href="https://weme.im/" rel="noreferrer">
-            <span>03</span>
-            <strong>WEME</strong>
-            <em>品牌与网络服务历史界面</em>
-            <b aria-hidden="true">↗</b>
-          </a>
-          <a href="https://rebui1t.com/" rel="noreferrer">
-            <span>04</span>
-            <strong>Rebui1t AI Projects</strong>
-            <em>AI 项目、生成作品与研究</em>
-            <b aria-hidden="true">↗</b>
-          </a>
+        <div class="memory-panel">
+          <p class="memory-panel-lead">
+            当前问题会检索相关情境，提取可复用方法，判断失效部分，重新组合资源与能力；行动的结果再被写回共同记忆。
+          </p>
+          <ol class="memory-loop">
+            <li>当前问题</li>
+            <li>相关情境</li>
+            <li>可复用方法</li>
+            <li>重新组合</li>
+            <li>记录行动</li>
+          </ol>
+          <details class="source-network">
+            <summary>来源网络 / Source Network</summary>
+            <p>NOUS 的公共身份已经收束；其历史材料仍来自多个曾经运行的空间、品牌、项目与生成实验。这里保留来源关系，而不是继续复制旧的品牌结构。</p>
+            <div class="source-list">
+              <a href="https://nous.we-media.net/" rel="noreferrer"><span>01</span><strong>NOUS Historical Corpus 2015–2025</strong><em>情境记忆：空间、展览与跨城市事件</em><b aria-hidden="true">↗</b></a>
+              <a href="https://we-media.net/" rel="noreferrer"><span>02</span><strong>we-media.net</strong><em>主体记忆：组织身份、项目治理与行动连续性</em><b aria-hidden="true">↗</b></a>
+              <a href="https://weme.im/" rel="noreferrer"><span>03</span><strong>weme.im</strong><em>程序性记忆：品牌、网站与数字交付经验</em><b aria-hidden="true">↗</b></a>
+              <a href="https://rebui1t.com/" rel="noreferrer"><span>04</span><strong>Rebui1t</strong><em>实验记忆：AI、生成艺术与研究原型</em><b aria-hidden="true">↗</b></a>
+            </div>
+          </details>
         </div>
       </section>
     </main>
 
+    <dialog class="vault-prelude" id="vault-prelude" aria-labelledby="vault-prelude-title">
+      <div class="vault-prelude-header">
+        <p>NOUS CASE STUDY / 01</p>
+        <button class="icon-button" type="button" data-close-vault-prelude aria-label="关闭 The Vault 案例前奏">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" /></svg>
+        </button>
+      </div>
+      <div class="vault-prelude-body">
+        <h2 id="vault-prelude-title">The Vault</h2>
+        <div>
+          <p><strong>为什么它属于 NOUS</strong>The Vault 将知识库、来源关系、三维 connectome 和智能体置于同一个可运行的知识环境中。</p>
+          <p><strong>谁是策展主体</strong>人负责问题、判断、授权与最终选择；智能体负责发现连接、缺口和可继续工作的桥梁。</p>
+          <p><strong>智能体执行什么行动</strong>发现关系与缺口，提出策展和创作问题，保留来源与不确定性，生成可审查的桥接建议。</p>
+          <p><strong>进入后可以做什么</strong>观察材料如何成为关系图谱，并尝试从已有节点之间发现一条尚未被写出的连接。</p>
+        </div>
+      </div>
+      <div class="vault-prelude-actions">
+        <a class="primary-action" href="./the-vault/">进入运行时</a>
+        <button class="text-action text-button" type="button" data-close-vault-prelude>返回 NOUS</button>
+      </div>
+    </dialog>
+
     <footer class="site-footer">
       <a class="wordmark" href="./">NOUS</a>
       <p>Curator Incubator / 策展孵化器</p>
-      <p>Atlas edition 2026.07</p>
+      <p>Atlas edition 2026.08</p>
     </footer>
   </body>
 </html>

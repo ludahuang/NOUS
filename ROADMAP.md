@@ -1,6 +1,6 @@
 # NOUS Roadmap
 
-Updated: 2026-07-17
+Updated: 2026-07-23
 
 ## Phase 1 - Establish the Mother Repository
 
@@ -49,3 +49,9 @@ Exit condition:
 - support bilingual reading;
 - publish project-specific entry points without collapsing them into one product;
 - offer machine-readable catalog exports.
+- [x] turn the public Atlas into a local-browser Seed Composer;
+- [x] model seed weights through the NOUS Symbiote geometry;
+- [x] introduce a source-aware Memory entry and source network;
+- [x] add a NOUS-owned The Vault case prelude;
+- [ ] migrate verified historical project records into the Memory corpus;
+- [ ] verify GitHub Pages deployment behavior after the 2026.08 branch review.

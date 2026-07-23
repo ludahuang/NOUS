@@ -15,7 +15,11 @@ The Atlas:
 - lets visitors compose a local, downloadable NOUS Seed without sending data
   to a server;
 - explains the curatorial operating loop;
-- presents active projects as situated expressions of the NOUS Symbiote;
+- organizes the ecosystem as Manifestations, Instruments, and Runtime;
+- presents The Vault, EvoGen Field Agent, and Sonic Field as manifestations;
+- presents Q Flow, Qode, and EnneaScope as cognitive instruments;
+- identifies the shared agent, evidence, source, local-first, and governance
+  infrastructure beneath those public expressions;
 - presents The Vault through a NOUS-owned case prelude;
 - links to the common-memory surface at `./memory/`, with historical domains
   retained as disclosed source nodes;

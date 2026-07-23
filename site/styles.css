@@ -274,6 +274,8 @@ button {
 .system-section,
 .protocol-section,
 .cases-section,
+.instruments-section,
+.runtime-architecture-section,
 .agent-section,
 .archive-section {
   padding: clamp(80px, 11vw, 170px) var(--gutter);
@@ -543,11 +545,119 @@ button {
   background: var(--cyan);
 }
 
+.ecosystem-heading,
+.instruments-heading {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.ecosystem-heading > p:first-child,
+.instruments-heading > p:first-child,
+.ecosystem-layer-heading > p,
+.runtime-heading > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ecosystem-heading h2,
+.instruments-heading h2,
+.runtime-heading h2 {
+  margin: 20px 0 0;
+  font-size: 76px;
+  font-weight: 500;
+  line-height: 1.04;
+  white-space: nowrap;
+}
+
+.ecosystem-heading > p:last-child,
+.instruments-heading > p:last-child {
+  width: min(58%, 700px);
+  max-width: 700px;
+  margin: 42px 0 0 auto;
+  font-size: 24px;
+  line-height: 1.55;
+}
+
+.ecosystem-layers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: clamp(72px, 9vw, 132px) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  list-style: none;
+}
+
+.ecosystem-layers li {
+  min-height: 224px;
+  padding: 18px 24px 24px 0;
+  border-right: 1px solid rgba(16, 16, 16, 0.45);
+}
+
+.ecosystem-layers li + li {
+  padding-left: 24px;
+}
+
+.ecosystem-layers li:last-child {
+  border-right: 0;
+}
+
+.ecosystem-layers span,
+.ecosystem-record-index span,
+.instrument-record span {
+  display: block;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.ecosystem-layers strong {
+  display: block;
+  margin-top: 56px;
+  font-size: 24px;
+}
+
+.ecosystem-layers em,
+.ecosystem-record-index em,
+.instrument-record em {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.ecosystem-layers p {
+  max-width: 330px;
+  margin: 18px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ecosystem-layer-heading {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);
+  gap: 6vw;
+  align-items: end;
+  margin-top: clamp(94px, 12vw, 176px);
+}
+
+.ecosystem-layer-heading h3 {
+  max-width: 930px;
+  margin: 0;
+  font-size: 35px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .case-heading {
   display: grid;
   grid-template-columns: minmax(340px, 0.9fr) minmax(360px, 1.1fr);
   gap: 8vw;
   align-items: end;
+  margin-top: clamp(70px, 9vw, 130px);
 }
 
 .case-heading > p:first-child {
@@ -555,7 +665,7 @@ button {
   margin-bottom: 0;
 }
 
-.case-heading h2 {
+.case-heading h3 {
   margin: 0;
   font-size: 124px;
   font-weight: 700;
@@ -711,6 +821,14 @@ button {
   line-height: 1.75;
 }
 
+.case-copy .case-question {
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(16, 16, 16, 0.45);
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .dark-action {
   margin-top: 22px;
 }
@@ -747,6 +865,186 @@ button {
 .case-visual:hover img,
 .case-visual:focus-visible img {
   transform: scale(1.025);
+}
+
+.manifestation-list {
+  margin-top: clamp(90px, 12vw, 180px);
+  border-top: 1px solid var(--ink);
+}
+
+.ecosystem-record {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.45fr) minmax(360px, 1fr) minmax(320px, 0.75fr);
+  gap: 5vw;
+  padding: 34px 0 44px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.ecosystem-record-index em {
+  max-width: 180px;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.ecosystem-record-main h3,
+.instrument-record h3 {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.ecosystem-record-main > p,
+.instrument-record > div:nth-child(2) > p {
+  margin: 22px 0 0;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.ecosystem-record blockquote,
+.instrument-record blockquote {
+  margin: 28px 0 0;
+  padding-top: 15px;
+  border-top: 1px solid rgba(16, 16, 16, 0.45);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.ecosystem-record-meta {
+  margin: 0;
+  border-top: 1px solid rgba(16, 16, 16, 0.45);
+}
+
+.ecosystem-record-meta div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(16, 16, 16, 0.35);
+}
+
+.ecosystem-record-meta dt,
+.ecosystem-record-meta dd {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.ecosystem-record-meta dt {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+}
+
+.ecosystem-record-meta a,
+.instrument-record a {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.instruments-section {
+  background: var(--white);
+}
+
+.instrument-list {
+  margin-top: clamp(72px, 9vw, 132px);
+  border-top: 1px solid var(--ink);
+}
+
+.instrument-record {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.42fr) minmax(390px, 1.08fr) minmax(260px, 0.5fr);
+  gap: 5vw;
+  padding: 34px 0 44px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.instrument-record > div:first-child em {
+  max-width: 190px;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.instrument-record > div:last-child {
+  align-self: end;
+}
+
+.instrument-record > div:last-child p {
+  margin: 0 0 28px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.runtime-architecture-section {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.15fr) minmax(300px, 0.85fr);
+  gap: 8vw;
+  background: var(--ink);
+  color: var(--white);
+}
+
+.runtime-heading h2 {
+  max-width: 900px;
+}
+
+.runtime-heading {
+  grid-column: 1 / -1;
+}
+
+.runtime-intro {
+  grid-column: 2;
+  align-self: end;
+  max-width: 620px;
+  margin: 0;
+  color: #b8b8b2;
+  font-size: 18px;
+  line-height: 1.75;
+}
+
+.runtime-capabilities {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: clamp(72px, 9vw, 132px) 0 0;
+  padding: 0;
+  border-top: 1px solid #555;
+  list-style: none;
+}
+
+.runtime-capabilities li {
+  min-height: 138px;
+  padding: 18px 20px 24px 0;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.runtime-capabilities li:nth-child(3n) {
+  border-right: 0;
+}
+
+.runtime-capabilities li:nth-child(n + 4) {
+  border-bottom: 0;
+}
+
+.runtime-capabilities li + li {
+  padding-left: 20px;
+}
+
+.runtime-capabilities li:nth-child(4) {
+  padding-left: 0;
+}
+
+.runtime-capabilities span {
+  display: block;
+  margin-bottom: 48px;
+  color: var(--yellow);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 400;
 }
 
 .agent-section {
@@ -1416,9 +1714,13 @@ button {
   .entry-prompts,
   .seed-heading,
   .protocol-intro,
+  .ecosystem-heading,
+  .instruments-heading,
+  .ecosystem-layer-heading,
   .case-heading,
   .case-composition,
   .case-runtime,
+  .runtime-architecture-section,
   .agent-section,
   .archive-section {
     grid-template-columns: 1fr;
@@ -1472,8 +1774,40 @@ button {
     padding-left: 0;
   }
 
-  .case-heading h2 {
+  .ecosystem-heading h2,
+  .instruments-heading h2,
+  .runtime-heading h2 {
+    font-size: 58px;
+  }
+
+  .ecosystem-heading > p:last-child,
+  .instruments-heading > p:last-child {
+    width: min(72%, 700px);
+    margin-top: 30px;
+  }
+
+  .ecosystem-layer-heading {
+    gap: 28px;
+  }
+
+  .case-heading h3 {
     font-size: 92px;
+  }
+
+  .ecosystem-record,
+  .instrument-record {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 34px;
+  }
+
+  .ecosystem-record-meta,
+  .instrument-record > div:last-child {
+    grid-column: 2;
+  }
+
+  .runtime-intro {
+    grid-column: 1;
+    margin-top: 30px;
   }
 
   .seed-heading h2 {
@@ -1590,6 +1924,8 @@ button {
   .system-section,
   .protocol-section,
   .cases-section,
+  .instruments-section,
+  .runtime-architecture-section,
   .agent-section,
   .archive-section {
     padding-top: 88px;
@@ -1677,8 +2013,67 @@ button {
     margin-top: 38px;
   }
 
-  .case-heading h2 {
-    font-size: 68px;
+  .ecosystem-heading,
+  .instruments-heading {
+    gap: 0;
+  }
+
+  .ecosystem-heading h2 {
+    margin-top: 16px;
+    font-size: 32px;
+    white-space: nowrap;
+  }
+
+  .instruments-heading h2,
+  .runtime-heading h2 {
+    margin-top: 16px;
+    font-size: 22px;
+    white-space: nowrap;
+  }
+
+  .ecosystem-heading > p:last-child,
+  .instruments-heading > p:last-child {
+    width: auto;
+    margin-top: 28px;
+    font-size: 17px;
+  }
+
+  .ecosystem-layers {
+    grid-template-columns: 1fr;
+    margin-top: 62px;
+  }
+
+  .ecosystem-layers li,
+  .ecosystem-layers li + li {
+    min-height: 0;
+    padding: 18px 0 28px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(16, 16, 16, 0.45);
+  }
+
+  .ecosystem-layers li:last-child {
+    border-bottom: 0;
+  }
+
+  .ecosystem-layers strong {
+    margin-top: 28px;
+  }
+
+  .ecosystem-layer-heading {
+    margin-top: 88px;
+  }
+
+  .ecosystem-layer-heading h3 {
+    font-size: 25px;
+  }
+
+  .case-heading {
+    margin-top: 70px;
+  }
+
+  .case-heading h3 {
+    font-size: 56px;
+    white-space: nowrap;
   }
 
   .case-heading > p:last-child,
@@ -1706,6 +2101,76 @@ button {
   .case-visual img {
     min-height: 380px;
     object-position: center;
+  }
+
+  .manifestation-list,
+  .instrument-list {
+    margin-top: 72px;
+  }
+
+  .ecosystem-record,
+  .instrument-record {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 26px 0 36px;
+  }
+
+  .ecosystem-record-meta,
+  .instrument-record > div:last-child {
+    grid-column: 1;
+  }
+
+  .ecosystem-record-main h3,
+  .instrument-record h3 {
+    font-size: 34px;
+  }
+
+  .ecosystem-record blockquote,
+  .instrument-record blockquote {
+    font-size: 17px;
+  }
+
+  .instrument-record > div:last-child {
+    align-self: auto;
+    padding-top: 18px;
+    border-top: 1px solid rgba(16, 16, 16, 0.45);
+  }
+
+  .runtime-intro {
+    margin-top: 28px;
+    font-size: 16px;
+  }
+
+  .runtime-capabilities {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 62px;
+  }
+
+  .runtime-capabilities li,
+  .runtime-capabilities li + li,
+  .runtime-capabilities li:nth-child(4) {
+    min-height: 116px;
+    padding: 16px 14px 20px 0;
+    border-right: 1px solid #555;
+    border-bottom: 1px solid #555;
+    font-size: 14px;
+  }
+
+  .runtime-capabilities li:nth-child(2n) {
+    padding-left: 14px;
+    border-right: 0;
+  }
+
+  .runtime-capabilities li:nth-child(2n + 1) {
+    padding-left: 0;
+  }
+
+  .runtime-capabilities li:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .runtime-capabilities span {
+    margin-bottom: 34px;
   }
 
   .agent-statement h2,

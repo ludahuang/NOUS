@@ -1,12 +1,12 @@
 # NOUS
 
-**Curator Incubator / 策展孵化器**
+**从智性共生宣言到智能体生成机制**
 
 NOUS is a long-running curatorial system that can take the form of a space,
-an exhibition, a knowledge environment, a research process, or a creative
+an experience, a knowledge environment, a research process, or a creative
 agent.
 
-NOUS 不是某一个网站或单一应用。它是一套持续生成空间、展览、知识项目与智能体的策展机制。
+NOUS 不是某一个网站或单一应用。它是一套持续生成空间、体验、知识项目与智能体的策展机制。
 
 ## Current Map
 

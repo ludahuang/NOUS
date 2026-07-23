@@ -1,0 +1,382 @@
+.memory-hero,
+.memory-roles,
+.memory-process,
+.memory-corpus {
+  padding: clamp(80px, 11vw, 170px) var(--gutter);
+}
+
+.memory-hero {
+  display: grid;
+  grid-template-columns: minmax(340px, 1fr) minmax(420px, 1fr);
+  gap: 8vw;
+  min-height: min(720px, calc(100svh - var(--header-height)));
+  align-content: center;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.memory-hero > p,
+.memory-section-heading > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.memory-hero h1,
+.memory-section-heading h2 {
+  margin: 0;
+  font-size: clamp(48px, 7vw, 92px);
+  font-weight: 500;
+  line-height: 1.04;
+}
+
+.memory-hero > div {
+  align-self: end;
+}
+
+.memory-hero > div > p:first-child {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.5;
+}
+
+.memory-caveat {
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.memory-roles {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.1fr);
+  gap: 8vw;
+  background: var(--cyan);
+}
+
+.memory-section-heading h2 {
+  margin-top: 22px;
+}
+
+.memory-roles dl {
+  margin: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.memory-roles dl div {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.2fr);
+  gap: 4vw;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(16, 16, 16, 0.45);
+}
+
+.memory-roles dt,
+.memory-roles dd {
+  margin: 0;
+}
+
+.memory-roles dt {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.memory-roles dd {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.memory-process {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.memory-process ol {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: clamp(66px, 8vw, 120px) 0 0;
+  padding: 0;
+  border-top: 1px solid #555;
+  list-style: none;
+}
+
+.memory-process li {
+  min-height: 190px;
+  padding: 18px 16px 0 0;
+  border-right: 1px solid #555;
+}
+
+.memory-process li + li {
+  padding-left: 16px;
+}
+
+.memory-process li:last-child {
+  border-right: 0;
+}
+
+.memory-process span {
+  display: block;
+  color: var(--yellow);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.memory-process strong {
+  display: block;
+  margin-top: 70px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.memory-corpus {
+  background: var(--white);
+}
+
+.memory-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 56px;
+}
+
+.memory-filter button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.memory-filter button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.memory-count {
+  margin: 30px 0 0;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.memory-list {
+  margin-top: 18px;
+  border-top: 1px solid var(--ink);
+}
+
+.memory-record {
+  border-bottom: 1px solid var(--ink);
+}
+
+.memory-record-toggle {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.65fr) minmax(200px, 1fr) minmax(120px, 0.45fr) minmax(220px, 0.9fr);
+  width: 100%;
+  min-height: 88px;
+  gap: 20px;
+  padding: 18px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.memory-record-toggle:hover,
+.memory-record-toggle:focus-visible,
+.memory-record-toggle[aria-expanded="true"] {
+  background: var(--yellow);
+}
+
+.memory-record-id,
+.memory-record-tags {
+  align-self: center;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.memory-record-toggle strong,
+.memory-record-toggle em {
+  align-self: center;
+}
+
+.memory-record-toggle strong {
+  font-size: 19px;
+}
+
+.memory-record-toggle em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.memory-record-detail {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.8fr) minmax(430px, 1.2fr);
+  gap: 6vw;
+  padding: 8px 0 36px;
+}
+
+.memory-record-context {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.memory-record-detail dl {
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.memory-record-detail dl div {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.35fr) minmax(250px, 1.65fr);
+  gap: 3vw;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.memory-record-detail dt,
+.memory-record-detail dd {
+  margin: 0;
+}
+
+.memory-record-detail dt {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.memory-record-detail dd {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.memory-source-link {
+  grid-column: 2;
+  margin-top: -12px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 1050px) {
+  .memory-hero,
+  .memory-roles,
+  .memory-record-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-hero {
+    min-height: 0;
+  }
+
+  .memory-process ol {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .memory-process li:nth-child(3n) {
+    border-right: 0;
+  }
+
+  .memory-process li:nth-child(4) {
+    padding-left: 0;
+  }
+
+  .memory-record-toggle {
+    grid-template-columns: minmax(170px, 0.65fr) minmax(180px, 1fr) minmax(120px, 0.45fr);
+  }
+
+  .memory-record-tags {
+    grid-column: 2 / -1;
+  }
+
+  .memory-source-link {
+    grid-column: 1;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .memory-hero,
+  .memory-roles,
+  .memory-process,
+  .memory-corpus {
+    padding-top: 88px;
+    padding-bottom: 88px;
+  }
+
+  .memory-hero h1,
+  .memory-section-heading h2 {
+    font-size: 36px;
+  }
+
+  .memory-hero > div > p:first-child {
+    font-size: 21px;
+  }
+
+  .memory-roles dl div {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .memory-process ol {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-process li,
+  .memory-process li + li,
+  .memory-process li:nth-child(4) {
+    min-height: 0;
+    padding: 18px 0 28px;
+    border-right: 0;
+    border-bottom: 1px solid #555;
+  }
+
+  .memory-process strong {
+    margin-top: 36px;
+  }
+
+  .memory-filter {
+    gap: 8px;
+  }
+
+  .memory-filter button {
+    font-size: 12px;
+  }
+
+  .memory-record-toggle {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .memory-record-toggle strong {
+    font-size: 18px;
+  }
+
+  .memory-record-tags {
+    grid-column: auto;
+  }
+
+  .memory-record-detail {
+    gap: 28px;
+  }
+
+  .memory-record-detail dl div {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}

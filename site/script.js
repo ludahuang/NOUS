@@ -739,3 +739,455 @@ createSymbioteScene({
     });
   },
 });
+
+const vaultPrelude = document.querySelector("#vault-prelude");
+const vaultPreludeOpeners = [...document.querySelectorAll("[data-open-vault-prelude]")];
+const vaultPreludeClosers = [...document.querySelectorAll("[data-close-vault-prelude]")];
+let vaultPreludeOpener = null;
+
+function openVaultPrelude(opener) {
+  if (!vaultPrelude) {
+    window.location.assign("./the-vault/");
+    return;
+  }
+
+  vaultPreludeOpener = opener;
+  if (typeof vaultPrelude.showModal === "function") {
+    vaultPrelude.showModal();
+  } else {
+    vaultPrelude.setAttribute("open", "");
+  }
+}
+
+function closeVaultPrelude() {
+  if (!vaultPrelude) {
+    return;
+  }
+
+  if (typeof vaultPrelude.close === "function") {
+    vaultPrelude.close();
+  } else {
+    vaultPrelude.removeAttribute("open");
+    vaultPreludeOpener?.focus();
+  }
+}
+
+vaultPreludeOpeners.forEach((opener) => {
+  opener.addEventListener("click", () => openVaultPrelude(opener));
+});
+
+vaultPreludeClosers.forEach((closer) => {
+  closer.addEventListener("click", closeVaultPrelude);
+});
+
+vaultPrelude?.addEventListener("close", () => {
+  vaultPreludeOpener?.focus();
+});
+
+const seedForm = document.querySelector("#seed-form");
+const seedSteps = [...document.querySelectorAll("[data-seed-step]")];
+const seedProgress = [...document.querySelectorAll("[data-seed-progress]")];
+const seedBack = document.querySelector("[data-seed-back]");
+const seedNext = document.querySelector("[data-seed-next]");
+const seedGenerate = document.querySelector("[data-seed-generate]");
+const seedClear = document.querySelector("[data-seed-clear]");
+const seedFormStatus = document.querySelector("#seed-form-status");
+const seedResult = document.querySelector("#seed-result");
+const seedWorkingTitle = document.querySelector("#seed-working-title");
+const seedSummary = document.querySelector("#seed-summary");
+const seedResultStatus = document.querySelector("#seed-result-status");
+const seedCopy = document.querySelector("[data-seed-copy]");
+const seedEdit = document.querySelector("[data-seed-edit]");
+const seedDownloads = [...document.querySelectorAll("[data-seed-download]")];
+const draftStorageKey = "nous-seed-composer-draft-v1";
+const seedWeightLevels = {
+  low: 0.68,
+  medium: 1,
+  high: 1.42,
+};
+const seedFacetLabels = {
+  space: "空间",
+  experience: "体验",
+  network: "网络",
+  data: "数据策展",
+  knowledge: "知识库",
+  agent: "智能体",
+};
+const seedFacetOutputKeys = {
+  space: "space",
+  experience: "experience",
+  network: "network",
+  data: "data_curation",
+  knowledge: "knowledge_base",
+  agent: "intelligent_agent",
+};
+const originalAtlasWeights = { ...atlasWeights };
+let seedStep = 1;
+let currentSeed = null;
+
+function selectedValues(name) {
+  return [...seedForm.querySelectorAll(`input[name="${name}"]:checked`)]
+    .map((input) => input.value);
+}
+
+function readSeedWeights() {
+  return Object.fromEntries(
+    Object.keys(seedFacetLabels).map((facet) => {
+      const input = seedForm.querySelector(`input[name="${facet}"]:checked`);
+      return [facet, input?.value || "medium"];
+    }),
+  );
+}
+
+function applySeedWeights() {
+  const selections = readSeedWeights();
+  Object.entries(selections).forEach(([facet, level]) => {
+    atlasWeights[facet] = originalAtlasWeights[facet] * seedWeightLevels[level];
+  });
+}
+
+function readSeedDraft() {
+  const interfaces = selectedValues("interfaces");
+  const participants = selectedValues("participants");
+  const interfaceCustom = seedForm.elements.interfaceCustom.value.trim();
+  const participantCustom = seedForm.elements.participantCustom.value.trim();
+
+  if (interfaceCustom) {
+    interfaces.push(interfaceCustom);
+  }
+  if (participantCustom) {
+    participants.push(participantCustom);
+  }
+
+  return {
+    question: seedForm.elements.question.value.trim(),
+    interfaces,
+    participants,
+    weights: readSeedWeights(),
+  };
+}
+
+function persistDraft() {
+  if (!seedForm) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(draftStorageKey, JSON.stringify(readSeedDraft()));
+  } catch {
+    // Local storage can be unavailable in private browsing modes.
+  }
+}
+
+function applyDraftToForm(draft) {
+  if (!draft || typeof draft !== "object") {
+    return false;
+  }
+
+  seedForm.elements.question.value = draft.question || "";
+  const interfaceOptions = new Set(draft.interfaces || []);
+  const participantOptions = new Set(draft.participants || []);
+  const knownInterfaces = [...seedForm.querySelectorAll('input[name="interfaces"]')];
+  const knownParticipants = [...seedForm.querySelectorAll('input[name="participants"]')];
+
+  knownInterfaces.forEach((input) => {
+    input.checked = interfaceOptions.has(input.value);
+    interfaceOptions.delete(input.value);
+  });
+  knownParticipants.forEach((input) => {
+    input.checked = participantOptions.has(input.value);
+    participantOptions.delete(input.value);
+  });
+  seedForm.elements.interfaceCustom.value = [...interfaceOptions].join("；");
+  seedForm.elements.participantCustom.value = [...participantOptions].join("；");
+
+  Object.entries(draft.weights || {}).forEach(([facet, level]) => {
+    const input = seedForm.querySelector(
+      `input[name="${facet}"][value="${level}"]`,
+    );
+    if (input) {
+      input.checked = true;
+    }
+  });
+
+  applySeedWeights();
+  return Boolean(
+    draft.question
+    || (draft.interfaces || []).length
+    || (draft.participants || []).length,
+  );
+}
+
+function setSeedStatus(message) {
+  if (seedFormStatus) {
+    seedFormStatus.textContent = message;
+  }
+}
+
+function setResultStatus(message) {
+  if (seedResultStatus) {
+    seedResultStatus.textContent = message;
+  }
+}
+
+function showSeedStep(nextStep) {
+  seedStep = Math.min(4, Math.max(1, nextStep));
+  seedSteps.forEach((step) => {
+    const isActive = Number(step.dataset.seedStep) === seedStep;
+    step.hidden = !isActive;
+    step.classList.toggle("is-active", isActive);
+  });
+  seedProgress.forEach((item) => {
+    item.classList.toggle("is-active", Number(item.dataset.seedProgress) === seedStep);
+  });
+  seedBack.hidden = seedStep === 1;
+  seedNext.hidden = seedStep === 4;
+  seedGenerate.hidden = seedStep !== 4;
+  setSeedStatus("");
+}
+
+function validateCurrentSeedStep() {
+  if (seedStep !== 1) {
+    return true;
+  }
+
+  const question = seedForm.elements.question;
+  if (question.value.trim()) {
+    return true;
+  }
+
+  setSeedStatus("请先留下一个核心问题，再继续。");
+  question.focus();
+  return false;
+}
+
+function makeSeedId(date) {
+  const timestamp = date.toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
+  return `generated-seed-${timestamp}`;
+}
+
+function makeWorkingTitle(question) {
+  const compact = question.replace(/\s+/g, " ").trim();
+  const excerpt = compact.length > 28 ? `${compact.slice(0, 28)}…` : compact;
+  return excerpt ? `关于「${excerpt}」的共生体种子` : "一个新的 NOUS 共生体种子";
+}
+
+function createSeed() {
+  const draft = readSeedDraft();
+  const generatedAt = new Date().toISOString();
+  const facets = Object.fromEntries(
+    Object.entries(draft.weights).map(([facet, level]) => [
+      seedFacetOutputKeys[facet],
+      level,
+    ]),
+  );
+  const interfaceLabel = draft.interfaces.length
+    ? draft.interfaces.join("、")
+    : "待共同确定的临时界面";
+
+  return {
+    id: makeSeedId(new Date(generatedAt)),
+    type: "nous-seed",
+    status: "generated",
+    source_status: "generated",
+    generated_by: "local-browser-seed-composer",
+    generated_at: generatedAt,
+    working_title: makeWorkingTitle(draft.question),
+    question: draft.question,
+    interfaces: draft.interfaces,
+    participants: draft.participants,
+    facets,
+    records_to_preserve: [
+      "核心问题及其首次表述",
+      "临时界面的实施记录",
+      "参与主体、授权与来源说明",
+      "作品、关系、工具与尚未解决的问题",
+    ],
+    reactivation_path: `将这份种子带回${interfaceLabel}，补充第一轮现场记录，并以新的关系、来源与问题再次修订。`,
+    local_only_notice: "由访客在本地生成，不属于 NOUS 历史档案或已注册项目。",
+  };
+}
+
+function seedMarkdown(seed) {
+  const facetLines = Object.entries(seed.facets)
+    .map(([facet, level]) => `  ${facet}: ${level}`)
+    .join("\n");
+  const list = (items) => items.length
+    ? items.map((item) => `- ${item}`).join("\n")
+    : "- 待共同确定";
+
+  return `---
+id: ${seed.id}
+type: ${seed.type}
+status: ${seed.status}
+source_status: ${seed.source_status}
+generated_by: ${seed.generated_by}
+generated_at: ${seed.generated_at}
+---
+
+# ${seed.working_title}
+
+> ${seed.local_only_notice}
+
+## 核心问题
+
+${seed.question}
+
+## 临时界面
+
+${list(seed.interfaces)}
+
+## 参与主体
+
+${list(seed.participants)}
+
+## 六种作用面
+
+${facetLines}
+
+## 建议记录对象
+
+${list(seed.records_to_preserve)}
+
+## 再次激活路径
+
+${seed.reactivation_path}
+`;
+}
+
+function renderSeed(seed) {
+  seedWorkingTitle.value = seed.working_title;
+  const rows = [
+    ["ID", seed.id],
+    ["核心问题", seed.question],
+    ["临时界面", seed.interfaces.join("、") || "待共同确定"],
+    ["参与主体", seed.participants.join("、") || "待共同确定"],
+    ["作用面", Object.entries(seed.facets)
+      .map(([facet, level]) => `${seedFacetLabels[Object.keys(seedFacetOutputKeys).find((key) => seedFacetOutputKeys[key] === facet)]} / ${level}`)
+      .join("；")],
+    ["建议记录对象", seed.records_to_preserve.join("；")],
+    ["再次激活", seed.reactivation_path],
+    ["生成时间", new Date(seed.generated_at).toLocaleString("zh-CN")],
+  ];
+  seedSummary.replaceChildren();
+  rows.forEach(([term, description]) => {
+    const definitionTerm = document.createElement("dt");
+    const definitionDescription = document.createElement("dd");
+    definitionTerm.textContent = term;
+    definitionDescription.textContent = description;
+    seedSummary.append(definitionTerm, definitionDescription);
+  });
+  seedResult.hidden = false;
+}
+
+async function copySeedMarkdown() {
+  const markdown = seedMarkdown(currentSeed);
+  try {
+    await navigator.clipboard.writeText(markdown);
+    setResultStatus("Markdown 已复制到剪贴板。");
+  } catch {
+    const fallback = document.createElement("textarea");
+    fallback.value = markdown;
+    fallback.setAttribute("readonly", "");
+    fallback.style.position = "fixed";
+    fallback.style.opacity = "0";
+    document.body.append(fallback);
+    fallback.select();
+    document.execCommand("copy");
+    fallback.remove();
+    setResultStatus("Markdown 已复制到剪贴板。");
+  }
+}
+
+function downloadSeed(format) {
+  const isJson = format === "json";
+  const content = isJson
+    ? JSON.stringify(currentSeed, null, 2)
+    : seedMarkdown(currentSeed);
+  const file = new Blob([content], {
+    type: isJson ? "application/json" : "text/markdown",
+  });
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${currentSeed.id}.${isJson ? "json" : "md"}`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setResultStatus(`${isJson ? "JSON" : "Markdown"} 已下载。`);
+}
+
+if (seedForm) {
+  try {
+    const savedDraft = JSON.parse(localStorage.getItem(draftStorageKey) || "null");
+    if (applyDraftToForm(savedDraft)) {
+      setSeedStatus("已恢复当前浏览器中的本地草稿。");
+    }
+  } catch {
+    // Ignore unreadable local draft data and continue with an empty form.
+  }
+
+  seedForm.addEventListener("input", persistDraft);
+  seedForm.addEventListener("change", () => {
+    applySeedWeights();
+    persistDraft();
+  });
+
+  seedNext.addEventListener("click", () => {
+    if (validateCurrentSeedStep()) {
+      showSeedStep(seedStep + 1);
+    }
+  });
+
+  seedBack.addEventListener("click", () => showSeedStep(seedStep - 1));
+
+  seedForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!validateCurrentSeedStep()) {
+      return;
+    }
+
+    currentSeed = createSeed();
+    renderSeed(currentSeed);
+    setResultStatus("种子已在当前浏览器生成。");
+    seedResult.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  seedClear.addEventListener("click", () => {
+    seedForm.reset();
+    Object.assign(atlasWeights, originalAtlasWeights);
+    try {
+      localStorage.removeItem(draftStorageKey);
+    } catch {
+      // The form remains usable even when browser storage cannot be cleared.
+    }
+    currentSeed = null;
+    seedResult.hidden = true;
+    showSeedStep(1);
+    setSeedStatus("本地草稿已清除。");
+  });
+
+  seedWorkingTitle?.addEventListener("input", () => {
+    if (!currentSeed) {
+      return;
+    }
+    currentSeed.working_title = seedWorkingTitle.value.trim() || "一个新的 NOUS 共生体种子";
+  });
+
+  seedCopy?.addEventListener("click", copySeedMarkdown);
+  seedDownloads.forEach((button) => {
+    button.addEventListener("click", () => downloadSeed(button.dataset.seedDownload));
+  });
+  seedEdit?.addEventListener("click", () => {
+    seedResult.hidden = true;
+    showSeedStep(1);
+    seedForm.elements.question.focus();
+    document.querySelector("#seed-composer")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+}

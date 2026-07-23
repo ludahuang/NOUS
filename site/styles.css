@@ -173,11 +173,23 @@ button {
 }
 
 .hero-copy h1 {
+  position: relative;
+  display: inline-block;
   margin: 0;
   font-size: 220px;
   font-weight: 800;
   line-height: 0.72;
   letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.hero-copy h1 span {
+  position: absolute;
+  top: 0.16em;
+  left: calc(100% + 0.08em);
+  font-size: 0.36em;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .hero-definition {

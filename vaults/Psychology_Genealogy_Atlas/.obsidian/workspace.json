@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "right": {
     "id": "7f95e7be49e23f1c",
@@ -183,7 +183,7 @@
       "bases:新建数据库": false
     }
   },
-  "active": "153e3e4e131c215c",
+  "active": "8f51199aa60e4e3d",
   "lastOpenFiles": [
     "01_起源与学派/历史谱系/格式塔心理学 Gestalt.md",
     "06_胼胝体桥接区/桥接节点/情绪.md",

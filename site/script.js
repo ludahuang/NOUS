@@ -822,6 +822,7 @@ const seedFacetOutputKeys = {
   agent: "intelligent_agent",
 };
 const originalAtlasWeights = { ...atlasWeights };
+const seedLastStep = seedSteps.length;
 let seedStep = 1;
 let currentSeed = null;
 
@@ -931,7 +932,7 @@ function setResultStatus(message) {
 }
 
 function showSeedStep(nextStep) {
-  seedStep = Math.min(4, Math.max(1, nextStep));
+  seedStep = Math.min(seedLastStep, Math.max(1, nextStep));
   seedSteps.forEach((step) => {
     const isActive = Number(step.dataset.seedStep) === seedStep;
     step.hidden = !isActive;
@@ -941,8 +942,9 @@ function showSeedStep(nextStep) {
     item.classList.toggle("is-active", Number(item.dataset.seedProgress) === seedStep);
   });
   seedBack.hidden = seedStep === 1;
-  seedNext.hidden = seedStep === 4;
-  seedGenerate.hidden = seedStep !== 4;
+  seedNext.hidden = seedStep === seedLastStep;
+  seedGenerate.hidden = seedStep !== seedLastStep;
+  seedGenerate.disabled = seedStep !== seedLastStep;
   setSeedStatus("");
 }
 
@@ -1146,6 +1148,10 @@ if (seedForm) {
 
   seedForm.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (seedStep !== seedLastStep) {
+      setSeedStatus("请先完成全部步骤，再生成种子。");
+      return;
+    }
     if (!validateCurrentSeedStep()) {
       return;
     }

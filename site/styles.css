@@ -235,6 +235,20 @@ button {
   color: var(--ink);
 }
 
+.primary-action:disabled {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.primary-action:disabled:hover {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+
 .text-action {
   font-size: 14px;
   font-weight: 700;
@@ -364,7 +378,7 @@ button {
   row-gap: 4px;
   align-items: start;
   min-height: 176px;
-  padding: 18px 18px 18px 0;
+  padding: 18px;
   border: 0;
   border-bottom: 1px solid var(--line);
   background: transparent;
@@ -372,10 +386,6 @@ button {
   cursor: pointer;
   text-align: left;
   transition: background 160ms ease;
-}
-
-.facet-control + .facet-control {
-  padding-left: 18px;
 }
 
 .facet-control span,
@@ -1249,22 +1259,16 @@ button {
 .seed-progress {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border-bottom: 1px solid var(--line);
   color: var(--muted);
 }
 
 .seed-progress span {
   min-height: 55px;
   padding-top: 18px;
-  border-right: 1px solid var(--line);
 }
 
 .seed-progress span + span {
   padding-left: 18px;
-}
-
-.seed-progress span:last-child {
-  border-right: 0;
 }
 
 .seed-progress span.is-active {
@@ -1437,6 +1441,10 @@ button {
 .seed-controls {
   min-height: 92px;
   border-bottom: 1px solid var(--ink);
+}
+
+.seed-controls [hidden] {
+  display: none !important;
 }
 
 .seed-controls [data-seed-clear] {
@@ -1748,10 +1756,6 @@ button {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .facet-control:nth-child(4) {
-    padding-left: 0;
-  }
-
   .protocol-intro h2 {
     font-size: 64px;
   }
@@ -1963,7 +1967,7 @@ button {
   .facet-control + .facet-control,
   .facet-control:nth-child(4) {
     min-height: 112px;
-    padding: 16px 0;
+    padding: 16px 20px;
     border: 0;
     border-bottom: 1px solid var(--line);
   }
@@ -2246,11 +2250,6 @@ button {
   .seed-progress span {
     min-height: 48px;
     padding-top: 15px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .seed-progress span:nth-child(2n) {
-    border-right: 0;
   }
 
   .seed-step {
